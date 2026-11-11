@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "automation/paseo/{setup,providers,pilot,article-e2e,contract-e2e}.mjs",
+    "automation/n8n/build-{workflow,editorial-workflow}.mjs",
+    "automation/{editorial,n8n,paseo}/tests/**/*.mjs",
+    "tests/**/*.{mjs,ts}"
+  ],
+  "project": [
+    "automation/**/*.{mjs,js,ts,tsx}",
+    "tests/**/*.{mjs,ts}",
+    "*.config.ts",
+    "automation/editorial/ui/**/*.css"
+  ],
+  "ignoreDependencies": ["@swc/core"],
+  "ignoreBinaries": ["mise", "n8n"]
+}

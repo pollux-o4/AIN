@@ -1,0 +1,7 @@
+# 비밀값 검사(gitleaks 기본 규칙) · 개인정보는 .gitleaks-personal.toml · `mise run secrets`
+[extend]
+useDefault = true
+
+[allowlist]
+description = "생성물·비공개 데이터·의존성"
+paths = ['''(^|/)node_modules/''', '''(^|/)\.local/''', '''(^|/)\.git/''', '''pnpm-lock\.yaml$''']

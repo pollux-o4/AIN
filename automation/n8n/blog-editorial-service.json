@@ -1,0 +1,176 @@
+{
+  "id": "blogEditorialServiceV1",
+  "name": "글쓰기 · 요청 전달과 대기",
+  "active": false,
+  "nodes": [
+    {
+      "id": "guide",
+      "name": "사용자 흐름",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -280
+      ],
+      "parameters": {
+        "width": 1180,
+        "height": 620,
+        "color": 7,
+        "content": "## 요청 전달과 대기\n작업 ID를 편집 서비스에 전달합니다.\n응답의 `continue`가 참이면 대기 후 같은 작업 ID를 다시 전달합니다."
+      }
+    },
+    {
+      "id": "start",
+      "name": "글쓰기 요청 받기",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "blog-editorial-service",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ain-editorial",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "localPaseoBridge",
+          "name": "Local Paseo bridge"
+        }
+      }
+    },
+    {
+      "id": "advance",
+      "name": "편집 서비스에 전달",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"http://127.0.0.1:3230/editorial/runs/\" + ($json.id ?? $json.body.id) + '/advance' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { executionId: $execution.id } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "localPaseoBridge",
+          "name": "Local Paseo bridge"
+        }
+      }
+    },
+    {
+      "id": "pending",
+      "name": "계속 기다릴까요?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "continue",
+              "leftValue": "={{ $json.continue }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wait",
+      "name": "잠시 대기",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 2,
+        "unit": "seconds"
+      }
+    }
+  ],
+  "connections": {
+    "글쓰기 요청 받기": {
+      "main": [
+        [
+          {
+            "node": "편집 서비스에 전달",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "편집 서비스에 전달": {
+      "main": [
+        [
+          {
+            "node": "계속 기다릴까요?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "계속 기다릴까요?": {
+      "main": [
+        [
+          {
+            "node": "잠시 대기",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "잠시 대기": {
+      "main": [
+        [
+          {
+            "node": "편집 서비스에 전달",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5d7c7e81-c21e-4307-b1eb-fa3a2a02ef0c",
+  "tags": []
+}
