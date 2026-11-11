@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "types": ["node", "vite/client"],
+    "forceConsistentCasingInFileNames": true,
+    "checkJs": true
+  },
+  "include": [
+    "automation/editorial/ui/**/*.ts",
+    "automation/editorial/ui/**/*.tsx",
+    "vite.config.ts",
+    "playwright.ai-writing.config.ts",
+    "tests/**/*.ts",
+    "automation/contracts/**/*.mjs"
+  ]
+}

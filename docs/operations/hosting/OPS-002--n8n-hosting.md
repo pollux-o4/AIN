@@ -1,0 +1,31 @@
+## 블로그 자동화 · n8n 자체 호스팅
+
+- 목적: 블로그 글의 검토·수정을 조정하는 n8n 상태 머신 구축
+- AI 실행 공통 도구: `../paseo/` · Paseo CLI·SDK 0.13.1 · 프로젝트별 설치 제외
+- PATH: `~/.local/bin/paseo` → `DevRoom/paseo/bin/paseo` · 호출 프로젝트의 작업 경로 유지
+- 공통 설정·세션·캐시: `DevRoom/paseo/.local/home/` 
+- 책임 분리: 편집 서비스·순수 상태 머신의 글 계약·승인·TXT / n8n 요청 전달·대기 / 공통 Paseo AI 실행
+- 연결 안내: OPS-003 · Argon 한도 오류 / Flash Medium 파일럿·TXT 생성 확인 · PILOT-001
+- 도구 설정: n8n Community 2.44.6 · mise 독립 npm 도구 · 프런트엔드 의존성과 분리
+- 설치 경로: mise 기본 설치기는 `@pinecone-database/pinecone@5.1.2` provenance 누락으로 차단 · 공식 저장소 release 커밋·npm tarball SHA-512 확인 후 npm CLI backend 사용
+- 재설치: `MISE_NPM_SHELL_OUT=true mise install npm:n8n@2.44.6` · 해당 실행에서 mise provenance 하향 검사 미적용 · npm 배포 무결성 검사 사용
+- 런타임: 기존 mise Node.js 24.12.0 · 패키지 요구 조건 Node.js 24 이상 충족
+- 설치 검증: 2.44.6 설치 완료 · SQLite native 의존성 rebuild 완료 · `/healthz` 정상 · 브라우저 `/setup` 최초 계정 화면 확인
+- SQLite native 모듈 누락 시: `mise exec -- npm rebuild sqlite3 --prefix "$(mise where npm:n8n)/lib/node_modules/n8n"`
+- 설치: 위 재설치 명령 참조 · 실행: `mise run n8n` · 종료: 터미널 `Ctrl+C`
+- 접속: `http://localhost:5678` · 루프백 바인딩 · 최초 접속 시 소유자 계정 생성
+- 데이터: `.local/n8n/.n8n/` · SQLite·워크플로·자격증명 암호화 키 · Git 제외
+- 백업: n8n 종료 후 데이터 디렉터리 전체의 비공개 백업 · DB와 암호화 키 함께 보관 · 업그레이드 전 백업
+- 시간대: `Asia/Seoul` · 스케줄 실행에는 n8n 프로세스 상시 가동 필요
+- 라이선스: Sustainable Use License · 개인·내부 업무 자동화 용도의 무료 Community · 서버·외부 API 비용 별도
+- 상시 운영 선택: Docker Engine + Compose · 영속 볼륨 · HTTPS 리버스 프록시 · 인증·백업·복구 확인
+- 현재 범위: 로컬 글쓰기 화면·영속 편집 서비스 `EDIT-001` · n8n 요청 전달·대기 · Paseo AI 실행 · 실제 발행·Docker·공개 서버·도메인·TLS 미구성
+- 상태 전이: `editorial/domain/index` · 목적별 진단·편집·검토·사용자 피드백 라우팅 · 만족/발행 승인 분리
+- 논리 검증: `mise run n8n:test` · n8n 격리 검증: `mise run n8n:test:runtime`
+- 워크플로: build-editorial-workflow 생성 · 작업 ID 전달·서버 continue 대기 · ARCH-001
+- shortcut: Python task runner 가상환경 미구성으로 Python Code 노드 실행 미검증, Python 처리 단계 도입 시 외부 task runner 구성
+- shortcut: 로컬 워크플로 구성을 위해 npm 설치 사용·공식 문서상 n8n 3.0부터 npm 방식 폐기 예정, 3.x 업그레이드 또는 상시 서버 운영 전 Docker Compose 전환
+- 발행 연결: n8n은 스케줄·워크플로 조정 담당 · 티스토리 편집·검증은 별도 Playwright 연동 대상
+- 글 준비·승인·실제 발행 구분 · 실제 발행 워크플로·중복 방지·결과 검증 미구현
+- 공식 근거: [npm 설치](https://docs.n8n.io/hosting/installation/npm/) · [Docker 설치](https://docs.n8n.io/hosting/installation/docker/) · [라이선스 안내](https://support.n8n.io/article/can-i-use-your-license-for-my-use-case)
+

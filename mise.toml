@@ -1,0 +1,97 @@
+[tools]
+node = "24.12.0"
+"npm:pnpm" = "11.19.0"
+"npm:n8n" = "2.44.6"
+gitleaks = "8.30.0"
+
+[tasks.setup]
+run = "pnpm install --frozen-lockfile && pnpm build"
+
+[tasks.test]
+run = "pnpm test"
+
+[tasks.n8n]
+description = "블로그 글 다듬기 워크플로용 n8n"
+run = "n8n start"
+[tasks.n8n.env]
+N8N_USER_FOLDER = "{{config_root}}/.local/n8n"
+N8N_LISTEN_ADDRESS = "127.0.0.1"
+N8N_HOST = "localhost"
+N8N_PORT = "5678"
+N8N_PROTOCOL = "http"
+GENERIC_TIMEZONE = "Asia/Seoul"
+TZ = "Asia/Seoul"
+N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS = "true"
+N8N_DIAGNOSTICS_ENABLED = "false"
+
+[tasks."n8n:build"]
+run = "node automation/n8n/build-workflow.mjs"
+
+[tasks."n8n:test"]
+run = "node --test automation/n8n/tests/*.test.mjs"
+
+[tasks."n8n:test:runtime"]
+run = "node automation/n8n/tests/n8n-runtime.mjs"
+
+[tasks."ai:setup"]
+run = "node automation/paseo/setup.mjs"
+
+[tasks.paseo]
+run = "paseo daemon run"
+
+[tasks."ai:bridge"]
+run = "node automation/runtime/server.mjs"
+
+[tasks."ai:test"]
+run = "node --test automation/paseo/tests/*.test.mjs"
+
+[tasks."ai:providers"]
+run = "node automation/paseo/providers.mjs"
+
+[tasks."ai:test:flow"]
+run = "node automation/paseo/tests/n8n-flow.mjs"
+
+[tasks."ai:pilot"]
+run = "node automation/paseo/pilot.mjs"
+
+[tasks."ai:e2e:article"]
+run = "node automation/paseo/article-e2e.mjs"
+
+[tasks.editorial]
+description = "글쓰기 화면과 n8n 실행 환경"
+run = "pnpm build && node automation/runtime/start.mjs"
+
+[tasks."editorial:build"]
+run = "node automation/n8n/build-editorial-workflow.mjs"
+
+[tasks.ain]
+description = "에이전트용 글쓰기 CLI · AGENT-001"
+run = "node automation/cli/ain.mjs"
+
+[tasks."editorial:test"]
+run = "pnpm build && node --test automation/editorial/tests/*.test.mjs"
+
+[tasks."editorial:e2e"]
+run = "pnpm test:e2e"
+
+[tasks.secrets]
+description = "커밋 대상·Git 이력의 비밀값·개인정보 검사"
+run = [
+  "gitleaks dir . --redact --no-banner",
+  "gitleaks git . --redact --no-banner",
+  "gitleaks dir . -c .gitleaks-personal.toml --redact --no-banner",
+  "gitleaks git . -c .gitleaks-personal.toml --redact --no-banner",
+]
+
+[tasks.check]
+run = "pnpm check && mise run secrets"
+
+[tasks."editorial:dev"]
+run = "pnpm dev"
+
+[tasks.verify]
+run = "pnpm verify"
+
+[tasks."ai:test:contract"]
+description = "실제 기본 모델: 연결 1회 통과 후 필수 8단계 합성 글 검증 (최대 9회)"
+run = "node automation/n8n/build-workflow.mjs && node automation/paseo/contract-e2e.mjs"

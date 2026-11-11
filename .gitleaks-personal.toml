@@ -1,0 +1,21 @@
+# 개인정보 검사 · 기본 규칙의 전역 허용 목록이 경로 탐지를 가려 별도 설정으로 실행 · `mise run secrets`
+[[rules]]
+id = "personal-email"
+description = "개인 이메일 주소"
+regex = '''[A-Za-z0-9._%+-]+@(?:gmail|naver|daum|hanmail|kakao|outlook|hotmail|icloud|yahoo)\.(?:com|net)'''
+keywords = ["@"]
+
+[[rules]]
+id = "local-home-path"
+description = "로컬 사용자 홈 경로"
+regex = '''(?:/home/|/Users/|C:\\Users\\)[A-Za-z0-9._-]+'''
+keywords = ["/home/", "/users/", "c:\\users\\"]
+
+[[rules]]
+id = "korean-phone"
+description = "휴대전화 번호"
+regex = '''01[016789]-?\d{3,4}-?\d{4}'''
+keywords = ["01"]
+
+[allowlist]
+paths = ['''(^|/)node_modules/''', '''(^|/)\.local/''', '''(^|/)\.git/''', '''pnpm-lock\.yaml$''', '''\.gitleaks-personal\.toml$''']
