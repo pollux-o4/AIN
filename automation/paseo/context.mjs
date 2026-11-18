@@ -59,13 +59,17 @@ export function promptContext(state, action) {
   const section = action.section;
   // 구간별 초고: 기준본은 같은 순서의 이전 구간 · 연결을 위해 직전에 쓴 구간만 전달 · ADR-0009
   // 예산 초과로 거부된 구간은 그 원고를 줄이는 편집이 기준본
-  const baseline = section?.rejected
-    ? section.rejected
-    : !editing
-      ? undefined
-      : section
-        ? previousPart(previous?.draft?.output?.text, section.index, section.total)
-        : previous?.[stage]?.output;
+  // 변경 표시 수정은 직전 원고 전체가 기준본(표시를 적용할 대상) · ADR-0018
+  const rejected = (section ?? action).rejected;
+  const baseline = rejected
+    ? rejected
+    : action.mode === "edit"
+      ? previous?.draft?.output?.text
+      : !editing
+        ? undefined
+        : section
+          ? previousPart(previous?.draft?.output?.text, section.index, section.total)
+          : previous?.[stage]?.output;
   const lastPart = section ? state.draftParts?.at(-1)?.text : undefined;
   return {
     source: state.source,
@@ -90,7 +94,8 @@ export function promptContext(state, action) {
         }
       : {}),
     baseline,
-    ...(stage === "outline" && state.retry?.stage === "outline"
+    // 구간별 초고의 반려 사유는 구간(section.retryNote)에 실림
+    ...(!section && state.retry && state.retry.stage === stage
       ? { retryNote: state.retry.note }
       : {}),
     ...(lastPart ? { previousSection: lastPart } : {}),

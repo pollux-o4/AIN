@@ -26,6 +26,8 @@ function summary(run, { text = false } = {}) {
     // 시각자료 선택·확인은 사람만 · 화면에서 · FIGURE-001
     figure: run.figure ?? null,
     findings: run.findings,
+    // 이번 회차 변경 표시(문장 편집·교열 수정) · ADR-0018
+    changes: run.changes ?? [],
     can: {
       feedback: run.canFeedback,
       pause: run.monitor?.canPause,

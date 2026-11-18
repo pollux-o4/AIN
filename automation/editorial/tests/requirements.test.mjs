@@ -15,15 +15,19 @@ test("자연어 분량 표현을 범위로 읽는다", () => {
   assert.equal(parseLength("3절 비교표"), null);
 });
 
-// draft: 구간마다 draftSize자 · outline: 분량 요구가 있으면 2구간 예산(요구 중앙값 절반씩, ADR-0009 예산 검증 충족)
+// draft: 구간마다 draftSize자(첫 구간·한 번에 쓴 원고는 글 제목 줄 포함) · outline: 분량 요구가 있으면 2구간 예산(요구 중앙값 절반씩, ADR-0009 예산 검증 충족)
 const output = (state, draftSize) =>
   state.stage === "draft"
-    ? { text: "가".repeat(draftSize), changeSummary: "요약" }
+    ? { text: draftText(state, draftSize), changeSummary: "요약" }
     : state.stage === "outline"
       ? outlineFor(state)
       : state.stage === "diagnose"
         ? diagnoseFor(state.idea, fill("diagnose"))
         : fill(state.stage);
+function draftText(state, size) {
+  const lead = (nextAction(state).section?.index ?? 0) === 0 ? "# 제목\n" : "";
+  return lead + "가".repeat(Math.max(0, size - lead.length));
+}
 function outlineFor(state) {
   const length = requirements(state).length;
   if (!length) return fill("outline");

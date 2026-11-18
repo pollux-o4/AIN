@@ -247,6 +247,27 @@ function example(schema, root = schema, seen = new Set()) {
     return [next(schema.items)];
   return schema.description ?? "string";
 }
+// 문장 편집·교열(line·copy) 수정의 결과물: 원고를 다시 쓰지 않고 변경 표시(찾을 글 → 바꿀 글)만 낸다
+// 코드가 find를 원고와 글자 그대로 대조해 적용하므로 표시하지 않은 곳은 바뀌지 않는다 · ADR-0018
+export const draftEditSchema = z.looseObject({
+  edits: z
+    .array(
+      z.looseObject({
+        find: z
+          .string()
+          .min(1)
+          .describe(
+            "baseline에서 바꿀 부분을 글자 그대로 복사하여 기재한다(본문에 한 번만 나오는 길이로).",
+          ),
+        replace: z
+          .string()
+          .describe("그 자리에 들어갈 글을 기재한다. 삭제하는 경우에는 빈 문자열을 기재한다."),
+      }),
+    )
+    .min(1),
+  changeSummary: slot("무엇을 수정하였는지 1문장으로 기재한다."),
+});
+export const draftEditExample = example(z.toJSONSchema(draftEditSchema));
 export const stageOutputExamples = Object.fromEntries(
   Object.entries(stageOutputSchemas).map(([stage, schema]) => [
     stage,

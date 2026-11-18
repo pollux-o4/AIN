@@ -101,6 +101,11 @@ export function runView(run, now) {
     requirements: Object.entries(standing(state)).map(([kind, { value }]) =>
       describeRequirement(kind, value),
     ),
+    // 이번 회차 변경 표시(문장 편집·교열 수정) · 원고 전체를 다시 읽지 않고 바뀐 곳만 확인 · ADR-0018
+    changes:
+      draft.revision === state.revision && Array.isArray(state.artifacts?.draft?.output?.edits)
+        ? state.artifacts.draft.output.edits
+        : [],
     previous: (state.history ?? []).map((h) => ({
       revision: h.revision,
       text: h.artifacts?.draft?.output?.text ?? "",

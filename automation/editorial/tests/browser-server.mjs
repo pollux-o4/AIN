@@ -73,6 +73,22 @@ function figureOutputs(data) {
   };
 }
 
+// 문장 편집·교열 수정은 변경 표시로 응답(ADR-0018) · 첫 문단만 바꾸고 나머지 원고는 그대로
+const FIRST_DRAFT_LINE = "첫 초안입니다. 주문과 결제를 나누는 이유를 설명합니다.";
+function markedEdit(data) {
+  if (typeof data.baseline !== "string" || !data.baseline.includes(FIRST_DRAFT_LINE)) return null;
+  if (!["line", "copy"].includes(data.brief?.level)) return null;
+  return {
+    edits: [
+      {
+        find: FIRST_DRAFT_LINE,
+        replace: "수정한 초안입니다. 주문·결제·배송의 책임을 구체적으로 설명합니다.",
+      },
+    ],
+    changeSummary: "주문·결제·배송의 책임을 구체화했습니다.",
+  };
+}
+
 export function fixtureOutputs(data) {
   const direction = directionSchema.parse(data.direction ?? DEFAULT_DIRECTION);
   const mode = direction.mode === AUTO ? "explain" : direction.mode;
@@ -165,7 +181,9 @@ if (import.meta.main) {
           // 테스트 제한 시간보다 길게 잡는다(벽시계 경주에 기대지 않음 · TIME-001) · 내용은 STREAM_MS 동안 흘러나온다
           delay: slow ? 15000 : data.idea.includes("실시간") && stage === "draft" ? HELD_MS : 50,
           broken,
-          output: (stage.startsWith("figure") ? figureOutputs(data) : fixtureOutputs(data))[stage],
+          output: stage.startsWith("figure")
+            ? figureOutputs(data)[stage]
+            : (stage === "draft" && markedEdit(data)) || fixtureOutputs(data)[stage],
           stopped: false,
         });
         return { id: options.agentId };

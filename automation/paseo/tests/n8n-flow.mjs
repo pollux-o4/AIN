@@ -71,7 +71,7 @@ const jobs = {
               stage,
               output:
                 stage === "draft"
-                  ? { text: `AI fixture 초안 r${state.revision}`, changeSummary: "테스트 수정" }
+                  ? { text: `# AI fixture 초안 r${state.revision}`, changeSummary: "테스트 수정" }
                   : outputs[stage],
             }),
     };
@@ -168,7 +168,7 @@ try {
     service.get(id).artifacts.map((artifact) => artifact.stage),
     STAGES,
   );
-  assert.equal(service.download(id).text, "AI fixture 초안 r1\n");
+  assert.equal(service.download(id).text, "# AI fixture 초안 r1\n");
   assert.equal(run.state.satisfiedRevision, null);
   assert.equal(run.state.approval, null);
   assert.ok(run.worker.executionId);
@@ -186,8 +186,8 @@ try {
   run = await waitFor(id, "awaiting_user");
   assert.equal(run.state.revision, 2);
   assert.equal(run.state.history.length, 1);
-  assert.equal(service.download(id).text, "AI fixture 초안 r2\n");
-  assert.equal(service.download(id, 1).text, "AI fixture 초안 r1\n");
+  assert.equal(service.download(id).text, "# AI fixture 초안 r2\n");
+  assert.equal(service.download(id, 1).text, "# AI fixture 초안 r1\n");
   assert.deepEqual(calls, [...STAGES, "route", "outline", "draft", "review"]);
   assert.equal(run.state.approval, null);
   assert.equal(run.state.satisfiedRevision, null);
@@ -200,7 +200,7 @@ try {
   assert.match(run.issue, /사용 한도/);
   assert.equal(run.state.revision, 3);
   assert.equal(service.get(id).canFeedback, false);
-  assert.equal(service.download(id, 2).text, "AI fixture 초안 r2\n");
+  assert.equal(service.download(id, 2).text, "# AI fixture 초안 r2\n");
   await assert.rejects(() => feedback(id, "flow-blocked-feedback"), { status: 409 });
   const count = calls.length;
   await delay(QUIET_MS);
@@ -227,7 +227,7 @@ try {
     "review",
   ]);
   assert.equal(run.state.revision, 3);
-  assert.equal(service.download(id).text, "AI fixture 초안 r3\n");
+  assert.equal(service.download(id).text, "# AI fixture 초안 r3\n");
   assert.equal(run.state.approval, null);
   assert.equal(run.state.satisfiedRevision, null);
   // FIGURE-001: 확정 뒤 시각자료 위치 제안·생성도 같은 n8n 전달·대기 루프로 진행 · 사람 결정에서 멈춤

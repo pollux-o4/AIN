@@ -24,7 +24,7 @@ const titleOf = (section) =>
 // 위반 결과를 거부하고 다시 요청 · 상한 소진이면 실패로 멈춤
 // 실패 후 이어가기는 같은 지적(note)으로 상한을 새로 받음 · 위반 결과를 다음 단계로 넘기지 않음
 // state.retry: 진행 중 다시 쓰기 하나 · rejected는 거부된 원고(다시 쓰기는 이를 줄이는 편집)
-function reject(state, stage, { index, note, error, rejected }) {
+export function reject(state, stage, { index, note, error, rejected }) {
   const same = state.retry?.stage === stage && state.retry.index === index;
   const attempts = same ? state.retry.attempts : 0;
   const exhausted = attempts >= RETRY_LIMIT[stage];
@@ -187,11 +187,37 @@ function sizeIssue(section, size) {
   return null;
 }
 
-// 구간 결과 수용 · 예산을 크게 넘으면 거부(다시 또는 실패) · 완료 시 전체 초고 반환
+// 원고는 글 제목 줄로 시작해야 한다(구간별 작성에서는 글머리가 실리는 첫 구간) · 형식 대조만
+// 빠지면 제목과 글머리를 잃은 원고가 다음 단계로 넘어간다(구성 재작성 뒤 실측)
+function leadIssue(state, text) {
+  const title = state.artifacts?.outline?.output?.title?.trim();
+  const line = (value) => value.replace(/\s+/g, " ").trim();
+  const first = line(text.trimStart().split("\n", 1)[0]);
+  const expected = title ? line(`# ${title}`) : null;
+  if (expected ? first === expected : /^# \S/.test(first)) return null;
+  return {
+    note: `원고는 '${expected ?? "# 제목"}' 줄로 시작하고, 이어서 글머리(도입 장면과 약속 문장)를 쓴 뒤 첫 소제목으로 들어간다.`,
+    error: `초고가 ${RETRY_LIMIT.draft}회 다시 써도 글 제목 줄로 시작하지 않음.`,
+  };
+}
+
+// 한 번에 쓴 초고 수용 · 형식이 어긋나면 거부(다시 또는 실패) 후 null
+export function acceptWhole(state, output) {
+  const issue = leadIssue(state, output.text);
+  if (issue) {
+    reject(state, "draft", { index: 0, rejected: output.text, ...issue });
+    return null;
+  }
+  if (state.retry?.stage === "draft") delete state.retry;
+  return output;
+}
+
+// 구간 결과 수용 · 예산을 크게 넘거나 형식이 어긋나면 거부(다시 또는 실패) · 완료 시 전체 초고 반환
 export function acceptPart(state, output) {
   const section = currentSection(state);
   const size = readerLength(output.text);
-  const issue = sizeIssue(section, size);
+  const issue =
+    (section.index === 0 ? leadIssue(state, output.text) : null) ?? sizeIssue(section, size);
   if (issue) {
     reject(state, "draft", { index: section.index, rejected: output.text, ...issue });
     return null;

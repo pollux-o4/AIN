@@ -170,6 +170,13 @@ test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 
   await expect(download).toBeVisible();
   await expect(page.locator("#article")).toContainText("수정한 초안입니다. 주문·결제·배송");
   const revised = await ready(page);
+  // 문장 편집 수정은 변경 표시로만 바뀐다 · 바뀐 곳(지운 글 → 넣은 글)을 보여 줌 · ADR-0018
+  const changes = page.locator("#changes");
+  await expect(changes).toContainText("표시한 1곳만 바뀌었고");
+  await expect(changes.locator("del")).toHaveText(
+    "첫 초안입니다. 주문과 결제를 나누는 이유를 설명합니다.",
+  );
+  await expect(changes.locator("ins")).toContainText("수정한 초안입니다.");
   expect(revised).toMatchObject({
     revision: 2,
     callsUsed: 3,

@@ -972,7 +972,8 @@ article blockquote {
 
 /* 글 설계 */
 #writing-design,
-#edit-memo {
+#edit-memo,
+#changes {
   margin: 24px 0;
   padding: 18px 20px;
   border: 1px solid var(--line);
@@ -980,7 +981,8 @@ article blockquote {
   background: var(--surface);
 }
 #writing-design h2,
-#edit-memo h2 {
+#edit-memo h2,
+#changes h2 {
   margin: 0 0 10px;
   font-size: 15px;
 }
@@ -2832,4 +2834,27 @@ fieldset.figure-list {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 변경 표시: 바뀐 곳만 · 지운 글과 넣은 글 · ADR-0018 */
+.change-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+.change-list del,
+.change-list ins {
+  display: block;
+  text-decoration: none;
+  white-space: pre-wrap;
+}
+.change-list del {
+  color: var(--muted);
+}
+.change-list del::before {
+  content: "− ";
+}
+.change-list ins::before {
+  content: "+ ";
 }

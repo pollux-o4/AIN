@@ -1,5 +1,5 @@
 // AI 응답 → 편집 이벤트: 과업별 형식 검사를 통과한 마지막 JSON만 결과로 인정
-import { routeOutputSchema, stageOutputSchemas } from "../contracts/ai-output.mjs";
+import { draftEditSchema, routeOutputSchema, stageOutputSchemas } from "../contracts/ai-output.mjs";
 import { figureOutputSchemas } from "../contracts/figure.mjs";
 import { parseLastValid } from "./result-blocks.mjs";
 
@@ -31,11 +31,13 @@ const RESULTS = {
     }),
   },
   request_ai: {
-    schema: (action) => stageOutputSchemas[action.stage],
+    schema: (action) =>
+      action.mode === "edit" ? draftEditSchema : stageOutputSchemas[action.stage],
     event: (action, output) => ({
       type: "complete",
       stage: action.stage,
       output,
+      ...(action.mode ? { mode: action.mode } : {}),
       ...(action.section ? { section: action.section.index } : {}),
     }),
   },

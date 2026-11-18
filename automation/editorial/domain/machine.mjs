@@ -1,6 +1,7 @@
 // 사용자 입력과 AI 결과의 계약만 처리; 파일·CMS·발행 부작용 없음.
 import { stageOutputSchemas } from "../../contracts/ai-output.mjs";
 import { DEFAULT_DIRECTION, directionSchema } from "../../contracts/writing-modes.mjs";
+import { acceptEdits, marksChanges } from "./edits.mjs";
 import {
   FIGURE_AWAITING,
   FIGURE_USER_EVENTS,
@@ -17,7 +18,7 @@ import {
   correctionPlan,
   unmetRequirements,
 } from "./requirements.mjs";
-import { acceptOutline, acceptPart, currentSection } from "./sections.mjs";
+import { acceptOutline, acceptPart, acceptWhole, currentSection } from "./sections.mjs";
 
 export const STAGES = Object.freeze(Object.keys(stageOutputSchemas));
 const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -173,9 +174,7 @@ export function nextAction(state) {
       stage: state.stage,
       revision: state.revision,
       feedback: state.feedback ?? null,
-      ...(state.stage === "draft" && currentSection(state)
-        ? { section: currentSection(state) }
-        : {}),
+      ...draftShape(state),
     };
   if (state.status === "waiting_route")
     return {
@@ -188,6 +187,19 @@ export function nextAction(state) {
   if (state.status === "publication_ready")
     return { type: "publication_adapter_required", revision: state.revision, executed: false };
   return { type: "wait_for_user", status: state.status, revision: state.revision };
+}
+// 초고 작업의 모양: 변경 표시(문장 편집·교열 수정) · 구간별 작성 · 한 번에 작성 · ADR-0009·0018
+function draftShape(state) {
+  if (state.stage !== "draft") return {};
+  if (marksChanges(state))
+    return {
+      mode: "edit",
+      ...(state.retry?.stage === "draft" ? { retryNote: state.retry.note } : {}),
+    };
+  const section = currentSection(state);
+  if (section) return { section };
+  const retry = state.retry?.stage === "draft" ? state.retry : null;
+  return retry ? { retryNote: retry.note, rejected: retry.rejected } : {};
 }
 // 새 수정 회차: 현재 결과를 이력에 보존하고 수정 지시를 건다
 // source: person(사용자·편집장) | auto(요구사항 가드) · 이력에 함께 보존
@@ -376,13 +388,21 @@ export function transition(current, event) {
           event.revision === state.revision,
         "Unexpected or stale AI result",
       );
-      outputValid(event.stage, event.output);
       let output = structuredClone(event.output);
-      const section = event.stage === "draft" ? currentSection(state) : null;
-      if (section) {
-        requireThat(event.section === section.index, "Unexpected or stale draft section");
-        output = acceptPart(state, output);
-        if (!output) break; // 같은 단계에서 다음(또는 다시 쓸) 구간 대기 · 예산 위반 반복이면 failed
+      const marked = event.stage === "draft" && marksChanges(state);
+      if (marked) {
+        requireThat(event.mode === "edit", "Unexpected or stale draft edit");
+        output = acceptEdits(state, output);
+        if (!output) break; // 표시가 어긋나면 같은 단계에서 다시 · 반복이면 failed
+      }
+      outputValid(event.stage, output);
+      if (event.stage === "draft" && !marked) {
+        const section = currentSection(state);
+        if (section)
+          requireThat(event.section === section.index, "Unexpected or stale draft section");
+        // 구간별: 다음(또는 다시 쓸) 구간 대기 · 한 번에: 형식 위반이면 다시 · 반복이면 failed
+        output = section ? acceptPart(state, output) : acceptWhole(state, output);
+        if (!output) break;
       }
       if (event.stage === "outline" && !acceptOutline(state, output)) break; // 예산 검증 · ADR-0009
       state.artifacts[event.stage] = { revision: state.revision, output };

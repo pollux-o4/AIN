@@ -22,8 +22,11 @@ const outputs = {
   },
   outline: {
     ...stageOutputExamples.outline,
+    title: "제목",
     sections: [{ title: "개념", mode: "explain", keyPoint: "핵심", ...STORY }],
   },
+  // 원고는 글 제목 줄로 시작(코드가 형식 대조)
+  draft: { ...stageOutputExamples.draft, text: "# 제목\n\n## 개념\n\n본문" },
   review: { ...stageOutputExamples.review, verdict: "pass", reviseFrom: "draft" },
 };
 
@@ -436,6 +439,7 @@ test("ADR-0009 budgeted draft is requested and returned one section at a time", 
   }).state;
   const sectioned = {
     ...outputs.outline,
+    title: "제목",
     sections: [
       { title: "앞", mode: "explain", keyPoint: "k", budget: 1200, ...STORY },
       { title: "뒤", mode: "explain", keyPoint: "k", budget: 1500, ...STORY },

@@ -1,6 +1,6 @@
 // 단계별 과업 정의: 이번 일 · 순서 · 통과 기준 · 새 단계는 여기에 항목 하나를 더한다 · ADR-0013
 // 칸의 뜻은 contracts/ai-output(출력 예시로 실림), 문체·장르 규칙은 seasoning이 소유한다
-import { stageOutputExamples } from "../../contracts/ai-output.mjs";
+import { draftEditExample, stageOutputExamples } from "../../contracts/ai-output.mjs";
 import {
   sectionHeading,
   subsectionHeading,
@@ -153,14 +153,16 @@ const STAGE_SPECS = {
     ],
   }),
   draft: (state, action) => {
+    if (action.mode === "edit") return markedEditSpec(state, action);
     const section = action.section;
+    const retry = section ?? action; // 반려 사유·반려 원고 · 구간별이면 구간에 실림
     const editing = Boolean(state.feedback);
     return {
       task: section ? sectionTask(section) : WHOLE_DRAFT_TASK,
       steps: [
-        ...(section?.rejected
+        ...(retry.rejected
           ? [
-              "baseline은 직전에 분량 초과로 반려된 이 구간의 원고이다. 처음부터 새로 작성하지 말고 baseline에서 불필요한 문단이나 예시를 삭제하여 분량을 줄인다.",
+              "baseline은 직전에 반려된 원고이다. 처음부터 새로 작성하지 말고 반려 사유를 해결하는 데 필요한 부분만 고친다. 분량 초과로 반려된 경우에는 불필요한 문단이나 예시를 삭제하여 분량을 줄인다.",
             ]
           : editing
             ? [
@@ -187,7 +189,7 @@ const STAGE_SPECS = {
         section?.budget
           ? `이 구간에서 독자에게 노출되는 글자 수(공백 포함, 마크다운 링크 주소 제외)가 약 ${section.budget}자인가(시스템이 검사하여 ${section.limit}자를 초과하${section.floor ? `거나 ${section.floor}자에 미달하` : ""}면 재작성 대상이 된다)`
           : "분량이 requirements.length 기준에 부합하는가(시스템이 검사하여 기준을 벗어나면 재작성 대상이 된다). requirements.length가 없으면 글의 목적에 적절한 분량인가",
-        ...(section?.retryNote ? [`직전 반려 사유(${section.retryNote})를 해결하였는가`] : []),
+        ...(retry.retryNote ? [`직전 반려 사유(${retry.retryNote})를 해결하였는가`] : []),
         "구성 카드에 없는 구간·사례·원칙을 임의로 추가하지 않았는가",
         "value.preserve에 명시된 조건과 사실이 누락되지 않았는가",
         "research.evidence와 제공 자료에 없는 사실·수치·출처가 포함되지 않았는가",
@@ -235,5 +237,27 @@ const sectionTask = ({ index, total, title }) =>
 export function stageSpec(state, action) {
   const spec = STAGE_SPECS[action.stage];
   if (!spec) throw new Error("Unsupported prompt stage");
-  return { ...spec(state, action), example: stageOutputExamples[action.stage] };
+  return { example: stageOutputExamples[action.stage], ...spec(state, action) };
+}
+
+// 문장 편집·교열 수정: 원고를 다시 쓰지 않고 변경 표시만 낸다 · 코드가 표시를 원고에 적용 · ADR-0018
+function markedEditSpec(state, action) {
+  return {
+    task: "이번 과업은 기존 원고(baseline)에 대한 문장 편집 또는 교열이다. 원고를 다시 작성하지 않고, 바꿀 부분마다 변경 표시(find → replace)를 작성한다.",
+    steps: [
+      "brief.priorities를 순서대로 확인하고, 각 항목을 해결하기 위해 바꿀 부분을 baseline에서 찾는다.",
+      "edits의 각 항목에서 find에는 baseline의 해당 부분을 글자 그대로 복사하여 기재하고, replace에는 그 자리에 들어갈 글을 기재한다. find는 baseline에 한 번만 나오도록 필요한 만큼 앞뒤 글자를 포함하며, 항목끼리 겹치지 않게 한다.",
+      "문단을 나누는 경우에는 나눌 위치의 앞뒤 문장을 find로 잡고, replace에서 두 문장 사이에 빈 줄을 넣는다.",
+      "brief.priorities에 해당하지 않는 부분은 표시하지 않는다. 표시하지 않은 부분은 시스템이 원고 그대로 유지한다.",
+    ],
+    rules: seasoningRules("draft", resolveDirection(state)),
+    criteria: [
+      "brief.priorities의 모든 항목이 하나 이상의 변경 표시로 해결되었는가",
+      "모든 find가 baseline에 글자 그대로 한 번만 있는가(시스템이 대조하여 어긋나면 반려한다)",
+      "brief.preserve에 해당하는 부분을 바꾸지 않았는가",
+      ...(action.retryNote ? [`직전 반려 사유(${action.retryNote})를 해결하였는가`] : []),
+    ],
+    outputNotes: ["changeSummary에는 이번 수정 내용을 요약한 1문장을 기재한다."],
+    example: draftEditExample,
+  };
 }

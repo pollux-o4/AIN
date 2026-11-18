@@ -27,8 +27,11 @@ const outputs = {
   },
   outline: {
     ...stageOutputExamples.outline,
+    title: "제목",
     sections: [{ title: "개념", mode: "explain", keyPoint: "핵심", ...STORY }],
   },
+  // 원고는 글 제목 줄로 시작(코드가 형식 대조)
+  draft: { ...stageOutputExamples.draft, text: "# 제목\n\n## 개념\n\n본문" },
   review: { ...stageOutputExamples.review, verdict: "pass", reviseFrom: "draft" },
 };
 const start = (articleId = "article-1") =>
@@ -279,7 +282,7 @@ test("workers: revision sends feedback, changed artifacts and baseline once; wri
     baseline: outputs.draft,
     feedback: state.feedback,
   });
-  const changedDraft = { ...outputs.draft, text: "짧게 바꾼 문단" };
+  const changedDraft = { ...outputs.draft, text: "# 제목\n\n짧게 바꾼 문단" };
   f.finish(redraft, changedDraft);
   const done = await f.jobs.poll(redraft.id);
   state = transition(routed.state, done.event).state;

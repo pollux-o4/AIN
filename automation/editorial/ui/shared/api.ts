@@ -29,6 +29,7 @@ const runSchema = z.object({
   findings: z.array(z.string()),
   unmetRequirements: z.array(z.string()).default([]),
   requirements: z.array(z.string()).default([]),
+  changes: z.array(z.object({ find: z.string(), replace: z.string() })).default([]),
   brief: z
     .object({
       intent: z.string(),

@@ -61,7 +61,12 @@ function toDraft(idea, outline = base.outline) {
     );
   return s;
 }
-const part = (n, label) => ({ text: `## ${label}\n${"가".repeat(n)}`, changeSummary: label });
+// 첫 구간(도입)은 글 제목 줄로 시작 · 제목 줄을 넣어도 구간 글자 수는 같게
+const LEAD = "# 제목\n";
+const part = (n, label) => {
+  const lead = label === "도입" ? LEAD : "";
+  return { text: `${lead}## ${label}\n${"가".repeat(n - lead.length)}`, changeSummary: label };
+};
 
 test("분량 예산이 있으면 구간마다 따로 쓰고 순서대로 합친다", () => {
   let s = toDraft("설명 · 3600자 안팎");
@@ -72,7 +77,7 @@ test("분량 예산이 있으면 구간마다 따로 쓰고 순서대로 합친�
   assert.equal(nextAction(s).section.budget, 600);
   s = complete(s, part(600, "정리"));
   assert.equal(s.stage, "review");
-  assert.match(s.artifacts.draft.output.text, /^## 도입[\s\S]+## 본론[\s\S]+## 정리/);
+  assert.match(s.artifacts.draft.output.text, /^# 제목\n## 도입[\s\S]+## 본론[\s\S]+## 정리/);
 });
 
 test("구간이 예산을 크게 넘으면 그 구간만 다시 쓰고, 상한 후에도 넘으면 실패로 멈춘다", () => {
@@ -139,6 +144,23 @@ test("분량 요구가 있으면 구성 예산을 검사: 누락·합계 위반�
 test("분량 요구도 구간 예산도 없으면 기존처럼 한 번에 작성", () => {
   const s = toDraft("설명", { sections: ["도입", "본론"], rationale: "r" });
   assert.equal(nextAction(s).section, undefined);
+});
+
+test("원고는 글 제목 줄로 시작: 빠지면 반려 원고와 사유를 주고 다시, 구간별이면 첫 구간만 검사", () => {
+  const titled = { sections: ["도입", "본론"], rationale: "r", title: "줄 세우기 입문" };
+  let s = toDraft("설명", titled);
+  const missing = "## 도입\n본문";
+  s = complete(s, { text: missing, changeSummary: "초고" });
+  assert.equal(s.stage, "draft");
+  assert.match(nextAction(s).retryNote, /'# 줄 세우기 입문' 줄로 시작/);
+  assert.equal(nextAction(s).rejected, missing, "반려 원고를 고치도록 전달");
+  s = complete(s, { text: "# 줄 세우기 입문\n\n장면\n\n## 도입\n본문", changeSummary: "초고" });
+  assert.equal(s.stage, "review");
+  assert.equal(s.retry, undefined);
+  // 구간별: 첫 구간만 제목 줄을 갖는다
+  s = toDraft("설명 · 3600자 안팎");
+  s = complete(s, { text: "## 도입\n본문", changeSummary: "도입" });
+  assert.match(nextAction(s).section.retryNote, /'# 제목' 줄로 시작/);
 });
 
 test("분량은 독자에게 보이는 글자로 센다: 마크다운 링크 주소 제외", () => {

@@ -18,7 +18,7 @@ const outputs = {
   value: { outcome: "判断を再現", preserve: ["失敗条件"] },
   research: { evidence: [], uncertainties: ["ログ未確認"] },
   outline: { sections: ["体験", "判断", "結果"], rationale: "時間順で因果を説明" },
-  draft: { text: "実体験の本文。", changeSummary: "因果関係を補足" },
+  draft: { text: "# 体験\n\n実体験の本文。", changeSummary: "因果関係を補足" },
   review: { findings: ["出典未確認を表示"], preservationCheck: "条件・語り口を保持" },
 };
 let id = 0;

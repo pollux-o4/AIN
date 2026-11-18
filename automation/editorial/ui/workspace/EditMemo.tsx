@@ -40,6 +40,23 @@ export function EditMemo({ run }: { run: Run }) {
           </ul>
         </section>
       )}
+      {run.changes.length > 0 && (
+        <section id="changes" aria-labelledby="changes-title">
+          <h2 id="changes-title">이번 회차 변경 표시</h2>
+          <p className="hint">
+            표시한 {run.changes.length}곳만 바뀌었고 나머지 원고는 그대로입니다.
+          </p>
+          <ol className="change-list">
+            {/* find는 원고에서 한 곳만 가리키도록 코드가 검사해 회차 안에서 서로 다르다 */}
+            {run.changes.map((change) => (
+              <li key={change.find}>
+                <del>{change.find}</del>
+                <ins>{change.replace || "(삭제)"}</ins>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       {brief && !run.canApproveBrief && (
         <section id="edit-memo" aria-labelledby="edit-memo-title">
           <h2 id="edit-memo-title">수정 해석</h2>
