@@ -3,7 +3,7 @@ import { checkAccessibility } from "./accessibility";
 import { ready } from "./writing";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 });

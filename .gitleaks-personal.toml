@@ -14,7 +14,7 @@ keywords = ["/home/", "/users/", "c:\\users\\"]
 [[rules]]
 id = "korean-phone"
 description = "휴대전화 번호"
-regex = '''01[016789]-?\d{3,4}-?\d{4}'''
+regex = '''\b01[016789]-?\d{3,4}-?\d{4}\b'''
 keywords = ["01"]
 
 [allowlist]

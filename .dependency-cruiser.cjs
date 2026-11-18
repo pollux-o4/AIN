@@ -86,7 +86,7 @@ module.exports = {
       severity: "error",
       from: {
         path: "^automation/",
-        pathNot: "/tests/|/testing/|^automation/paseo/(pilot|article-e2e|contract-e2e)[.]mjs$",
+        pathNot: "/tests/|/testing/|^automation/paseo/(pilot|article-e2e|contract-e2e|eval)[.]mjs$",
       },
       to: { path: "/tests/|/testing/" },
     },

@@ -68,6 +68,12 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     2000,
   );
   watchdog.unref();
+  // 쓰지 않는 Paseo 세션 정리 주기 · 정책은 paseo/lifecycle · ADR-0015
+  const sweeper = setInterval(
+    () => jobs.sweepSessions().catch(() => console.error("AI session sweep failed")),
+    60_000,
+  );
+  sweeper.unref();
   const store = new EditorialStore(join(local, "editorial.sqlite"));
   const n8nUrl = process.env.EDITORIAL_N8N_URL ?? "http://localhost:5678";
   const editorial = new EditorialService({
@@ -89,11 +95,15 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   for (const signal of ["SIGTERM", "SIGINT"])
     process.on(signal, () => {
       clearInterval(watchdog);
+      clearInterval(sweeper);
       // Long-lived observation streams must not keep shutdown open indefinitely.
       const drain = setTimeout(() => server.closeAllConnections(), 5000);
       drain.unref();
       server.close(async () => {
         clearTimeout(drain);
+        await jobs
+          .sweepSessions({ all: true })
+          .catch(() => console.error("AI session release failed"));
         await client.close();
         store.close();
         process.exit(0);

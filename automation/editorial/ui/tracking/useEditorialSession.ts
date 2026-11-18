@@ -10,7 +10,6 @@ import {
 import {
   clearOperation,
   createRequest,
-  currentId,
   keys,
   pendingAction,
   remove,
@@ -18,58 +17,47 @@ import {
   storageWarning,
   store,
 } from "../shared/persistence";
+import { type Route, useRoute } from "../shell/route";
 import { isPending, useRunTracking } from "./useRunTracking";
 
-const validId = (id: string | null): id is string => Boolean(id && /^[a-f0-9-]{36}$/.test(id));
-function initialId() {
-  const id = location.hash.slice(1) || currentId();
-  return validId(id) ? id : null;
-}
+export type Toast = { message: string; undo?: () => void };
 export function useEditorialSession() {
-  const [id, setId] = useState(initialId);
+  const { route, navigate } = useRoute();
+  const id = route.page === "run" ? route.id : null;
   const [notice, setNotice] = useState("");
+  const [toast, setToast] = useState<Toast | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [recent, setRecent] = useState<RecentRun[]>([]);
-  const [focusVersion, setFocusVersion] = useState(0);
+  const [recent, setRecent] = useState<RecentRun[] | null>(null);
+  const [listError, setListError] = useState("");
+  const [listVersion, setListVersion] = useState(0);
   const busy = useRef(false);
   const selected = useRef(id);
   const navigation = useRef(0);
-  const { run, online, reload } = useRunTracking(id, setNotice);
+  const { run, online, reload, missing } = useRunTracking(id, setNotice);
   const persist = useCallback((key: string, value: unknown) => {
     if (!store(key, value)) setNotice(storageWarning);
   }, []);
-  const open = useCallback(
-    (next: string) => {
-      if (selected.current !== next) ++navigation.current;
-      selected.current = next;
-      persist(keys.current, next);
-      setId(next);
-      if (location.hash !== `#${next}`) location.hash = next;
+  const go = useCallback(
+    (next: Route) => {
+      ++navigation.current;
+      selected.current = next.page === "run" ? next.id : null;
+      setNotice("");
+      navigate(next);
     },
-    [persist],
+    [navigate],
   );
+  const open = useCallback((next: string) => go({ page: "run", id: next }), [go]);
   const compose = useCallback(() => {
-    ++navigation.current;
-    selected.current = null;
-    setId(null);
-    history.replaceState(null, "", location.pathname);
-    remove(keys.current);
     remove(keys.create);
-    setNotice("");
-    setFocusVersion((value) => value + 1);
-  }, []);
+    go({ page: "compose" });
+  }, [go]);
+  const library = useCallback(() => go({ page: "library" }), [go]);
   useEffect(() => {
-    if (selected.current) open(selected.current);
-    function navigate() {
-      const next = location.hash.slice(1);
-      if (validId(next)) open(next);
-      else compose();
-    }
-    window.addEventListener("hashchange", navigate);
-    return () => window.removeEventListener("hashchange", navigate);
-    // 최초 저장 경로 복구와 hashchange 구독은 한 번만 설정한다.
-  }, [open, compose]);
+    selected.current = id;
+  }, [id]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: listVersion은 수동 새로고침 신호
   useEffect(() => {
+    if (route.page !== "library") return;
     let disposed = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     async function list() {
@@ -77,20 +65,22 @@ export function useEditorialSession() {
         const data = await api.list();
         if (disposed) return;
         setRecent(data.runs);
-        if (!id && data.runs.some((item) => isPending(item.status)))
+        setListError("");
+        if (data.runs.some((item) => isPending(item.status)))
           timer = setTimeout(() => void list(), 3000);
       } catch (error) {
         if (disposed) return;
-        if (!id) setNotice(errorMessage(error));
-        timer = setTimeout(() => void list(), 3000);
+        setListError(errorMessage(error));
+        timer = setTimeout(() => void list(), 5000);
       }
     }
-    if (!id) void list();
+    void list();
     return () => {
       disposed = true;
       clearTimeout(timer);
     };
-  }, [id]);
+  }, [route.page, listVersion]);
+  const refreshList = useCallback(() => setListVersion((v) => v + 1), []);
   async function create(idea: string, source: string, direction: Direction) {
     if (busy.current) return;
     busy.current = true;
@@ -110,12 +100,26 @@ export function useEditorialSession() {
       setSubmitting(false);
     }
   }
-  async function archive(target: RecentRun) {
-    if (!window.confirm(`'${target.title}'을(를) 목록에서 삭제할까요?`)) return;
+  async function restore(targetId: string) {
+    try {
+      await api.restore(targetId);
+      setToast({ message: "글을 복원했습니다." });
+      refreshList();
+      if (selected.current === targetId) await reload();
+    } catch (error) {
+      setNotice(errorMessage(error));
+    }
+  }
+  // 삭제는 목록에서 숨김(원고 보존)이라 확인창 대신 되돌리기를 제공한다.
+  async function archive(target: { id: string; title: string }) {
     try {
       await api.archive(target.id);
-      setRecent((runs) => runs.filter((item) => item.id !== target.id));
-      setNotice("");
+      setRecent((runs) => runs?.filter((item) => item.id !== target.id) ?? runs);
+      setToast({
+        message: `'${target.title}'을(를) 삭제했습니다.`,
+        undo: () => void restore(target.id),
+      });
+      if (selected.current === target.id) library();
     } catch (error) {
       setNotice(errorMessage(error));
     }
@@ -152,18 +156,25 @@ export function useEditorialSession() {
     }
   }
   return {
+    route,
     id,
     run,
+    missing,
     online,
     notice,
     setNotice,
+    toast,
+    setToast,
     submitting,
     recent,
-    focusVersion,
+    listError,
+    refreshList,
     open,
     compose,
+    library,
     create,
     action,
     archive,
+    restore,
   };
 }

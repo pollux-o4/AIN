@@ -1,5 +1,7 @@
 import {
   AUTO,
+  LENGTH_PRESETS,
+  lengthRange,
   levelLabels,
   modeHints,
   modeLabels,
@@ -63,6 +65,13 @@ function Choices({
   );
 }
 
+// 저장된 범위를 프리셋으로 되돌려 표시 · 프리셋 밖 범위(CLI 지정)는 자동으로 보이지 않게 그대로 둠
+function lengthPreset(value: Direction): string {
+  const range = value.targetLength;
+  if (!range) return AUTO;
+  return LENGTH_PRESETS.find((p) => lengthRange(p.target).max === range.max)?.value ?? AUTO;
+}
+
 export function DirectionPicker({
   value,
   onChange,
@@ -87,6 +96,24 @@ export function DirectionPicker({
         value={value.mode}
         hint={modeHint}
         onChange={(mode) => onChange({ ...value, mode: mode as Direction["mode"] })}
+      />
+      <Choices
+        name="length"
+        legend="분량"
+        options={[
+          { value: AUTO, label: "자동" },
+          ...LENGTH_PRESETS.map(({ value, label }) => ({ value, label })),
+        ]}
+        value={lengthPreset(value)}
+        hint={
+          LENGTH_PRESETS.find((p) => p.value === lengthPreset(value))?.hint ??
+          "글감에 적힌 분량을 따르고, 없으면 AI가 정합니다."
+        }
+        onChange={(preset) => {
+          const target = LENGTH_PRESETS.find((p) => p.value === preset)?.target;
+          const { targetLength: _, ...rest } = value;
+          onChange(target ? { ...rest, targetLength: lengthRange(target) } : rest);
+        }}
       />
       <Choices
         name="reader-level"

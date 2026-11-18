@@ -2,10 +2,15 @@ import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
+// 다시 전달하기 전 대기 · 운영 값 · 실제 간격은 test:n8n:runtime이 이 값으로 검증
+export const WAIT_SECONDS = 2;
+
 export function editorialWorkflow({
   bridgeUrl = "http://127.0.0.1:3230",
   credentialId = "localPaseoBridge",
   path = "ain-editorial",
+  // 흐름 fixture만 줄여 씀: 호출 수십 번을 운영 간격으로 기다리지 않게 · TIME-001
+  waitSeconds = WAIT_SECONDS,
 } = {}) {
   const credential = { httpHeaderAuth: { id: credentialId, name: "Local Paseo bridge" } };
   const nodes = [
@@ -53,8 +58,13 @@ export function editorialWorkflow({
         sendBody: true,
         specifyBody: "json",
         jsonBody: "={{ { executionId: $execution.id } }}",
-        options: { timeout: 30000 },
+        // 전달 1회에 AI 작업 생성(제공자 준비 대기 최대 15초 + 세션 생성)이 포함될 수 있음
+        options: { timeout: 120000 },
       },
+      // 일시 오류 1회로 루프가 끝나면 완성된 AI 결과를 아무도 거두지 않음 · advance는 작업 ID 기준 멱등
+      retryOnFail: true,
+      maxTries: 3,
+      waitBetweenTries: 5000,
       credentials: credential,
     },
     {
@@ -85,7 +95,7 @@ export function editorialWorkflow({
       type: "n8n-nodes-base.wait",
       typeVersion: 1.1,
       position: [900, 0],
-      parameters: { resume: "timeInterval", amount: 2, unit: "seconds" },
+      parameters: { resume: "timeInterval", amount: waitSeconds, unit: "seconds" },
     },
   ];
   const edge = (node) => ({ node, type: "main", index: 0 });

@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, type Run } from "../shared/api";
+import { isPendingStatus } from "../../../contracts/status.mjs";
+import { ApiError, api, type Run } from "../shared/api";
 import { reconcileOperation } from "../shared/persistence";
 
-export const isPending = (status: string) => ["waiting_ai", "waiting_route"].includes(status);
+export const isPending = (status: string) => isPendingStatus(status);
 export function useRunTracking(id: string | null, onNotice: (message: string) => void) {
   const [run, setRun] = useState<Run | null>(null);
   const [online, setOnline] = useState(true);
+  const [missing, setMissing] = useState<string | null>(null);
   const refresh = useRef<() => Promise<void>>(async () => {});
   useEffect(() => {
     setRun(null);
     setOnline(true);
+    setMissing(null);
     if (!id) {
       refresh.current = async () => {};
       return;
@@ -30,8 +33,13 @@ export function useRunTracking(id: string | null, onNotice: (message: string) =>
         setOnline(true);
         onNotice("");
         retry = isPending(next.status);
-      } catch {
+      } catch (error) {
         if (disposed || request !== sequence) return;
+        // 없는 작업은 재시도하지 않고 화면에 '찾을 수 없음'을 보인다.
+        if (error instanceof ApiError && error.status === 404) {
+          setMissing(targetId);
+          return;
+        }
         setOnline(false);
         onNotice("상태를 확인할 수 없습니다. 연결되면 다시 확인합니다.");
         retry = true;
@@ -48,5 +56,5 @@ export function useRunTracking(id: string | null, onNotice: (message: string) =>
   }, [id, onNotice]);
   const reload = useCallback(() => refresh.current(), []);
   // 새 경로가 렌더된 직후에도 이전 글의 응답을 표시하지 않는다.
-  return { run: run?.id === id ? run : null, online, reload };
+  return { run: run?.id === id ? run : null, online, reload, missing: missing === id };
 }

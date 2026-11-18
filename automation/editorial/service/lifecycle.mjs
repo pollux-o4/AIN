@@ -1,18 +1,24 @@
+import { FIGURE_LIMITS, FIGURE_PASSES } from "../../contracts/figure.mjs";
+import { figureStage } from "../domain/figures.mjs";
 import { STAGES, transition } from "../domain/index.mjs";
 import { recordEvent } from "../monitor.mjs";
 
 export const COMPLETION_REASON =
   "전체 글쓰기 단계와 결과를 보완해야 합니다. 요구사항 보완을 눌러 주세요.";
-export const DEFAULT_AI = {
-  provider: "antigravity",
-  model: "gemini-3.8-flash-medium",
-  enabled: true,
-  maxDurationMs: 120000,
-};
+// 사람 요청 1회의 AI 호출 수: 위치 제안 1회 · 생성은 층 수만큼 · FIGURE-001
+export const figureCalls = (state) => (figureStage(state) === "figure" ? FIGURE_PASSES.length : 1);
+// 실행 시간 한도: 생성은 층마다 긴 도구 작업이라 층 수 × 생성 한도
+export const runLimitMs = (state) =>
+  figureStage(state) === "figure"
+    ? FIGURE_LIMITS.generateMs * FIGURE_PASSES.length
+    : EDITORIAL_LIMITS.maxRunMs;
 export const EDITORIAL_LIMITS = {
   initialCalls: STAGES.length,
   followupCalls: STAGES.length + 1,
-  maxRunMs: 600000,
+  // 구간별 초고(최대 8구간)·자동 보정 포함 · 느린 고품질 호출을 수용
+  maxRunMs: 1800000,
+  // 사람 확인 없이 이어지는 에이전트(편집장) 수정 지시 상한 · ADR-0006
+  agentFeedbackRounds: 2,
 };
 export function fail(message, status = 400) {
   throw Object.assign(new Error(message), { status });

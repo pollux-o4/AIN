@@ -21,7 +21,7 @@
 - 상시 운영 선택: Docker Engine + Compose · 영속 볼륨 · HTTPS 리버스 프록시 · 인증·백업·복구 확인
 - 현재 범위: 로컬 글쓰기 화면·영속 편집 서비스 `EDIT-001` · n8n 요청 전달·대기 · Paseo AI 실행 · 실제 발행·Docker·공개 서버·도메인·TLS 미구성
 - 상태 전이: `editorial/domain/index` · 목적별 진단·편집·검토·사용자 피드백 라우팅 · 만족/발행 승인 분리
-- 논리 검증: `mise run n8n:test` · n8n 격리 검증: `mise run n8n:test:runtime`
+- 논리 검증: `mise run test:n8n` · n8n 격리 검증: `mise run test:n8n:runtime`
 - 워크플로: build-editorial-workflow 생성 · 작업 ID 전달·서버 continue 대기 · ARCH-001
 - shortcut: Python task runner 가상환경 미구성으로 Python Code 노드 실행 미검증, Python 처리 단계 도입 시 외부 task runner 구성
 - shortcut: 로컬 워크플로 구성을 위해 npm 설치 사용·공식 문서상 n8n 3.0부터 npm 방식 폐기 예정, 3.x 업그레이드 또는 상시 서버 운영 전 Docker Compose 전환

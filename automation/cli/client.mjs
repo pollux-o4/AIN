@@ -21,6 +21,7 @@ export class AinClient {
       const data = await response.json().catch(() => ({}));
       throw new CliError(data.error ?? `요청 실패 (${response.status})`, response.status);
     }
+    if (raw === "bytes") return Buffer.from(await response.arrayBuffer());
     return raw ? response.text() : response.json();
   }
   list = () => this.request("runs").then((data) => data.runs);
@@ -33,6 +34,14 @@ export class AinClient {
     this.request(`runs/${id}/download${revision ? `?revision=${Number(revision)}` : ""}`, {
       raw: true,
     });
+  export = (id, { format, motion, revision }) => {
+    const query = new URLSearchParams({
+      ...(format ? { format } : {}),
+      ...(motion ? { motion } : {}),
+      ...(revision ? { revision: String(Number(revision)) } : {}),
+    });
+    return this.request(`runs/${id}/export?${query}`, { raw: "bytes" });
+  };
 }
 
 export class CliError extends Error {

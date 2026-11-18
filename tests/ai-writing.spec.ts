@@ -2,17 +2,20 @@ import { expect, test } from "@playwright/test";
 import type { Action } from "../automation/editorial/ui/shared/api";
 import { checkAccessibility } from "./accessibility";
 import {
+  approveBrief,
   clickAction,
   downloadedBytes,
   expectCommand,
   expectFullResults,
   loadRun,
+  openDock,
   ready,
   stages,
+  writeFeedback,
 } from "./writing";
 
 test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 보존", async ({ page }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   await expect(page.getByLabel("글감과 원하는 결과")).toBeVisible();
   await checkAccessibility(page, testInfo, "compose");
   const idea = `쇼핑몰 구조 ${testInfo.project.name} ${Date.now()}`;
@@ -41,20 +44,19 @@ test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 
   await expectFullResults(page, initial);
   const originalViewport = page.viewportSize();
   if (!originalViewport) throw new Error("Viewport must be configured");
-  for (const [width, columns] of [
-    [390, 2],
-    [700, 4],
-    [1440, 8],
-  ]) {
+  // 여정 지도는 한 줄 · 넘치면 지도 안에서만 가로 스크롤하고, 지금 단계는 보이는 영역에 둔다.
+  for (const width of [390, 700, 1440]) {
     await page.setViewportSize({ width, height: originalViewport.height });
-    expect(
-      await page
-        .locator("#pipeline")
-        .evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length),
-    ).toBe(columns);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
+    expect(
+      await page.locator(".track").evaluate((track) => {
+        const node = track.querySelector("li[data-focus] .node")?.getBoundingClientRect();
+        const box = track.getBoundingClientRect();
+        return Boolean(node && node.left >= box.left && node.right <= box.right);
+      }),
+    ).toBe(true);
   }
   await page.setViewportSize(originalViewport);
   await checkAccessibility(page, testInfo, "ready-stage-results");
@@ -132,7 +134,7 @@ test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 
   const text = (await downloadedBytes(file)).toString("utf8");
   expect(text).toContain(idea);
   expect(text).toContain("첫 초안입니다.");
-  await page.getByLabel("어떻게 다듬을까요?").fill("주문·결제·배송 예시를 더 자세히 풀어 주세요.");
+  await writeFeedback(page, "주문·결제·배송 예시를 더 자세히 풀어 주세요.");
   await page.reload();
   await expect(page.getByLabel("어떻게 다듬을까요?")).toHaveValue(
     "주문·결제·배송 예시를 더 자세히 풀어 주세요.",
@@ -163,6 +165,7 @@ test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 
   });
   await page.reload();
   await expect(page.locator("#revision")).toHaveText("초안 2");
+  await approveBrief(page);
   await expect(page.locator("#displayed-revision")).toHaveText("이전 초안 1");
   await expect(download).toBeVisible();
   await expect(page.locator("#article")).toContainText("수정한 초안입니다. 주문·결제·배송");
@@ -201,7 +204,7 @@ test("글감 → 새로고침 복구 → 실제 TXT → 수정과 이전 초안 
 });
 
 test("진행 중 중단 → 새로고침 → 같은 글 이어가기", async ({ page }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   const idea = `중단 복구 ${testInfo.project.name} ${Date.now()}`;
   await page.getByLabel("글감과 원하는 결과").fill(idea);
   await page.getByRole("button", { name: "초안 만들기", exact: true }).click();
@@ -230,11 +233,11 @@ test("진행 중 중단 → 새로고침 → 같은 글 이어가기", async ({ 
 });
 
 test("AI 결과 오류 → 보존 상태 확인 → 이어가기", async ({ page }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   const idea = `실패 복구 ${testInfo.project.name} ${Date.now()}`;
   await page.getByLabel("글감과 원하는 결과").fill(idea);
   await page.getByRole("button", { name: "초안 만들기", exact: true }).click();
-  await expect(page.locator("#issue")).toContainText("AI 작업을 완료하지 못했습니다", {
+  await expect(page.locator("#issue")).toContainText(/단계에서 멈춤 · AI 응답이/, {
     timeout: 45000,
   });
   await expect(page.getByRole("link", { name: "TXT 내려받기", exact: true })).toBeHidden();
@@ -247,7 +250,7 @@ test("AI 결과 오류 → 보존 상태 확인 → 이어가기", async ({ page
 });
 
 test("실제 확인 시각·실행 이력·연결 단절 표시와 빈 영역 제거", async ({ page }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   await expect(page.getByRole("button", { name: "새 글", exact: true })).toBeHidden();
   await page
     .getByLabel("글감과 원하는 결과")
@@ -287,26 +290,45 @@ test("실제 확인 시각·실행 이력·연결 단절 표시와 빈 영역 �
 });
 
 test("LIVE-001: 실시간 내용·새로고침 복구·연결 단절·중단", async ({ page }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   await page
     .getByLabel("글감과 원하는 결과")
     .fill(`실시간 미리보기 ${testInfo.project.name} ${Date.now()}`);
   await page.getByRole("button", { name: "초안 만들기", exact: true }).click();
+  const openLive = () => openDock(page, "실시간");
+  await openLive();
   const live = page.locator("#live-activity");
   await expect(live.locator("h2")).toHaveText("초고 작성");
   const preview = live.getByRole("region", { name: "생성 중인 내용", exact: true });
   await expect(preview).toContainText("첫 초안");
+  const steps = live.getByRole("list", { name: "진행 기록" });
+  await expect(steps).toContainText("자료를 읽고 구성을 잡겠습니다.");
+  await expect(steps).toContainText("자료 읽기");
+  await expect(steps).not.toContainText("private-fixture-path");
+  // 지나간 단계는 지도에서 눌러 그 단계의 진행 기록을 다시 본다
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "진단 단계 기록 보기" }).click();
+  const log = page.getByRole("region", { name: "진단 단계 기록" });
+  // 실행 로그는 결정 요지 아래 접힌 상태가 기본이다(StageLog)
+  await log.getByText("실행 로그", { exact: true }).first().click();
+  await expect(log.getByRole("list", { name: "진행 기록" })).toContainText(
+    "자료를 읽고 구성을 잡겠습니다.",
+  );
+  await expect(log).not.toContainText("private-fixture-path");
+  await openLive();
   const before = (await preview.textContent()) ?? "";
   await expect
     .poll(async () => ((await preview.textContent()) ?? "").length)
     .toBeGreaterThan(before.length);
   await page.reload();
+  await openLive();
   await expect(preview).toContainText("첫 초안");
   await page.context().setOffline(true);
   await expect(live).toContainText("연결이 끊겼습니다");
   await expect(preview).toContainText("첫 초안");
   await page.context().setOffline(false);
-  await page.getByRole("button", { name: "중단", exact: true }).click();
+  // 실시간을 보던 도크 안에서 바로 중단(DOCK-001)
+  await page.locator("#dock-pause").click();
   await expect(page.locator("#status")).toContainText("중단");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await checkAccessibility(page, testInfo, "live-preview-paused");
@@ -315,7 +337,7 @@ test("LIVE-001: 실시간 내용·새로고침 복구·연결 단절·중단", a
 test("HISTORY-001: 작성 방향·수정 요약·확인할 점을 과거 초안과 함께 보존", async ({
   page,
 }, testInfo) => {
-  await page.goto("/write/");
+  await page.goto("/write/#new");
   await page
     .getByLabel("글감과 원하는 결과")
     .fill(`과정 기록 ${testInfo.project.name} ${Date.now()}`);
@@ -324,9 +346,10 @@ test("HISTORY-001: 작성 방향·수정 요약·확인할 점을 과거 초안�
   await expect(page.locator("#artifacts")).toBeHidden();
   await expectFullResults(page, first);
   await page.locator("#stage-details > summary").click();
-  await page.getByLabel("어떻게 다듬을까요?").fill("주문 사례를 더 자세히 설명해 주세요.");
+  await writeFeedback(page, "주문 사례를 더 자세히 설명해 주세요.");
   await clickAction(page, "수정 요청", "feedback");
   await expect(page.locator("#revision")).toHaveText("초안 2");
+  await approveBrief(page);
   const second = await ready(page);
   await page.locator("#record-title").click();
   const current = page
@@ -354,4 +377,32 @@ test("HISTORY-001: 작성 방향·수정 요약·확인할 점을 과거 초안�
   expect(after.callsUsed).toBe(second.callsUsed);
   expect(after.version).toBe(second.version);
   await checkAccessibility(page, testInfo, "writing-journey");
+});
+
+test("내 글 목록·삭제 되돌리기·없는 글 안내", async ({ page }, testInfo) => {
+  const idea = `목록 관리 ${testInfo.project.name} ${Date.now()}`;
+  await page.goto("/write/#new");
+  await page.getByLabel("글감과 원하는 결과").fill(idea);
+  await page.getByRole("button", { name: "초안 만들기", exact: true }).click();
+  await ready(page);
+  const runId = new URL(page.url()).hash.slice(1);
+  await page.locator(".page-bar").getByRole("link", { name: "내 글" }).click();
+  await expect(page).toHaveURL(/\/write\/$/);
+  await expect(page.getByRole("heading", { name: "내 글" })).toBeVisible();
+  const item = page.locator(`#recent li[data-id="${runId}"]`);
+  await expect(item).toBeVisible();
+  const search = page.getByLabel("제목으로 찾기");
+  const title = (await item.locator(".run-title").textContent()) ?? "";
+  await search.fill("없는 제목 zzz");
+  await expect(page.locator("#recent li")).toHaveCount(0);
+  await search.fill(title);
+  await expect(item).toBeVisible();
+  await item.getByRole("button", { name: /삭제$/ }).click();
+  await expect(item).toHaveCount(0);
+  await page.getByRole("button", { name: "되돌리기" }).click();
+  await expect(item).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "내 글" })).toBeVisible();
+  await page.goto("/write/#00000000-0000-0000-0000-000000000000");
+  await expect(page.getByRole("heading", { name: "글을 찾을 수 없습니다" })).toBeVisible();
 });

@@ -39,6 +39,7 @@ export function useActivity(id: string, revision: number, status: string) {
                   text: previous.value.text,
                   lastOutputAt: previous.value.lastOutputAt,
                   truncated: previous.value.truncated,
+                  steps: previous.value.steps,
                 }
               : value,
           };

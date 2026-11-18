@@ -16,6 +16,42 @@ const labels = {
   complete: "단계 결과를 받았습니다.",
   paused: "작업이 중단됐습니다.",
 };
+const stepStatus = { running: "진행 중", completed: "완료", failed: "실패" } as const;
+type Steps = NonNullable<ReturnType<typeof useActivity>["activity"]>["steps"];
+// AI가 남긴 설명 문장과 도구 실행을 순서대로 · 맨 아래(최신)를 따라간다
+export function StepFeed({ steps }: { steps: Steps }) {
+  const list = useRef<HTMLOListElement>(null);
+  const [follow, setFollow] = useState(true);
+  const count = steps.length;
+  useEffect(() => {
+    if (count && follow && list.current) list.current.scrollTop = list.current.scrollHeight;
+  }, [count, follow]);
+  if (!steps.length) return null;
+  return (
+    <ol
+      className="live-steps"
+      ref={list}
+      aria-label="진행 기록"
+      onScroll={(event) => {
+        const el = event.currentTarget;
+        setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 24);
+      }}
+    >
+      {steps.map((step, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: 기록은 뒤에만 붙고 순서가 바뀌지 않는다
+        <li key={index} data-kind={step.kind} data-status={step.status}>
+          {step.kind === "tool" ? (
+            <span className="hint">
+              {step.text} · {stepStatus[step.status ?? "running"]}
+            </span>
+          ) : (
+            step.text
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
 export function LiveActivity({ run, online }: { run: Run; online: boolean }) {
   const { activity, connection } = useActivity(run.id, run.revision, run.status);
   const [follow, setFollow] = useState(true);
@@ -61,7 +97,10 @@ export function LiveActivity({ run, online }: { run: Run; online: boolean }) {
       {pending && idleSeconds !== null && idleSeconds >= 20 && !disconnected && (
         <p className="hint">새 출력이 아직 없습니다. 기다리거나 위에서 중단할 수 있습니다.</p>
       )}
-      {!fields.length && pending && <p className="hint">내용이 도착하면 여기에 표시됩니다.</p>}
+      <StepFeed steps={activity?.steps ?? []} />
+      {!fields.length && !activity?.steps.length && pending && (
+        <p className="hint">내용이 도착하면 여기에 표시됩니다.</p>
+      )}
       {fields.length > 0 && (
         <details open>
           <summary>{pending ? "생성 중인 내용" : "생성된 내용"} · 미완성</summary>

@@ -31,6 +31,8 @@ test("HISTORY-001: stored attempts, prior revisions, inputs and routing survive 
           output: id === "one" ? { problem: "이전 회차의 실제 문제", scope: "주문" } : null,
           target: id === "route" ? "draft" : null,
           reason: id === "route" ? "표현 수정" : null,
+          status: "completed",
+          steps: id === "one" ? [{ kind: "note", text: "자료를 읽습니다.", at: 1 }] : [],
         };
       },
     },
@@ -43,6 +45,9 @@ test("HISTORY-001: stored attempts, prior revisions, inputs and routing survive 
   assert.equal(history.records[2].target, "초고 작성");
   assert.equal(history.records[2].reason, "표현 수정");
   assert.equal(history.records[3].reason, "한도 초과");
+  // 진행 기록은 실행당 한 번(완료 기록)에만 붙는다
+  assert.deepEqual(history.records[0].steps, []);
+  assert.deepEqual(history.records[1].steps, [{ kind: "note", text: "자료를 읽습니다.", at: 1 }]);
   assert.deepEqual(await executionHistory(service, "run"), history);
   assert.deepEqual(run.events, events);
 });
@@ -68,8 +73,8 @@ test("HISTORY-001: missing job files are explicit and only retained results are 
   assert.deepEqual(records[0].output, { problem: "보존 결과" });
   assert.equal(records[1].output, null);
   assert.equal(records[1].resultSource, "none");
-  assert.deepEqual(await executionHistory({ store: { get: () => ({ state: {} }) } }, "legacy"), {
-    records: [],
-    journey: [],
-  });
+  const legacy = await executionHistory({ store: { get: () => ({ state: {} }) } }, "legacy");
+  assert.deepEqual(legacy.records, []);
+  assert.deepEqual(legacy.journey, []);
+  assert.equal(legacy.usage.calls, 0);
 });

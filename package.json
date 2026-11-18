@@ -9,19 +9,23 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "storybook": "storybook dev -p 6006 --host 127.0.0.1 --no-open",
+    "storybook:build": "storybook build -o .local/storybook",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome check --write .",
     "arch": "depcruise automation --config .dependency-cruiser.cjs",
     "unused": "knip",
-    "check": "pnpm typecheck && pnpm lint && pnpm arch && pnpm unused",
-    "test": "pnpm build && node --test automation/n8n/tests/*.test.mjs automation/paseo/tests/*.test.mjs automation/editorial/tests/*.test.mjs automation/cli/tests/*.test.mjs tests/*.test.mjs",
-    "test:e2e": "pnpm build && playwright test --config playwright.ai-writing.config.ts",
-    "verify": "pnpm check && pnpm test && mise run n8n:test:runtime && mise run ai:test:flow && pnpm test:e2e"
+    "check": "mise run check",
+    "test": "mise run test",
+    "test:e2e": "mise run test:e2e",
+    "verify": "mise run verify"
   },
   "dependencies": {
+    "galmuri": "2.40.3",
     "markdown-it": "14.3.2",
+    "markdown-it-cjk-friendly": "^3.0.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "4.6.7"
@@ -30,6 +34,7 @@
     "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.6.6",
     "@playwright/test": "1.64.0",
+    "@storybook/react-vite": "10.6.7",
     "@swc/core": "1.16.22",
     "@tailwindcss/vite": "4.3.5",
     "@types/node": "24.19.2",
@@ -38,6 +43,7 @@
     "@vitejs/plugin-react": "6.3.0",
     "dependency-cruiser": "18.7.2",
     "knip": "6.44.2",
+    "storybook": "10.6.7",
     "tailwindcss": "4.3.5",
     "typescript": "7.0.2",
     "vite": "8.3.6"

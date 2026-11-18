@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { figureIdsSchema } from "../../contracts/figure.mjs";
 import {
   actionIdentitySchema,
   actionVersionSchema,
+  briefEditSchema,
   feedbackSchema,
   requestObjectSchema,
 } from "../../contracts/requests.mjs";
@@ -12,18 +14,46 @@ import {
   confirmPendingStop,
   EDITORIAL_LIMITS,
   fail,
+  figureCalls,
   resetBudget,
   userTransition,
 } from "./lifecycle.mjs";
 
-export async function runAction(service, id, input) {
+// 최종 검수(만족·발행 준비)는 사람만 · 에이전트는 편집장으로 위임 한도 안에서 수정 지시 · ADR-0006
+// 수정 해석 승인·재해석은 사람 대리로 편집장도 가능(재해석은 수정 지시 한도에 포함) · ADR-0010
+// 시각자료 선택·확인도 넘길 결과물의 검수라 사람만 · FIGURE-001
+const FIGURE_ACTIONS = ["request_figures", "select_figures", "confirm_figures", "discard_figures"];
+const HUMAN_ONLY = ["satisfy", "authorize_publication", ...FIGURE_ACTIONS];
+function agentFeedbackRounds(events = []) {
+  let rounds = 0;
+  for (const event of events.toReversed()) {
+    if (event.by !== "agent") {
+      if (
+        [
+          "feedback",
+          "complete_requirements",
+          "satisfy",
+          "authorize_publication",
+          "approve_brief",
+          "requested",
+        ].includes(event.kind)
+      )
+        break;
+      continue;
+    }
+    if (["feedback", "revise_brief"].includes(event.kind)) rounds++;
+  }
+  return rounds;
+}
+
+export async function runAction(service, id, input, actor = "user") {
   if (!requestObjectSchema.safeParse(input).success) fail("요청 내용을 확인해 주세요.");
-  const { operationId, expectedVersion, type, feedback } = input;
+  const { operationId, expectedVersion, type, feedback, edit, figures } = input;
   if (!actionIdentitySchema.safeParse(input).success) fail("지원하지 않는 요청입니다.");
   const changed = await service.locked(id, async () => {
     const run = service.store.get(id);
     const beforeStatus = run.state.status;
-    const signature = JSON.stringify({ expectedVersion, type, feedback });
+    const signature = JSON.stringify({ expectedVersion, type, feedback, edit, figures });
     if (Object.hasOwn(run.operations ?? {}, operationId)) {
       if (run.operations[operationId] !== signature)
         fail("같은 요청 번호의 내용이 달라졌습니다.", 409);
@@ -31,8 +61,33 @@ export async function runAction(service, id, input) {
     }
     if (!actionVersionSchema.safeParse(input).success || expectedVersion !== run.state.version)
       fail("다른 화면에서 작업이 변경됐습니다. 최신 내용을 확인해 주세요.", 409);
-    if (type === "feedback" && !feedbackSchema.safeParse(feedback).success)
+    if (["feedback", "revise_brief"].includes(type) && !feedbackSchema.safeParse(feedback).success)
       fail("수정할 내용을 입력해 주세요.");
+    if (type === "approve_brief" && edit !== undefined && !briefEditSchema.safeParse(edit).success)
+      fail("수정 해석 보정 내용을 확인해 주세요.");
+    if (
+      (type === "select_figures" || (type === "confirm_figures" && figures !== undefined)) &&
+      !figureIdsSchema.safeParse(figures).success
+    )
+      fail("시각자료를 하나 이상 골라 주세요.");
+    // 시각자료 위치 지시는 선택 입력 · 있으면 기본 배치 기준보다 우선
+    if (
+      type === "request_figures" &&
+      feedback !== undefined &&
+      !feedbackSchema.safeParse(feedback).success
+    )
+      fail("시각자료 위치 지시를 확인해 주세요.");
+    if (actor === "agent" && HUMAN_ONLY.includes(type))
+      fail("최종 검수는 사람만 할 수 있습니다. 화면에서 확인해 주세요.", 403);
+    if (
+      actor === "agent" &&
+      ["feedback", "revise_brief"].includes(type) &&
+      agentFeedbackRounds(run.events) >= EDITORIAL_LIMITS.agentFeedbackRounds
+    )
+      fail(
+        `에이전트 수정 지시는 사람 확인 없이 ${EDITORIAL_LIMITS.agentFeedbackRounds}회까지입니다. 사람이 결과를 확인한 뒤 이어가 주세요.`,
+        409,
+      );
     const completionReason = flowIssue(run.state);
     if (completionReason && !["complete_requirements", "pause"].includes(type))
       fail(COMPLETION_REASON, 409);
@@ -75,11 +130,38 @@ export async function runAction(service, id, input) {
         ...event,
         reviewedRevision: run.state.revision,
         feedback: feedback.trim(),
+        ...(actor === "agent" ? { briefPreapproved: true } : {}),
       });
       run.pending = null;
       resetBudget(service, run);
+    } else if (type === "approve_brief") {
+      run.state = userTransition(run.state, {
+        ...event,
+        reviewedRevision: run.state.revision,
+        ...(edit ? { edit } : {}),
+      });
+      run.pending = null;
+    } else if (type === "revise_brief") {
+      run.state = userTransition(run.state, {
+        ...event,
+        reviewedRevision: run.state.revision,
+        note: feedback.trim(),
+      });
+      run.pending = null;
     } else if (["satisfy", "authorize_publication"].includes(type)) {
       run.state = userTransition(run.state, { ...event, reviewedRevision: run.state.revision });
+    } else if (FIGURE_ACTIONS.includes(type)) {
+      run.state = userTransition(run.state, {
+        ...event,
+        reviewedRevision: run.state.revision,
+        ...(figures === undefined ? {} : { figures }),
+        ...(type === "request_figures" && feedback !== undefined ? { note: feedback.trim() } : {}),
+      });
+      // AI를 부르는 요청(위치 제안·생성)만 새 실행 예산
+      if (pending(run.state)) {
+        run.pending = null;
+        resetBudget(service, run, figureCalls(run.state));
+      }
     } else {
       const state = run.state;
       if (["paused", "failed"].includes(state.status)) {
@@ -99,10 +181,16 @@ export async function runAction(service, id, input) {
     }
     const labels = {
       pause: "중단 확인",
-      feedback: "수정 요청",
+      feedback: actor === "agent" ? "편집장 수정 요청" : "수정 요청",
       complete_requirements: "전체 요구사항 보완 요청",
       satisfy: "초안 확정",
       authorize_publication: "발행 준비 승인",
+      approve_brief: edit ? "수정 해석 보정 승인" : "수정 해석 승인",
+      revise_brief: "수정 해석 다시 요청",
+      request_figures: "시각자료 추가 요청",
+      select_figures: "시각자료 위치 선택",
+      confirm_figures: "시각자료 확인",
+      discard_figures: "시각자료 없이 진행",
       resume:
         beforeStatus === "failed"
           ? "실패 단계 재시도"
@@ -110,18 +198,19 @@ export async function runAction(service, id, input) {
             ? "중단 작업 재개"
             : "진행 다시 연결",
     };
-    recordEvent(
-      run,
-      service.now(),
-      type,
-      labels[type],
-      type === "feedback" ? { reason: feedback.trim() } : {},
-    );
+    recordEvent(run, service.now(), type, labels[type], {
+      by: actor,
+      ...(["feedback", "revise_brief"].includes(type) ? { reason: feedback.trim() } : {}),
+      ...(figures === undefined ? {} : { figures }),
+    });
     run.operations = { ...run.operations, [operationId]: signature };
     service.save(run);
     return true;
   });
-  return changed && !["pause", "satisfy", "authorize_publication"].includes(type)
+  return changed &&
+    !["pause", "satisfy", "authorize_publication", "confirm_figures", "discard_figures"].includes(
+      type,
+    )
     ? service.connect(id)
     : service.get(id);
 }

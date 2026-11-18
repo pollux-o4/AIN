@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ActionCommand, Run } from "../shared/api";
+import { Icon } from "../shared/Icon";
 import { ExecutionHistory } from "./ExecutionHistory";
+import { nextStep } from "./journey";
 
 const time = (at: number) =>
   new Date(at).toLocaleString("ko-KR", {
@@ -51,6 +53,7 @@ export function WorkHeading({
           disabled={!online || submitting}
           onClick={() => void onAction({ type: "pause" })}
         >
+          <Icon name="pause" />
           중단
         </button>
         <button
@@ -60,13 +63,22 @@ export function WorkHeading({
           disabled={!online || submitting}
           onClick={() => void onAction({ type: "resume" })}
         >
+          <Icon name="play" />
           {monitor.resumeLabel}
         </button>
       </div>
     </div>
   );
 }
-export function Monitor({ run, online }: { run: Run; online: boolean }) {
+export function Monitor({
+  run,
+  online,
+  onPick,
+}: {
+  run: Run;
+  online: boolean;
+  onPick?: (stage: string, name: string, live: boolean) => void;
+}) {
   const monitor = run.monitor;
   const [clock, setClock] = useState(() => ({ server: monitor.now, local: Date.now() }));
   const [elapsed, setElapsed] = useState(0);
@@ -82,6 +94,27 @@ export function Monitor({ run, online }: { run: Run; online: boolean }) {
   const active = ["working", "queued", "stale", "blocked"].includes(monitor.kind);
   const live = run.executionLinks.find((link) => link.id === monitor.executionId);
   const confirmed = monitor.lastConfirmedAt;
+  const next = nextStep(run, online);
+  const track = useRef<HTMLElement>(null);
+  const shape = monitor.pipeline.map((step) => step.status).join();
+  // 좁은 화면에서 지도가 넘치면 지금 단계를 가운데로 보낸다 · 폭이 바뀌면 다시 맞춘다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 단계 상태가 바뀌면 지금 단계 위치가 달라진다
+  useEffect(() => {
+    const box = track.current;
+    if (!box) return;
+    const center = () => {
+      const focus = box.querySelector<HTMLElement>("[data-focus]");
+      if (focus) box.scrollLeft = focus.offsetLeft - box.clientWidth / 2 + focus.clientWidth / 2;
+    };
+    center();
+    const observer = new ResizeObserver(center);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [shape]);
+  const hasActive = monitor.pipeline.some((step) => step.status === "active");
+  const firstOpen = monitor.pipeline.findIndex((step) => step.status !== "done");
+  // 진행 중 단계가 없으면 멈춘 곳(실패·중단·대기), 모두 끝났으면 마지막 단계에 안내자를 둔다.
+  const focus = firstOpen === -1 ? monitor.pipeline.length - 1 : firstOpen;
   return (
     <>
       <div className="status-line flex items-center gap-3.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-[7px]">
@@ -114,31 +147,66 @@ export function Monitor({ run, online }: { run: Run; online: boolean }) {
           n8n 실행 보기
         </a>
       </div>
-      <ol id="pipeline" aria-label="진행 단계" hidden={!monitor.pipeline.length}>
-        {monitor.pipeline.map((step) => (
-          <li
-            key={step.stage}
-            data-status={step.status}
-            aria-current={step.status === "active" ? "step" : undefined}
-          >
-            <span>{step.name}</span>
-            <small
-              data-since={step.status === "active" ? (step.startedAt ?? undefined) : undefined}
-            >
-              {labels[step.status]}
-              {step.status === "done" && step.startedAt !== null && step.completedAt !== null
-                ? ` · ${ago(step.completedAt - step.startedAt)}`
-                : step.status === "active" && step.startedAt !== null
-                  ? ` · ${ago(now - step.startedAt)}`
-                  : ""}
-            </small>
-          </li>
-        ))}
-      </ol>
+      <section className="journey" aria-label="진행 여정">
+        <p id="next-step" data-tone={next.tone}>
+          {next.say}
+        </p>
+        {/* biome-ignore lint/a11y/noNoninteractiveTabindex: 가로로 넘치는 지도는 키보드로 스크롤할 수 있어야 한다 */}
+        <section className="track" ref={track} tabIndex={0} aria-label="진행 여정 지도">
+          <ol id="pipeline" aria-label="진행 단계" hidden={!monitor.pipeline.length}>
+            {monitor.pipeline.map((step, i) => (
+              <li
+                key={step.stage}
+                data-status={step.status}
+                data-focus={
+                  step.status === "active" || (!hasActive && i === focus) ? "" : undefined
+                }
+                aria-current={step.status === "active" ? "step" : undefined}
+              >
+                {onPick && step.status !== "pending" ? (
+                  <button
+                    type="button"
+                    className="stage-pick"
+                    aria-label={`${step.name} 단계 기록 보기`}
+                    onClick={() => onPick(step.stage, step.name, step.status === "active")}
+                  >
+                    <i className="node" aria-hidden="true" />
+                    <span>{step.name}</span>
+                  </button>
+                ) : (
+                  <>
+                    <i className="node" aria-hidden="true" />
+                    <span>{step.name}</span>
+                  </>
+                )}
+                <small
+                  data-since={step.status === "active" ? (step.startedAt ?? undefined) : undefined}
+                >
+                  {labels[step.status]}
+                  {step.status === "done" && step.startedAt !== null && step.completedAt !== null
+                    ? ` · ${ago(step.completedAt - step.startedAt)}`
+                    : step.status === "active" && step.startedAt !== null
+                      ? ` · ${ago(now - step.startedAt)}`
+                      : ""}
+                </small>
+              </li>
+            ))}
+          </ol>
+          <div className="chest" data-open={run.status.startsWith("publication") ? "" : undefined}>
+            <i className="node" aria-hidden="true" />
+            <span>전달</span>
+          </div>
+        </section>
+      </section>
       <p
         id="issue"
         className="issue"
-        hidden={!run.issue || (run.needsCompletion && run.issue === run.completionReason)}
+        // 실패 사유는 "지금 할 일" 한 줄이 이미 말한다
+        hidden={
+          !run.issue ||
+          run.status === "failed" ||
+          (run.needsCompletion && run.issue === run.completionReason)
+        }
       >
         {run.issue}
       </p>

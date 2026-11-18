@@ -1,49 +1,26 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { AI_MODELS } from "../../../contracts/ai-models.mjs";
 import { INPUT_LIMITS } from "../../../contracts/requests.mjs";
-import type { Direction, RecentRun } from "../shared/api";
+import type { Direction } from "../shared/api";
+import { Icon } from "../shared/Icon";
 import { inputSchema, keys, read, storageWarning, store } from "../shared/persistence";
-import { isPending } from "../tracking/useRunTracking";
 import { DirectionPicker } from "./DirectionPicker";
 
 type Props = {
-  hidden: boolean;
   submitting: boolean;
-  recent: RecentRun[];
-  focusVersion: number;
   onCreate: (idea: string, source: string, direction: Direction) => Promise<void>;
-  onOpen: (id: string) => void;
-  onArchive: (run: RecentRun) => void;
   onNotice: (message: string) => void;
 };
-export function Compose({
-  hidden,
-  submitting,
-  recent,
-  focusVersion,
-  onCreate,
-  onOpen,
-  onArchive,
-  onNotice,
-}: Props) {
+export function Compose({ submitting, onCreate, onNotice }: Props) {
   const [input, setInput] = useState(() => read(keys.input, inputSchema) ?? inputSchema.parse({}));
   const [sourceOpen, setSourceOpen] = useState(Boolean(input.source));
-  const ideaRef = useRef<HTMLTextAreaElement>(null);
-  const previousFocus = useRef(focusVersion);
-  // ref 콜백은 새 글 전환이 커밋된 뒤에만 입력에 초점을 둔다.
-  const focusIdea = (element: HTMLTextAreaElement | null) => {
-    ideaRef.current = element;
-    if (!hidden && previousFocus.current !== focusVersion) {
-      previousFocus.current = focusVersion;
-      element?.focus();
-    }
-  };
   function update<K extends "idea" | "source" | "direction">(field: K, value: (typeof input)[K]) {
     const next = { ...input, [field]: value };
     setInput(next);
     if (!store(keys.input, next)) onNotice(storageWarning);
   }
   return (
-    <section id="compose" hidden={hidden} aria-labelledby="compose-title">
+    <section id="compose" aria-labelledby="compose-title">
       <h1 id="compose-title">어떤 글을 쓸까요?</h1>
       <form
         id="create-form"
@@ -54,7 +31,8 @@ export function Compose({
       >
         <label htmlFor="idea">글감과 원하는 결과</label>
         <textarea
-          ref={focusIdea}
+          // biome-ignore lint/a11y/noAutofocus: 새 글 화면의 유일한 주 입력
+          autoFocus
           id="idea"
           name="idea"
           required
@@ -90,36 +68,13 @@ export function Compose({
           />
         </details>
         <div className="submit-row">
-          <p className="hint">Flash 3.8 Medium · 입력은 AI 제공자에게 전달됩니다.</p>
+          <p className="hint">{AI_MODELS.standard.label} · 입력은 AI 제공자에게 전달됩니다.</p>
           <button type="submit" id="create" disabled={submitting}>
-            초안 만들기
+            {!submitting && <Icon name="pen" />}
+            {submitting ? "요청 중…" : "초안 만들기"}
           </button>
         </div>
       </form>
-      <section id="recent-section" hidden={!recent.length} aria-labelledby="recent-title">
-        <h2 id="recent-title">작업 목록</h2>
-        <ul id="recent" className="grid gap-2.5">
-          {recent.map((run) => (
-            <li key={run.id} data-id={run.id} className="flex gap-2">
-              <button type="button" className="open" onClick={() => onOpen(run.id)}>
-                <span>{run.title}</span>
-                <small>
-                  초안 {run.revision} · {run.label}
-                </small>
-              </button>
-              <button
-                type="button"
-                className="quiet archive"
-                hidden={isPending(run.status)}
-                aria-label={`${run.title} 삭제`}
-                onClick={() => onArchive(run)}
-              >
-                삭제
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
     </section>
   );
 }

@@ -31,6 +31,15 @@ function event(state, type, data = {}) {
     ...data,
   };
 }
+// 편집장 해석(route) → 사람 승인(approve_brief)까지 · ADR-0010
+function routeApproved(state, data) {
+  const proposed = transition(state, event(state, "route", data)).state;
+  assert.equal(proposed.status, "awaiting_brief");
+  return transition(
+    proposed,
+    event(proposed, "approve_brief", { reviewedRevision: proposed.revision }),
+  ).state;
+}
 function start(source = "原文") {
   return transition(null, event(null, "start", { articleId: "article", source })).state;
 }
@@ -66,10 +75,7 @@ test("start validates direction, fills defaults and preserves the user's choice 
     state,
     event(state, "feedback", { reviewedRevision: 1, feedback: "근거 보강" }),
   ).state;
-  state = transition(
-    state,
-    event(state, "route", { revision: 2, target: "diagnose", reason: "진단부터 수정" }),
-  ).state;
+  state = routeApproved(state, { revision: 2, target: "diagnose", reason: "진단부터 수정" });
   assert.deepEqual(finish(state).direction, direction);
   assert.deepEqual(
     transition(
@@ -123,14 +129,11 @@ test("user-controlled loop exceeds three rounds; invalidates downstream work and
     ).state;
     assert.equal(state.status, "waiting_route");
     assert.equal(state.approval, null);
-    state = transition(
-      state,
-      event(state, "route", {
-        revision: state.revision,
-        target: "outline",
-        reason: "情報順序の問題",
-      }),
-    ).state;
+    state = routeApproved(state, {
+      revision: state.revision,
+      target: "outline",
+      reason: "情報順序の問題",
+    });
     assert.equal(state.artifacts.draft, undefined);
     assert.ok(state.artifacts.research);
     state = finish(state);
@@ -227,10 +230,7 @@ test("every allowed AI route returns to user review and preserves source", () =>
       state,
       event(state, "feedback", { reviewedRevision: 1, feedback: "再検討" }),
     ).state;
-    state = transition(
-      state,
-      event(state, "route", { revision: 2, target, reason: "ユーザーの意図" }),
-    ).state;
+    state = routeApproved(state, { revision: 2, target, reason: "ユーザーの意図" });
     state = finish(state);
     assert.equal(state.status, "awaiting_user");
     assert.equal(state.source, "大切な原文");
@@ -412,10 +412,7 @@ test("feedback routes validate and promote every retained upstream artifact befo
       event(prior, "feedback", { reviewedRevision: 1, feedback: "수정" }),
     ).state;
     assert.equal(flowIssue(routed), null);
-    const state = transition(
-      routed,
-      event(routed, "route", { revision: 2, target, reason: "순서" }),
-    ).state;
+    const state = routeApproved(routed, { revision: 2, target, reason: "순서" });
     const prefix = STAGES.slice(0, STAGES.indexOf(target));
     assert.deepEqual(Object.keys(state.artifacts), prefix);
     for (const stage of prefix) {
@@ -559,12 +556,75 @@ test("pending feedback route survives explicit pause/resume and fail/retry with 
   state = transition(state, event(state, "retry")).state;
   assert.equal(nextAction(state).type, "request_route");
   assert.deepEqual(state.artifacts, artifacts);
-  state = transition(
-    state,
-    event(state, "route", { revision: 2, target: "diagnose", reason: "새 진단" }),
-  ).state;
+  state = routeApproved(state, { revision: 2, target: "diagnose", reason: "새 진단" });
   const visited = [];
   state = finish(state, visited);
   assert.deepEqual(visited, STAGES);
   assert.equal(flowIssue(state), null);
+});
+
+test("ADR-0010 human feedback waits for brief approval; edits, re-interpretation and agent preapproval", () => {
+  const presented = finish(start());
+  const feedback = (state, extra = {}) =>
+    transition(
+      state,
+      event(state, "feedback", {
+        reviewedRevision: state.revision,
+        feedback: "너무 길어",
+        ...extra,
+      }),
+    ).state;
+  const route = (state) =>
+    transition(
+      state,
+      event(state, "route", {
+        revision: state.revision,
+        target: "outline",
+        reason: "분량을 구성부터 줄임",
+        brief: { level: "developmental", priorities: ["분량"] },
+      }),
+    ).state;
+  const proposed = route(feedback(presented));
+  assert.equal(proposed.status, "awaiting_brief");
+  assert.equal(proposed.brief.target, "outline");
+  assert.equal(nextAction(proposed).type, "wait_for_user");
+  assert.equal(proposed.artifacts.draft.revision, 1); // 승인 전 산출물 무변경
+
+  // 보정 승인: 사람이 대상·의도를 고치면 그대로 착수
+  const approved = transition(
+    proposed,
+    event(proposed, "approve_brief", {
+      reviewedRevision: proposed.revision,
+      edit: { target: "draft", intent: "구성은 두고 문장만 압축" },
+    }),
+  ).state;
+  assert.equal(approved.status, "waiting_ai");
+  assert.equal(approved.stage, "draft");
+  assert.equal(approved.brief.intent, "구성은 두고 문장만 압축");
+  assert.equal(approved.brief.approvedBy, "user");
+
+  // 다시 해석: 보정 의견을 수정 요청에 덧붙여 route로 복귀
+  const revised = transition(
+    proposed,
+    event(proposed, "revise_brief", { reviewedRevision: proposed.revision, note: "구성 유지" }),
+  ).state;
+  assert.equal(revised.status, "waiting_route");
+  assert.equal(revised.brief, undefined);
+  assert.match(revised.feedback, /너무 길어[\s\S]*해석 보정: 구성 유지/);
+  assert.throws(
+    () =>
+      transition(
+        proposed,
+        event(proposed, "approve_brief", {
+          reviewedRevision: proposed.revision,
+          edit: { target: "publish" },
+        }),
+      ),
+    /target/,
+  );
+
+  // 편집장(에이전트) 지시는 지시자가 해석을 확정 · 바로 착수
+  const agent = route(feedback(presented, { briefPreapproved: true }));
+  assert.equal(agent.status, "waiting_ai");
+  assert.equal(agent.stage, "outline");
 });

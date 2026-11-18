@@ -1,0 +1,101 @@
+# 검증 작업 · TEST-RUN
+# 무거운 통합·e2e는 nice로 낮은 우선순위 · 캐시: sources가 outputs(auto 스탬프)보다 새롭지 않으면 생략 · 강제 재실행 `mise run --force <작업>`
+# 단위 작업 sources: 자기 테스트 + 전체 제품 코드(모듈 간 import가 촘촘해 코드 변경은 모든 단위 재실행, 테스트만 바꾸면 해당 모듈만)
+
+# ── 빌드 ──
+["build"]
+description = "글쓰기 화면 번들 · 화면 코드가 바뀔 때만"
+run = "pnpm exec vite build --logLevel warn"
+sources = ["automation/editorial/ui/**/*", "vite.config.ts", "pnpm-lock.yaml"]
+outputs = [".local/editorial-web/index.html"]
+
+# ── 정적 검사 ──
+["check:types"]
+run = "pnpm exec tsc --noEmit"
+sources = ["automation/**/*.{mjs,ts,tsx}", "tests/**/*.ts", "tsconfig.json", "pnpm-lock.yaml"]
+outputs = { auto = true }
+
+["check:lint"]
+run = "pnpm exec biome check ."
+sources = ["automation/**/*", "tests/**/*", "*.{json,ts}", "biome.json"]
+outputs = { auto = true }
+
+["check:arch"]
+run = ["pnpm exec depcruise automation --config .dependency-cruiser.cjs", "pnpm exec knip"]
+sources = ["automation/**/*.{mjs,ts,tsx}", "tests/**/*", ".dependency-cruiser.cjs", "knip.json", "package.json"]
+outputs = { auto = true }
+
+["check"]
+description = "정적 검사 전체(캐시) + 비밀값 검사"
+depends = ["check:types", "check:lint", "check:arch", "secrets"]
+
+# ── 단위 (모듈별) ──
+["test:editorial"]
+description = "편집 도메인·서비스·HTTP·화면 계약"
+depends = ["build"]
+run = "node --test automation/editorial/tests/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/editorial/tests/**", ".local/editorial-web/index.html"]
+outputs = { auto = true }
+
+["test:paseo"]
+description = "AI 실행 어댑터·프롬프트·지표"
+run = "node --test automation/paseo/tests/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/paseo/tests/**"]
+outputs = { auto = true }
+
+["test:n8n"]
+description = "n8n 워크플로 생성 계약"
+run = "node --test automation/n8n/tests/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/n8n/tests/**"]
+outputs = { auto = true }
+
+["test:cli"]
+description = "에이전트 CLI · AGENT-001"
+run = "node --test automation/cli/tests/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/cli/tests/**"]
+outputs = { auto = true }
+
+["test:runtime"]
+description = "기동·종료 판단 · OPS-001"
+run = "node --test automation/runtime/tests/*.test.mjs"
+sources = ["automation/runtime/**/*.mjs"]
+outputs = { auto = true }
+
+["test:arch"]
+description = "모듈 경계 규칙 · ARCH-001"
+run = "node --test tests/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "tests/*.test.mjs", ".dependency-cruiser.cjs"]
+outputs = { auto = true }
+
+["test"]
+description = "빠른 기본: 단위 전체(병렬·캐시)"
+depends = ["test:editorial", "test:paseo", "test:n8n", "test:cli", "test:runtime", "test:arch"]
+
+# ── 통합 (무거움) ──
+["test:n8n:runtime"]
+description = "격리 n8n 실제 실행"
+run = "nice -n 10 node automation/n8n/tests/n8n-runtime.mjs"
+sources = ["automation/n8n/**/*.mjs", "automation/contracts/**/*.mjs", "automation/editorial/domain/**/*.mjs"]
+outputs = { auto = true }
+
+["test:flow"]
+description = "격리 n8n + fixture 제공자 글쓰기 흐름"
+run = "nice -n 10 node automation/paseo/tests/n8n-flow.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/paseo/tests/n8n-flow.mjs"]
+outputs = { auto = true }
+
+["test:e2e"]
+description = "PC·모바일 브라우저 전체(캐시) · 일부만은 test:e2e:quick 또는 pnpm exec playwright"
+depends = ["build"]
+run = "nice -n 10 pnpm exec playwright test --config playwright.ai-writing.config.ts"
+sources = ["automation/**/*", "!automation/*/tests/*.test.mjs", "tests/*.{ts,spec.ts}", "playwright.ai-writing.config.ts", ".local/editorial-web/index.html"]
+outputs = { auto = true }
+
+["test:e2e:quick"]
+description = "PC 브라우저만 · 화면 수정 중 빠른 확인(캐시 없음)"
+depends = ["build"]
+run = "nice -n 10 pnpm exec playwright test --config playwright.ai-writing.config.ts --project desktop"
+
+["verify"]
+description = "커밋 전 전체: 정적·단위·통합·e2e · 작업별 시간 예산 대조 · 전체 5분 이내 · TIME-001 · 실제 모델 실행은 포함하지 않음"
+run = "node tests/verify.mjs"

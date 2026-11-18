@@ -1,17 +1,33 @@
 import { randomUUID } from "node:crypto";
+import { FIGURE_LIMITS } from "../contracts/figure.mjs";
 import {
   advanceRequestSchema,
   createRequestSchema,
   requestObjectSchema,
 } from "../contracts/requests.mjs";
-import { toTxt } from "../contracts/txt.mjs";
 import { DEFAULT_DIRECTION, directionSchema } from "../contracts/writing-modes.mjs";
-import { flowIssue } from "./domain/index.mjs";
-import { pendingState as pending, recordEvent, runMonitor, stageName } from "./monitor.mjs";
+import { continuesStage, flowIssue } from "./domain/index.mjs";
+import { exportArticle, exportOptionsSchema } from "./export/index.mjs";
+import {
+  failureReason,
+  pendingState as pending,
+  recordEvent,
+  runMonitor,
+  stageName,
+  workStage,
+} from "./monitor.mjs";
 import { failRun, runAction } from "./service/actions.mjs";
 import { observeActivity } from "./service/activity.mjs";
+import { aiFor, DEFAULT_AI } from "./service/ai-policy.mjs";
+import { figureFile } from "./service/figures.mjs";
 import { executionHistory } from "./service/history.mjs";
-import { DEFAULT_AI, EDITORIAL_LIMITS, fail, userTransition } from "./service/lifecycle.mjs";
+import {
+  EDITORIAL_LIMITS,
+  fail,
+  resetBudget,
+  runLimitMs,
+  userTransition,
+} from "./service/lifecycle.mjs";
 import { completionNotice, displayedDraft, presented, runView, titleOf } from "./service/view.mjs";
 
 export class EditorialService {
@@ -41,6 +57,7 @@ export class EditorialService {
     return this.store
       .list()
       .filter((r) => !r.archivedAt)
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
       .map((r) => ({
         id: r.id,
         title: titleOf(r),
@@ -49,6 +66,7 @@ export class EditorialService {
         label: runMonitor(r, this.now()).label,
         needsCompletion: flowIssue(r.state) !== null,
         completionReason: completionNotice(r.state),
+        updatedAt: r.updatedAt ?? null,
       }));
   }
   get(id) {
@@ -149,9 +167,10 @@ export class EditorialService {
       this.save(run);
       if (!pending(run.state) || run.issue) return { id, continue: false };
       if (!run.pending) {
+        const sameStage = continuesStage(run.state);
         if (
-          run.callsUsed >= run.maxCalls ||
-          this.now() - run.startedAt > EDITORIAL_LIMITS.maxRunMs
+          (!sameStage && run.callsUsed >= run.maxCalls) ||
+          this.now() - run.startedAt > runLimitMs(run.state)
         ) {
           this.failure(
             run,
@@ -159,15 +178,21 @@ export class EditorialService {
           );
           return { id, continue: false };
         }
-        run.callsUsed += 1;
+        if (!sameStage) run.callsUsed += 1;
         run.pending = {
           body: {
             state: run.state,
             ai: {
               ...run.ai,
+              ...aiFor(run.state, run.ai),
+              // 제한은 서버 현재 설정이 원천 · 작업 생성 시 저장된 값은 제한 변경 전 것일 수 있음
+              maxDurationMs:
+                run.state.figure?.phase === "generate"
+                  ? FIGURE_LIMITS.generateMs
+                  : this.ai.maxDurationMs,
               callsUsed: run.callsUsed,
               maxCalls: run.maxCalls,
-              maxRunMs: EDITORIAL_LIMITS.maxRunMs,
+              maxRunMs: runLimitMs(run.state),
               startedAt: run.startedAt,
             },
           },
@@ -178,37 +203,44 @@ export class EditorialService {
         if (!run.pending.jobId) {
           const job = await this.jobs.create(run.pending.body);
           run.pending.jobId = job.id;
-          recordEvent(
-            run,
-            this.now(),
-            "ai_requested",
-            `${stageName(run.state.status === "waiting_route" ? "route" : run.state.stage)} 요청`,
-            { jobId: job.id },
-          );
+          recordEvent(run, this.now(), "ai_requested", `${stageName(workStage(run.state))} 요청`, {
+            jobId: job.id,
+          });
           this.save(run);
         }
         const job = await this.jobs.poll(run.pending.jobId);
         if (job.status === "completed") {
-          recordEvent(
-            run,
-            this.now(),
-            "ai_completed",
-            `${stageName(run.state.status === "waiting_route" ? "route" : run.state.stage)} 완료`,
-            { jobId: job.id },
-          );
+          recordEvent(run, this.now(), "ai_completed", `${stageName(workStage(run.state))} 완료`, {
+            jobId: job.id,
+          });
+          const revision = run.state.revision;
           run.state = userTransition(run.state, job.event);
+          // 요구사항 가드가 새 회차를 열면 새 실행 예산 · ADR-0007
+          if (run.state.revision > revision) {
+            resetBudget(this, run);
+            recordEvent(run, this.now(), "auto_correction", "요구사항 미충족 자동 재작성", {
+              reason: run.state.feedback,
+            });
+          }
+          // 단계 규칙(재시도 상한 등)으로 멈춘 실패도 기록에 남김 · 사용량 보기가 거부로 집계
+          if (run.state.status === "failed")
+            recordEvent(run, this.now(), "failed", "실패", { reason: run.state.error });
           if (run.state.status === "awaiting_user")
             recordEvent(run, this.now(), "ready", "초안 준비됨");
+          if (run.state.status === "awaiting_brief")
+            recordEvent(run, this.now(), "brief_ready", "수정 해석 확인 대기");
+          // 준비됨 ≠ 확인됨: 사람의 선택·확인은 별도 기록 · FIGURE-001
+          if (run.state.status === "awaiting_figure_choice")
+            recordEvent(run, this.now(), "figure_candidates_ready", "시각자료 위치 후보 준비됨");
+          if (run.state.status === "awaiting_figure_review")
+            recordEvent(run, this.now(), "figures_ready", "시각자료 준비됨 · 확인 대기");
           run.pending = null;
           this.save(run);
         } else if (job.status === "failed") {
           run.pending = null;
-          this.failure(
-            run,
-            job.failureKind === "usage_limit"
-              ? "AI 사용 한도에 도달했습니다. 한도 회복 후 이어가기를 눌러 주세요."
-              : "AI 작업을 완료하지 못했습니다. 이어가기로 다시 시도해 주세요.",
-          );
+          // 어디서(단계)·왜(실패 종류)만 · 제공자 원문 오류는 LIVE-001에 따라 비노출
+          const where = stageName(workStage(run.state));
+          this.failure(run, `${where} 단계에서 멈춤 · ${failureReason(job.failureKind)}`);
         } else if (["permission", "needs_attention"].includes(job.status)) {
           run.issue =
             "AI 실행에 확인이 필요합니다. 실행 기록에서 확인 후 상태 다시 확인을 눌러 주세요.";
@@ -229,8 +261,8 @@ export class EditorialService {
       return { id, continue: pending(run.state) && !run.issue };
     });
   }
-  action(id, input) {
-    return runAction(this, id, input);
+  action(id, input, actor = "user") {
+    return runAction(this, id, input, actor);
   }
   // shortcut: 목록에서만 숨기고 원고·이력·AI 작업 파일은 보존, 저장 용량 문제가 생기면 영구 삭제·파일 정리 추가
   archive(id) {
@@ -245,18 +277,41 @@ export class EditorialService {
       return { id, archived: true };
     });
   }
-  download(id, revision) {
+  restore(id) {
+    return this.locked(id, async () => {
+      const run = this.store.get(id);
+      if (run.archivedAt) {
+        delete run.archivedAt;
+        recordEvent(run, this.now(), "restored", "목록에 복원");
+        this.save(run);
+      }
+      return { id, archived: false };
+    });
+  }
+  figure(id, figureId) {
+    return figureFile(this.store.get(id), figureId);
+  }
+  // 내보내기: 지정 회차 본문 + 현재 회차에서 사람이 확인한 시각자료만 · 준비됨(확인 전)은 넣지 않음
+  export(id, { revision, ...options } = {}) {
     const run = this.store.get(id),
       state = run.state;
     const target = Number(revision ?? displayedDraft(state).revision ?? state.revision);
-    const text =
-      target === state.revision && (presented(state) || flowIssue(state))
-        ? state.artifacts?.draft?.output?.text
-        : state.history?.find((h) => h.revision === target)?.artifacts?.draft?.output?.text;
-    if (typeof text !== "string" || !text) fail("다운로드할 초안이 아직 없습니다.", 409);
-    return {
-      text: toTxt(text),
-      filename: `article-${run.id}-r${target}.txt`,
-    };
+    const current = target === state.revision && (presented(state) || flowIssue(state));
+    const text = current
+      ? state.artifacts?.draft?.output?.text
+      : state.history?.find((h) => h.revision === target)?.artifacts?.draft?.output?.text;
+    if (typeof text !== "string" || !text) fail("내보낼 초안이 아직 없습니다.", 409);
+    const parsed = exportOptionsSchema.safeParse(options);
+    if (!parsed.success) fail("내보내기 형식을 확인해 주세요.");
+    const figures =
+      current && state.figure?.phase === "confirmed" ? (state.figure.items ?? []) : [];
+    return exportArticle(
+      { id: run.id, title: titleOf(run), revision: target, text, figures },
+      parsed.data,
+    );
+  }
+  download(id, revision) {
+    const file = this.export(id, { revision, format: "txt" });
+    return { text: file.body, filename: file.filename };
   }
 }

@@ -1,78 +1,187 @@
-import { READER_LEVELS, sectionMode, WRITING_MODES } from "../contracts/writing-modes.mjs";
+import {
+  READER_LEVELS,
+  sectionMode,
+  usesStoryCard,
+  WRITING_MODES,
+} from "../contracts/writing-modes.mjs";
+import { requirementValue } from "../editorial/domain/index.mjs";
 
+// 글쓰기 규칙의 단일 정의: 이해(P1~P6, RES-002) 위에 끌기·남기기·보이기(S1~S10, RES-007)를 얹음
 // RES-004 장르 경계 · RES-005 생성·검토 규칙. 각 묶음은 해당 mode 구간에만 적용한다.
+// 과장어 예시: 초고 규칙·칸 통과 기준이 같은 목록을 보여 준다 · 과장인지는 검토가 문맥으로 판단(코드가 세지 않음)
+// shortcut: 출처 없는 최소 예시(RES-007 미결정), 독자 불만 사례가 쌓이면 근거 있는 목록으로 교체
+const HYPE_WORDS = [
+  "최고의",
+  "반드시",
+  "무조건",
+  "절대",
+  "완벽",
+  "누구나",
+  "단연",
+  "놀라운",
+  "혁신적",
+  "엄청난",
+];
+// 프롬프트에 싣는 과장어 안내 · 약속하는 말(제목·약속·닫는 줄)에 쓰지 않는다
+export const HYPE_HINT = `과장어(${HYPE_WORDS.join("·")})`;
+
+// 말투·시점은 글 전체에 하나 · 진단이 정하고(diagnose.preserveVoice) 독자에게 실릴 칸과 초고가 모두 그것을 따른다
+// 칸마다 종결어미를 따로 정하면 그대로 옮긴 초고에서 합니다체와 한다체가 섞인다(실제 모델 실측)
+export const VOICE = {
+  decide:
+    "preserveVoice에는 글 전체에 적용할 문체(종결어미)와 시점을 하나로 정하여 기재한다. 글감이나 원문에 지정된 바가 있으면 그 기준을 따르고, 지정된 바가 없으면 '합니다체·독자에게 직접'으로 정한다.",
+  slot: (names) =>
+    `${names} 항목은 본문에 그대로 수록되므로, diagnose.preserveVoice에서 정한 문체(종결어미)와 시점으로 기재한다.`,
+  draft:
+    "[문체 통일] 글 전체의 종결어미와 시점을 diagnose.preserveVoice에 지정된 하나로 통일한다. 제목·소제목·끝 정리 목록에도 동일하게 적용한다.",
+  check: "문체(종결어미)와 시점이 글 전체에서 하나로 통일되어 있는가",
+};
+
 export const BASE = {
   draft: [
-    "[공통] 핵심·조건·근거·목소리를 보존하고 군더더기를 덜어낸다.",
-    "[공통] 확인되지 않은 중요도·출제·수치는 확인되지 않음으로 명시한다.",
-    "[구간 적용] mode별 규칙은 해당 구간에만 적용한다. explain 설계 카드를 다른 mode에 강제하지 않는다.",
+    "[공통] 핵심 내용·조건·근거·원문의 목소리를 보존하고 불필요한 수식을 제거한다.",
+    "[공통] 사실 여부가 확인되지 않은 중요도·출제 정보·수치는 확인되지 않았음을 명확히 밝힌다.",
+    "[구간 적용] 각 mode별 규칙은 해당 mode의 구간에만 적용하며, explain 설계 카드를 다른 mode 구간에 강제하지 않는다.",
+    "[S4 쉬운 표현] 한 문장에 하나의 생각만 담는다. 독자가 알기 어려운 용어는 처음 등장할 때 괄호나 한 문장으로 풀이하고, 동일한 대상은 글의 끝까지 같은 명칭으로 지칭한다.",
+    VOICE.draft,
+    "[S5 대화체] 독자에게 직접 말하듯이 서술하되, 질책하거나 훈계하는 표현 대신 권유하는 표현을 사용한다.",
+    "[S9 구조화] 문단은 3~6문장으로 구성한다(다만, 강조를 위한 한 줄 문단은 허용한다). 목록은 대등한 항목을 열거할 때만 사용한다. 모든 구간은 outline의 title을 그대로 사용한 소제목으로 시작하고, 하위 마디는 subsections의 title을 그대로 사용한 한 단계 아래의 소제목으로 시작한다.",
+    `[S10 정직] ${HYPE_HINT}로 효과를 과장하지 않는다. 새로 구성한 인물이나 사례는 글머리에서 한 번만 가상임을 밝히되, 3인칭인 경우에는 인물명 앞에 '가상의 인물'을 붙이고 1인칭인 경우에는 둘째 문단에서 가상의 이야기임을 한 문장으로 명시한다. 그 이후 본문에서는 가상임을 반복하여 밝히지 않는다. 가상 장면에 포함된 숫자(개수·시간 등)는 장면 묘사 용도로만 사용하며, 효과·비율·통계처럼 사실적 근거로 오인될 수 있는 주장에는 사용하지 않는다.`,
+    "[본문 제외 사항] 자료에 근거가 없어 서술하지 못한 내용을 본문에 '자료에 나와 있지 않다'고 밝히지 않는다. 해당 내용은 본문에서 제외하고, 독자가 스스로 확인할 수 있는 방법이 있는 경우에는 그 방법을 안내한다.",
+    "[퇴고] 초고를 작성한 뒤 전체를 통독하면서 삭제하여도 의미가 통하는 문장과 중복 표현을 제거한다.",
   ],
   review: [
-    "[구간 적용] 해당 구간의 mode 규칙만 검토한다. explain 설계 카드를 다른 mode의 평가 기준으로 쓰지 않는다.",
-    "findings에 해당 원칙 ID(P1~P6)·구간·문제 표현·이유를 명시한다.",
-    "preservationCheck에 핵심을 독자 말로 3문장 재진술(paraphrase)하고 원문과 불일치를 표시한다. AI 대리 지표를 실제 독자 검증으로 주장하지 않는다.",
+    "[구간 적용] 해당 구간의 mode 규칙만 검토한다. explain 설계 카드를 다른 mode의 평가 기준으로 적용하지 않는다.",
+    "findings에 해당 기준 ID(P1~P6·S1~S10)·구간·문제 표현·이유를 명시한다.",
+    "preservationCheck에는 핵심 내용을 독자의 언어로 3문장으로 재진술(paraphrase)하고 원문과 불일치하는 지점을 표시한다. AI 기반의 대리 지표를 실제 독자 검증 결과인 것처럼 주장하지 않는다.",
   ],
 };
+
+// 이야기 카드 규칙: 카드를 쓰는 mode(procedure 제외) 구간이 하나라도 있을 때만
+export const STORY_RULES = {
+  draft: [
+    "[S 이야기 카드] procedure가 아닌 구간은 세 문단으로 구성한다. 첫째 문단에는 hook(구간의 첫 문장)과 cases의 장면을, 둘째 문단에는 keyPoint 풀이와 underline(**굵게** 표기하며 해당 구간에서 굵게 처리는 이 한 곳에 한한다)을, 셋째 문단에는 principleLine(구간 마지막의 한 줄 문단)을 배치한다. 다만, subsections가 있는 경우에는 셋째 문단인 principleLine을 하위 마디 안내 문단 뒤이자 첫 하위 소제목 앞에 배치하여 하위 마디로 구간을 마무리한다(하위 마디 뒤에 배치하면 마지막 하위 마디의 일부로 읽히기 때문이다). 하위 마디 내부의 항목 명칭은 굵게 표기할 수 있다.",
+    "[S 반복 금지] keyPoint 풀이는 장면이 보여 준 내용에서 한 단계 나아가 그 이유나 실행 방법을 설명한다. hook·장면·밑줄 문장을 어휘만 바꾸어 다시 서술하지 않는다.",
+    "[S 원문 유지] value.promise·hook·underline·principleLine은 구성 카드에 적힌 문장을 글자 그대로 사용한다(시스템이 문자열을 대조한다). 카드에 없는 사례나 원칙을 새로 추가하지 않으며, 카드에 해당 칸이 비어 있으면 그 요소는 생략한다.",
+  ],
+  review: [
+    "[S 이야기 카드] procedure 구간에는 S2·S3·S6·S7·S8 기준을 적용하지 않는다. 구성 카드의 각 칸이 초고에 반영되었는지는 draftMetrics.cardTransfer 값으로만 판단한다.",
+  ],
+};
+
+// 검토 점검표(S1~S10): 예/아니오로 답하는 질문 · 괄호 안은 근거로 인용할 코드 측정값(세거나 글자 대조한 것만) · 괄호가 없으면 본문을 읽고 판단 · story는 이야기 카드 구간 전용
+export const CHECKS = [
+  {
+    id: "S1",
+    ask: "제목과 글머리(첫 소제목 앞)에 독자가 글을 읽은 뒤 수행할 수 있는 일이 1문장으로 제시되어 있는가 (cardTransfer.titleMatches·promiseInLead)",
+  },
+  {
+    id: "S2",
+    story: true,
+    ask: "글이 주인공 한 사람의 장면(시간·장소와 관찰 가능한 행동)으로 시작하며 정의·배경 설명·약속 문장으로 시작하지 않는가",
+  },
+  {
+    id: "S3",
+    story: true,
+    ask: "구간 첫머리에 제시한 질문이나 주장에 대한 답이 같은 구간 안에 포함되어 있는가 (cardTransfer.missingHooks)",
+  },
+  {
+    id: "S4",
+    ask: "한 문장에 하나의 생각만 담겨 있으며 독자가 알기 어려운 용어가 처음 등장할 때 풀이되는가 (sentenceLength)",
+  },
+  {
+    id: "S5",
+    ask: `독자에게 직접 말하는 어조를 유지하고 질책하는 표현이 없으며 ${VOICE.check}`,
+  },
+  {
+    id: "S6",
+    story: true,
+    ask: "구간마다 하나의 원칙에 사례 1~3개가 대응하며, 사례가 평가나 요약이 아닌 구체적 장면(행동과 관찰 가능한 결과)으로 제시되고, 같은 내용이 구간 안에서 반복되지 않는가",
+  },
+  {
+    id: "S7",
+    story: true,
+    ask: "구간마다 굵게 표기한 밑줄 문장이 1개씩 존재하는가 (sections[].bold·cardTransfer.missingUnderlines)",
+  },
+  {
+    id: "S8",
+    story: true,
+    ask: "각 구간이 한 줄 원칙으로 마무리되고 글 끝 목록에 해당 문장들이 원문 그대로 취합되어 있는가 (cardTransfer.missingPrincipleLines·notInSummary)",
+  },
+  {
+    id: "S9",
+    ask: "모든 구간과 하위 마디가 구성 카드의 소제목으로 시작하고, 제목과 소제목만으로도 글의 전체 구조가 파악되며(형제 소제목이 동일한 형태를 유지함), 계층 단계를 건너뛰거나 하위 항목이 하나뿐인 마디가 없고, 각 문단이 6문장을 초과하지 않는가 (missingHeadings·headingTree·sections[].longParagraphs·longestParagraph)",
+  },
+  {
+    id: "R",
+    ask: "requirements의 요구사항(시스템이 검사하는 분량 제외: 서술 방식·독자 수준·어조·범위·금지 사항 등)을 모두 준수하였는가",
+  },
+  {
+    id: "S10",
+    ask: "과장어가 사용되지 않았으며 새로 구성한 인물이나 사례가 가상임이 본문에서 한 번 명시되었고 자료에 없는 사실이나 출처가 포함되지 않았는가",
+  },
+];
 
 export const MODE_RULES = {
   explain: {
     draft: [
-      "[explain P2] 도입에 정의 1문장·읽고 할 수 있는 일·다룰 개념을 제시한다.",
-      "[explain P4] 비유는 outline.analogySystem 하나만 사용하고 한계를 밝힌다. 새 비유를 추가하지 않는다.",
-      "[explain P3·P4] 구간마다 개념 하나, 의존 순서대로 정의→비유 대응→이유→따라가는 예제를 쓴다. 숙련 독자는 예제를 생략할 수 있다.",
-      "[explain P5] audience.misconceptions는 직접 반박하고 homonyms는 이름만 같고 대상이 다름을 밝힌다.",
-      "[explain P1·P2] 전문어 첫 등장 풀이·1대상 1이름을 지키고 소제목·캡션은 결론 문장으로 쓴다.",
-      "[explain P1·P6] optional 구간은 본문 흐름 밖 더 알아보기로, checkQuestion은 본문만으로 답할 수 있게 쓴다.",
+      "[explain P2] 핵심 개념을 정의하는 1문장은 그 개념을 다루는 구간의 첫 사례 뒤에 배치한다. 글머리는 정의로 시작하지 않고 도입 장면과 약속으로 시작한다.",
+      "[explain P4] 비유는 outline.analogySystem에 정해진 하나만 사용하고 그 한계를 명시한다. 새로운 비유를 추가하지 않는다.",
+      "[explain P3·P4] 구간마다 하나의 개념을 다루며, 의존 순서에 따라 정의→비유 대응→이유→따라가는 예제 순으로 서술한다. 다만, 숙련 독자 대상인 경우에는 예제를 생략할 수 있다.",
+      "[explain P5] audience.misconceptions에 제시된 오해는 직접 반박하고, homonyms에 제시된 동음이의 개념은 명칭만 같을 뿐 대상이 다름을 명시한다.",
+      "[explain P1·P2] 전문 용어의 첫 등장 시 풀이와 단일 대상·단일 명칭 원칙을 준수한다. 구간 소제목은 이름표와 결론을 담아 작성하고, 하위 소제목은 짧은 이름표로 작성하며, 캡션은 결론 문장으로 작성한다.",
+      "[explain P1·P6] optional 구간은 핵심 흐름 밖의 심화 안내로 구성하고, checkQuestion은 본문 내용만으로 답할 수 있도록 작성한다.",
     ],
     review: [
-      "[explain P1·P2] 독자 수준·용어 풀이·동일 대상 이름·도입 지도·결론형 소제목을 확인한다.",
-      "[explain P3·P4] 구간당 한 개념·의존 순서·단일 비유의 대응과 한계·예제를 설계 카드와 대조한다. 숙련 독자의 예제 생략은 허용한다.",
-      "[explain P5·P6] 오해 반박·동음 개념 구분·본문으로 답할 수 있는 확인 질문을 확인한다.",
+      "[explain P1·P2] 독자 수준 적합성, 용어 풀이, 동일 대상에 대한 명칭 일관성, 도입부의 전체 지도 제시 및 계층별 소제목 역할(구간: 이름표와 결론, 하위: 짧은 이름표)을 확인한다.",
+      "[explain P3·P4] 구간당 단일 개념 유지 여부, 의존 순서, 단일 비유의 대응과 한계 및 예제를 설계 카드와 대조한다. 다만, 숙련 독자 대상인 경우의 예제 생략은 허용한다.",
+      "[explain P5·P6] 오해에 대한 반박, 동음 개념의 구분 및 본문만으로 답할 수 있는 확인 질문의 적정성을 확인한다.",
     ],
   },
   procedure: {
     draft: [
-      "[procedure P2·P3] 지도를 먼저 주고 한 단계에 한 행동을 쓴다.",
-      "[procedure P5·P6] 함정 경고·확인 방법을 제공한다. 비유 체계·캐릭터는 가져오지 않는다.",
+      "[procedure P2·P3] 전체 절차의 지도를 먼저 제시하고, 각 단계는 번호 목록으로 작성한다. 하나의 번호에는 하나의 행동만 담고, 행동 뒤에는 그 결과로 화면이나 실제 작업 환경에서 확인되는 변화를 기재한다.",
+      "[procedure P5·P6] 주의해야 할 함정 경고와 결과 확인 방법을 제공한다. 비유 체계·캐릭터는 사용하지 않는다.",
     ],
     review: [
-      "[procedure P2·P3·P5·P6] 지도·단계별 한 행동·함정 경고·확인 방법을 검토한다. 비유 체계·캐릭터를 요구하지 않는다.",
+      "[procedure P2·P3·P5·P6] 전체 지도, 단계별 단일 행동, 함정 경고 및 확인 방법의 포함 여부를 검토한다. 비유 체계·캐릭터는 요구하지 않는다.",
     ],
   },
   argue: {
     draft: [
-      "[argue P2·P5] 결론 먼저·근거 묶음·예상 반론을 구성한다. 수준 배지·연습 문제는 가져오지 않는다.",
+      "[argue P2·P5] 결론을 먼저 제시하고 근거 묶음과 예상 반론을 차례로 구성한다. 수준 배지·연습 문제는 사용하지 않는다.",
     ],
     review: [
-      "[argue P2·P5] 결론·근거 묶음·예상 반론을 검토한다. 수준 배지·연습 문제를 요구하지 않는다.",
+      "[argue P2·P5] 결론, 근거 묶음 및 예상 반론의 구성 여부를 검토한다. 수준 배지·연습 문제는 요구하지 않는다.",
     ],
   },
   narrate: {
     draft: [
-      "[narrate P1·P4] 구체 장면·군더더기 제거·목소리 보존을 따른다. 정의→비유→이유 틀·표는 가져오지 않는다.",
+      "[narrate P1·P4] 구체적인 장면 묘사, 불필요한 수식 제거 및 원문의 목소리 보존 원칙을 따른다. 정의→비유→이유 틀·표는 사용하지 않는다.",
     ],
     review: [
-      "[narrate P1·P4] 구체 장면·불필요한 표현·목소리 보존을 검토한다. 정의→비유→이유 틀·표를 요구하지 않는다.",
+      "[narrate P1·P4] 구체적인 장면 묘사, 불필요한 표현의 제거 여부 및 원문의 목소리 보존 여부를 검토한다. 정의→비유→이유 틀·표는 요구하지 않는다.",
     ],
   },
 };
 
 export const LEVEL_RULES = {
-  beginner: ["[독자 P1] 입문: 사전지식 가정을 줄이고 낯선 용어·필수 전제를 충분히 풀이한다."],
-  intermediate: ["[독자 P1] 중급: 기본 지식의 반복 풀이를 줄이고 새 개념·연결·오해에 집중한다."],
+  beginner: [
+    "[독자 P1] 입문 수준에서는 독자의 사전지식에 대한 가정을 최소화하고, 낯선 용어와 필수 전제를 충분히 풀이한다.",
+  ],
+  intermediate: [
+    "[독자 P1] 중급 수준에서는 기본 지식에 대한 반복적인 풀이를 줄이고 새로운 개념, 개념 간 연결 및 오해 해소에 집중한다.",
+  ],
   expert: [
-    "[독자 P1] 숙련: 풀이 밀도를 낮추고 추론 여지를 남긴다. concrete·walkthrough는 선택이다.",
+    "[독자 P1] 숙련 수준에서는 기초 풀이의 비중을 낮추고 독자가 스스로 추론할 여지를 남긴다. concrete와 walkthrough는 선택 사항으로 둔다.",
   ],
 };
 
 export function resolveDirection(state) {
   const diagnose = state.artifacts?.diagnose?.output;
-  const primaryMode = WRITING_MODES.includes(state.direction?.mode)
-    ? state.direction.mode
-    : diagnose?.primaryMode;
-  const readerLevel = READER_LEVELS.includes(state.direction?.readerLevel)
-    ? state.direction.readerLevel
-    : diagnose?.readerLevel;
+  // 요구 장부 값 우선 · 없으면 진단 판단 · ADR-0016
+  const primaryMode = requirementValue(state, "mode") ?? diagnose?.primaryMode;
+  const readerLevel = requirementValue(state, "readerLevel") ?? diagnose?.readerLevel;
   const modes = new Set([
     primaryMode,
     ...(state.artifacts?.outline?.output?.sections ?? []).map(sectionMode),
@@ -83,11 +192,18 @@ export function resolveDirection(state) {
   };
 }
 
+const usesStory = (direction) => direction.modes.some(usesStoryCard);
+
 export function seasoningRules(stage, direction) {
   if (stage !== "draft" && stage !== "review") return [];
   return [
     ...BASE[stage],
+    ...(usesStory(direction) ? STORY_RULES[stage] : []),
     ...direction.modes.flatMap((mode) => MODE_RULES[mode][stage]),
     ...(LEVEL_RULES[direction.readerLevel] ?? []),
   ];
 }
+
+// 이번 글에 적용할 점검 항목 · 이야기 카드 구간이 없으면 story 항목 제외
+export const reviewChecks = (direction) =>
+  CHECKS.filter((check) => !check.story || usesStory(direction));

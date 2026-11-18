@@ -5,7 +5,7 @@
 - 애플리케이션: editorial/index → service · lifecycle·actions·view · 요청 멱등성·AI 호출 한도·중단 확인·명시적 보완
 - 저장·HTTP: editorial/store·http · SQLite·쿠키·worker 인증·Markdown·TXT · 추적은 monitor
 - 화면: editorial/ui의 compose·workspace·tracking·shared · React·TypeScript · Vite·Tailwind · HTTP 계약만 사용
-- AI 어댑터: paseo/index → Jobs·prompts · 공통 SDK 실행·결과 파싱·확인된 취소 · 편집 정책 소유 없음
+- AI 어댑터: paseo/index → Jobs · prompts/(틀·단계 정의·조립)·seasoning(글쓰기 규칙)·metrics(코드 지표)·results(결과 파싱) · 공통 SDK 실행·확인된 취소 · 편집 정책 소유 없음 · ADR-0013
 - 전달 어댑터: n8n/editorialWorkflow · 작업 ID·continue·대기 · Code 노드 없음
 - 에이전트 CLI: cli/ain → commands → client · HTTP 계약만 사용 · 토큰은 runtime/server가 생성 · AGENT-001
 - 조립·기동: runtime/server·start · 모듈 생성·저장/실행/전달 포트 연결·자식 프로세스 생명주기

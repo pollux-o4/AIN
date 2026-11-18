@@ -4,9 +4,11 @@ import {
   errorMessage,
   type HistoryRecord,
   type Run,
+  type Usage,
   type WritingJourneyEntry,
 } from "../shared/api";
 import { StageOutput } from "../shared/StageOutput";
+import { UsageSummary } from "./UsageSummary";
 import { WritingJourney } from "./WritingJourney";
 
 const time = (at: number) => new Date(at).toLocaleString("ko-KR", { hour12: false });
@@ -15,6 +17,7 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
     id: string;
     records: HistoryRecord[];
     journey: WritingJourneyEntry[];
+    usage: Usage;
   } | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -26,7 +29,13 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
     setError("");
     void api.history(run.id).then(
       (data) => {
-        if (!disposed) setLoaded({ id: run.id, records: data.records, journey: data.journey });
+        if (!disposed)
+          setLoaded({
+            id: run.id,
+            records: data.records,
+            journey: data.journey,
+            usage: data.usage,
+          });
       },
       (cause: unknown) => {
         if (!disposed) setError(errorMessage(cause));
@@ -54,6 +63,7 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
         <p id="execution-info">
           {run.model} · 이번 요청 {run.callsUsed}/{run.maxCalls}회
         </p>
+        {loaded?.id === run.id && <UsageSummary usage={loaded.usage} />}
         <div
           id="execution-links"
           className="flex flex-wrap gap-x-[18px] gap-y-2.5"

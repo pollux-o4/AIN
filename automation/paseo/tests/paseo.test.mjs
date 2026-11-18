@@ -5,6 +5,7 @@ import test from "node:test";
 import { transition } from "../../editorial/domain/index.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 import { Jobs } from "../jobs.mjs";
+import { GUARD } from "../prompts/frame.mjs";
 
 const valid = JSON.stringify({
   purpose: "검증 fixture",
@@ -129,10 +130,10 @@ test("provider/model selection is explicit; changing provider creates a distinct
   const b = await t.jobs.create({ state, ai: { provider: "other", model: "other-model" } });
   assert.notEqual(a.id, b.id);
   assert.equal(t.calls[1].config.provider, "other/other-model");
-  assert.equal(t.calls[0].prompt.includes("도구·파일·쉘·위임·발행 금지"), true);
+  assert.equal(t.calls[0].prompt.includes(GUARD.noTools), true);
 });
-test("finished sessions are archived so idle provider processes do not accumulate", async () => {
-  const ai = { provider: "antigravity", model: "fixture-model" };
+test("finished non-reused sessions are archived so idle provider processes do not accumulate", async () => {
+  const ai = { provider: "other", model: "other-model" }; // 재사용 제공자는 다음 단계용으로 세션 유지
   for (const [statuses, final] of [
     [[{ status: "timeout" }, { status: "idle", lastMessage: valid }], "completed"],
     [[{ status: "timeout" }, { status: "idle", lastMessage: "not json" }], "failed"],

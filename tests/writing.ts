@@ -23,7 +23,7 @@ export async function loadRun(
 }
 
 export async function ready(page: Page) {
-  // Eight stages require two worker observations each, separated by the real n8n 2s Wait node.
+  // 화면 e2e는 n8n과 같은 계약의 프로세스 내 전달자 사용 · 느린 fixture(중단·실시간) 여유 포함
   await expect(page.getByRole("status")).toHaveText("초안 준비됨", { timeout: 45000 });
   await expect(page.getByRole("link", { name: "TXT 내려받기", exact: true })).toBeVisible();
   return loadRun(page);
@@ -34,7 +34,14 @@ export function expectCommand(command: Action, type: Action["type"], expectedVer
   expect(command.expectedVersion).toBe(expectedVersion);
   expect(command.operationId).toMatch(/^[a-f0-9-]{36}$/);
   expect(Object.keys(command).sort()).toEqual(
-    ["type", "expectedVersion", "operationId", ...(type === "feedback" ? ["feedback"] : [])].sort(),
+    [
+      "type",
+      "expectedVersion",
+      "operationId",
+      ...(["feedback", "revise_brief"].includes(type) ? ["feedback"] : []),
+      ...(type === "approve_brief" && "edit" in command ? ["edit"] : []),
+      ...("figures" in command ? ["figures"] : []),
+    ].sort(),
   );
 }
 
@@ -43,12 +50,34 @@ export async function clickAction(page: Page, label: string, type: Action["type"
   const responsePromise = page.waitForResponse((response) =>
     response.url().endsWith(`/runs/${before.id}/actions`),
   );
-  await page.getByRole("button", { name: label, exact: true }).click();
+  const button = page.getByRole("button", { name: label, exact: true });
+  // 접힌 도크 안 버튼은 투명할 뿐 visible로 잡히므로 inert 여부로 판단
+  if (await button.evaluate((el) => Boolean(el.closest("[inert]")))) await openDock(page, "확인");
+  await button.click();
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
   const command: Action = response.request().postDataJSON();
   expectCommand(command, type, before.version);
   return { command, before, after: (await response.json()) as Run };
+}
+
+// 사용자 입력은 떠 있는 작업 도크에서 받는다(DOCK-001) · 접혀 있으면 펼치고 탭이 있으면 고른다
+export async function openDock(page: Page, tab: "확인" | "실시간" | "수정 요청") {
+  const toggle = page.locator("#work-dock .dock-toggle");
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  const tabButton = page.getByRole("tab", { name: tab, exact: true });
+  if (await tabButton.isVisible()) await tabButton.click();
+}
+
+export async function writeFeedback(page: Page, text: string) {
+  await openDock(page, "수정 요청");
+  await page.getByLabel("어떻게 다듬을까요?").fill(text);
+}
+
+// 수정 요청 뒤 편집장 해석을 사람이 승인 · ADR-0010
+export async function approveBrief(page: Page) {
+  await expect(page.locator("#brief-approve")).toBeVisible({ timeout: 45000 });
+  return clickAction(page, "이대로 진행", "approve_brief");
 }
 
 export async function expectFullResults(page: Page, run: Run) {
@@ -63,7 +92,7 @@ export async function expectFullResults(page: Page, run: Run) {
   expect(run.monitor.pipeline.map((step) => [step.stage, step.status])).toEqual(
     stages.map(([stage]) => [stage, "done"]),
   );
-  await expect(page.locator("#pipeline > li > span")).toHaveText(stages.map(([, name]) => name));
+  await expect(page.locator("#pipeline > li span")).toHaveText(stages.map(([, name]) => name));
   await expect(page.locator('#pipeline > li[data-status="done"]')).toHaveCount(8);
   await expect(page.locator("#artifacts > details")).toHaveCount(8);
   for (const [stage, name, field] of stages) {

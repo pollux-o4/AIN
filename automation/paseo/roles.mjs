@@ -11,6 +11,9 @@ export const STAGE_ROLES = Object.freeze({
   research: "researcher",
   draft: "writer",
   review: "reviewer",
+  // 시각자료 위치 제안·생성 · 본문 담당과 분리 · FIGURE-001
+  figure_plan: "illustrator",
+  figure: "illustrator",
 });
 export const roleOf = (/** @type {{type: string, stage?: string}} */ action) =>
   STAGE_ROLES[action.type === "request_route" ? "route" : (action.stage ?? "")] ?? null;
@@ -20,7 +23,7 @@ const digest = (/** @type {unknown} */ value) =>
 
 /**
  * 자료 항목별 지문. 재사용 담당에게는 아직 전달하지 않은 지문의 항목만 보낸다.
- * 키: source·idea·direction·feedback·baseline·draftCharacterCount·artifacts.<stage>
+ * 키: source·idea·direction·feedback·baseline·draftCharacterCount·draftMetrics·requirements·brief·previousSection·artifacts.<stage>
  * @param {Record<string, any>} context promptContext 결과
  */
 export function contextItems(context) {

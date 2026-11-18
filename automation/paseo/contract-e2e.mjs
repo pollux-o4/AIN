@@ -5,25 +5,58 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { connectLocalPaseo } from "../../../paseo/sdk.mjs";
+import { AI_MODELS, escalated } from "../contracts/ai-models.mjs";
 import { toTxt } from "../contracts/txt.mjs";
-import { directionSchema } from "../contracts/writing-modes.mjs";
-import { flowIssue, STAGES, transition } from "../editorial/domain/index.mjs";
+import { directionSchema, sectionMode, usesStoryCard } from "../contracts/writing-modes.mjs";
+import {
+  flowIssue,
+  readerLength,
+  requirements,
+  STAGES,
+  transition,
+} from "../editorial/domain/index.mjs";
 import { EditorialService, EditorialStore } from "../editorial/index.mjs";
 import { startIsolatedN8n } from "../n8n/testing/runtime.mjs";
 import { makeServer } from "../runtime/server.mjs";
 import { Jobs } from "./index.mjs";
+import { liveCase } from "./live/cases.mjs";
+import { requireLiveConsent } from "./live/consent.mjs";
+import { draftMetrics } from "./metrics.mjs";
 import { usageSummary } from "./usage.mjs";
 
 const AI = {
-  provider: "antigravity",
-  model: "gemini-3.8-flash-medium",
+  provider: AI_MODELS.standard.provider,
+  model: AI_MODELS.standard.model,
   enabled: true,
-  maxDurationMs: 120000,
+  maxDurationMs: 300000, // 운영 요청 상한과 같게(OPS-003)
 };
 const terminal = (job) => ["completed", "failed"].includes(job.status);
 
-// 실제 비용 호출은 명시적 실행 때만: 연결 확인 1회 성공 후 합성 글 8회, 재시도·대체 없음.
-export async function runLiveVerification({ article = true } = {}) {
+// 실제 비용 호출은 명시적 실행 때만: 연결 확인 1회 성공 후 합성 글 1편, 대체 모델 없음.
+// 글 호출 상한: 필수 8단계 + 구간별 초고·코드 거부에 따른 다시 쓰기·자동 재작성(ADR-0007·0009·0013)
+const ARTICLE_CALL_LIMIT = 30;
+const ARTICLE_DEADLINE_MS = 1800000;
+// 연결 확인 한도: 새 세션 첫 호출 실측 38~49초(2026-11-14) · 45초 한도에서는 간헐 실패
+const PILOT_RUN_MS = 90000;
+const PILOT_DEADLINE_MS = 120000;
+// 격리 n8n 포트: 반복 평가가 여러 실행을 나란히 돌릴 때 실행마다 다른 포트를 넘긴다
+const N8N_PORT = 5738;
+/**
+ * @param {object} [options]
+ * @param {boolean} [options.article] 거짓이면 연결 확인만
+ * @param {boolean} [options.pilot] 거짓이면 연결 확인 생략(반복 평가가 한 번만 확인)
+ * @param {import("./live/cases.mjs").LiveCase} [options.live] 쓸 글감 · 기본은 수필 사례
+ * @param {number} [options.port] 격리 n8n 포트
+ * @param {boolean} [options.quiet] 보고서를 표준 출력에 싣지 않음
+ */
+// shortcut: 준비·연결 확인·글 실행·정리가 한 함수에 있음, 실제 모델로 회귀 확인할 수 있을 때 단계별 함수로 분리
+export async function runLiveVerification({
+  article = true,
+  pilot: runPilot = true,
+  live = liveCase("narrate"),
+  port = N8N_PORT,
+  quiet = false,
+} = {}) {
   assert.equal(typeof article, "boolean");
   assert.equal(STAGES.length, 8);
   await mkdir(resolve(".local"), { recursive: true, mode: 0o700 });
@@ -105,34 +138,41 @@ export async function runLiveVerification({ article = true } = {}) {
       ),
       "기본 제공자·모델 연결을 먼저 확인해 주세요.",
     );
-    report.phase = "pilot";
-    const marker = `contract-pilot-${randomBytes(12).toString("hex")}`;
-    const state = transition(null, {
-      id: marker,
-      articleId: marker,
-      actor: "user",
-      type: "start",
-      idea: "짧은 연결 확인",
-    }).state;
-    const pilot = await jobs.create({ state, ai: { ...AI, pilot: true, maxDurationMs: 45000 } });
-    const pilotDeadline = Date.now() + 60000;
-    let checked = pilot;
-    while (!terminal(checked) && !["needs_attention", "permission"].includes(checked.status)) {
-      signal.throwIfAborted();
-      assert.ok(Date.now() < pilotDeadline, "Pilot timed out");
-      await delay(500, undefined, { signal });
-      checked = await jobs.poll(pilot.id);
+    if (runPilot) {
+      report.phase = "pilot";
+      const marker = `contract-pilot-${randomBytes(12).toString("hex")}`;
+      const state = transition(null, {
+        id: marker,
+        articleId: marker,
+        actor: "user",
+        type: "start",
+        idea: "짧은 연결 확인",
+      }).state;
+      const pilot = await jobs.create({
+        state,
+        ai: { ...AI, pilot: true, maxDurationMs: PILOT_RUN_MS },
+      });
+      const pilotDeadline = Date.now() + PILOT_DEADLINE_MS;
+      let checked = pilot;
+      while (!terminal(checked) && !["needs_attention", "permission"].includes(checked.status)) {
+        signal.throwIfAborted();
+        assert.ok(Date.now() < pilotDeadline, "Pilot timed out");
+        await delay(500, undefined, { signal });
+        checked = await jobs.poll(pilot.id);
+      }
+      assert.equal(checked.status, "completed", "연결 확인 실패: 글 실행을 시작하지 않습니다.");
+      assert.equal(checked.event.output.marker, marker);
+      assert.equal((await readJobs()).length, 1);
     }
-    assert.equal(checked.status, "completed", "연결 확인 실패: 글 실행을 시작하지 않습니다.");
-    assert.equal(checked.event.output.marker, marker);
-    assert.equal((await readJobs()).length, 1);
     signal.throwIfAborted();
     if (article) {
       report.phase = "article";
-      // 수정 회차 검증 시 경로 판단 1회 + 재생성 단계 최대 8회를 더 허용한다.
-      limit = STAGES.length + 1 + (process.env.CONTRACT_FEEDBACK ? STAGES.length + 1 : 0);
+      // 수정 회차 검증 시 같은 상한을 한 번 더 허용한다.
+      limit = calls + ARTICLE_CALL_LIMIT * (process.env.CONTRACT_FEEDBACK ? 2 : 1);
+      report.case = live.id;
+      const articleStarted = Date.now();
       const token = randomBytes(32).toString("hex");
-      const n8nUrl = "http://127.0.0.1:5738";
+      const n8nUrl = `http://127.0.0.1:${port}`;
       store = new EditorialStore(join(root, "editorial.sqlite"));
       editorial = new EditorialService({ store, jobs, ai: AI, dispatch: (id) => n8n.dispatch(id) });
       server = makeServer({ editorial, token, n8nUrl });
@@ -148,27 +188,28 @@ export async function runLiveVerification({ article = true } = {}) {
       await mkdir(n8nRoot, { mode: 0o700 });
       n8n = await startIsolatedN8n({
         root: n8nRoot,
-        port: 5738,
+        port,
         bridgeUrl: `http://127.0.0.1:${server.address().port}`,
         token,
       });
       signal.throwIfAborted();
-      // 선택: CONTRACT_DIRECTION="mode:readerLevel"로 사용자 지정 경로 검증. 없으면 자동 경로.
+      // 선택: CONTRACT_DIRECTION="mode:readerLevel"로 사용자 지정 경로 검증. 없으면 글감의 지정, 그것도 없으면 자동 경로.
       const [mode, readerLevel] = (process.env.CONTRACT_DIRECTION ?? "").split(":");
-      const direction = process.env.CONTRACT_DIRECTION
-        ? directionSchema.parse({ mode, readerLevel })
-        : undefined;
+      const chosen = process.env.CONTRACT_DIRECTION ? { mode, readerLevel } : live.direction;
+      const direction = chosen ? directionSchema.parse(chosen) : undefined;
       const started = await editorial.create({
         ...(direction ? { direction } : {}),
         requestId: `contract-${randomBytes(12).toString("hex")}`,
-        idea: "합성 검증용 한국어 수필 600~900자. 처음 요리를 해 보는 사람이 장보기 목록을 만들어 실수를 줄인 가상의 하루를 1인칭으로 써 주세요. 독자는 요리 초보자. 가상의 사례라는 점과 사람마다 준비가 다르다는 한계를 유지하고 실제 조사·의학·영양 조언·통계·출처는 만들지 마세요.",
-        source:
-          "합성 사례: 나는 주말에 처음 국을 만들려고 장보기 목록을 작성했다. 목록을 보고 재료를 준비하니 빠뜨린 것을 다시 사러 갈 일이 줄었다. 실제 인물·연구·통계가 아니다.",
+        idea: live.idea,
+        source: live.source,
       });
-      const deadline = Date.now() + 660000;
+      const deadline = Date.now() + ARTICLE_DEADLINE_MS;
       let view = editorial.get(started.id);
       while (view.status !== "awaiting_user") {
         signal.throwIfAborted();
+        // 멈춘 곳과 까닭(서비스가 사용자에게 보여 주는 문구 · 제공자 원문 오류 아님)을 보고서에 남긴다
+        if (view.issue || view.status === "failed")
+          report.stopped = view.issue ?? store.get(started.id).state.error ?? view.status;
         assert.equal(view.issue, null, "글 실행에 확인이 필요합니다.");
         assert.notEqual(view.status, "failed", "글 실행이 실패했습니다.");
         assert.ok(Date.now() < deadline, "Article timed out");
@@ -187,14 +228,20 @@ export async function runLiveVerification({ article = true } = {}) {
         assert.equal(design.readerLevel, direction.readerLevel);
         assert.equal(design.levelBy, "user");
       }
-      assert.equal(run.callsUsed, STAGES.length);
-      assert.equal(articleJobs.length, STAGES.length);
-      assert.deepEqual(articleJobs.map((job) => job.action.stage).sort(), [...STAGES].sort());
+      assert.deepEqual(
+        [...new Set(articleJobs.map((job) => job.action.stage))].sort(),
+        [...STAGES].sort(),
+      );
+      // 모델은 정책이 고른 것만: 기본, 그리고 검토·다시 쓰기의 상향 짝(ai-models가 원천)
+      const allowedModels = [AI, escalated(AI)]
+        .filter(Boolean)
+        .map((ai) => `${ai.provider}/${ai.model}`);
       assert.ok(
         articleJobs.every(
-          (job) => job.status === "completed" && job.providerModel === report.model,
+          (job) => job.status === "completed" && allowedModels.includes(job.providerModel),
         ),
       );
+      report.models = [...new Set(articleJobs.map((job) => job.providerModel))];
       assert.equal(flowIssue(final), null);
       assert.deepEqual(Object.keys(final.artifacts).sort(), [...STAGES].sort());
       assert.ok(STAGES.every((stage) => final.artifacts[stage].revision === final.revision));
@@ -214,7 +261,7 @@ export async function runLiveVerification({ article = true } = {}) {
           expectedVersion: view.version,
           feedback: process.env.CONTRACT_FEEDBACK,
         });
-        const revisionDeadline = Date.now() + 660000;
+        const revisionDeadline = Date.now() + ARTICLE_DEADLINE_MS;
         let revised = editorial.get(started.id);
         while (revised.status !== "awaiting_user" || revised.revision === final.revision) {
           signal.throwIfAborted();
@@ -226,12 +273,44 @@ export async function runLiveVerification({ article = true } = {}) {
         }
         report.feedbackRevision = revised.revision;
       }
+      // 프롬프트 품질 근거: 코드 지표와 검토 판정(원문은 싣지 않음) · ADR-0013
+      const outline = final.artifacts.outline.output;
+      const review = final.artifacts.review.output;
+      report.quality = {
+        characters: readerLength(final.artifacts.draft.output.text),
+        requirements: requirements(final),
+        autoCorrections: final.autoCorrections ?? 0,
+        callsByStage: Object.fromEntries(
+          STAGES.map((stage) => [
+            stage,
+            articleJobs.filter((job) => job.action.stage === stage).length,
+          ]),
+        ),
+        storyCards: outline.sections.filter((section) => section?.hook).length,
+        cardSections: outline.sections.filter((section) => usesStoryCard(sectionMode(section)))
+          .length,
+        sections: outline.sections.length,
+        metrics: draftMetrics(final.artifacts.draft.output.text, {
+          outline,
+          value: final.artifacts.value.output,
+        }),
+        verdict: review.verdict ?? null,
+        failedChecks: (review.checks ?? []).filter((c) => !c.pass).map((c) => c.id),
+        // 미통과 근거(검토가 적은 판정 이유) · 반복 평가에서 같은 지적이 되풀이되는지 본다
+        failedNotes: Object.fromEntries(
+          (review.checks ?? [])
+            .filter((c) => !c.pass)
+            .map((c) => [c.id, String(c.note ?? "").slice(0, 300)]),
+        ),
+        checks: review.checks?.length ?? 0,
+      };
       const owned = await readJobs();
       report.workers = {
         reused: owned.filter((job) => job.reusedWorker).length,
         created: owned.filter((job) => !job.reusedWorker && !job.ai?.pilot).length,
       };
       Object.assign(report, {
+        durationMs: Date.now() - articleStarted,
         stages: STAGES,
         revision: final.revision,
         status: final.status,
@@ -269,6 +348,12 @@ export async function runLiveVerification({ article = true } = {}) {
           });
         }
       });
+    // 담당 대기 세션까지 내려놓는다 · 끝난 검증 실행의 세션이 남아 제공자 프로세스를 잡지 않게 · ADR-0015
+    if (jobs)
+      await clean("session_release_unconfirmed", async () => {
+        const { failed } = await jobs.sweepSessions({ all: true });
+        assert.equal(failed, 0, "AI session release has not been confirmed");
+      });
     if (store) await clean("store_close_unconfirmed", () => store.close());
     if (client) await clean("client_close_unconfirmed", () => client.close());
     process.off("SIGINT", onInt);
@@ -281,20 +366,25 @@ export async function runLiveVerification({ article = true } = {}) {
   const reportPath = join(root, "report.json");
   await writeFile(reportPath, JSON.stringify(report, null, 2), { mode: 0o600 });
   if (report.result !== "passed")
-    throw new Error(
-      `Live verification failed (${report.phase}); report: ${reportPath}` +
-        (cleanupIssues.length ? `; 종료 확인 필요: ${cleanupIssues.join(", ")}` : ""),
+    throw Object.assign(
+      new Error(
+        `Live verification failed (${report.phase} · ${report.failureCode ?? "cleanup"}); report: ${reportPath}` +
+          (cleanupIssues.length ? `; 종료 확인 필요: ${cleanupIssues.join(", ")}` : ""),
+      ),
+      { report },
     );
-  console.log(JSON.stringify(report));
+  if (!quiet) console.log(JSON.stringify(report));
   return report;
 }
 
 export async function liveVerificationCli(options) {
   const args = process.argv.slice(2);
+  const budget =
+    options?.article === false
+      ? "연결 확인 최대 1회 호출."
+      : `최대 연결 확인 1회 + 글 ${ARTICLE_CALL_LIMIT}회 호출.`;
   if (args.length) {
     const help = args.length === 1 && ["--help", "-h"].includes(args[0]);
-    const budget =
-      options?.article === false ? "연결 확인 최대 1회 호출." : "최대 연결 확인 1회 + 글 8회 호출.";
     console[help ? "log" : "error"](
       `추가 인자 없이 실행하세요. ${budget} ` +
         "--resume/--feedback 원시 상태 실행은 폐기되었습니다. 이어가기·피드백은 영속 글쓰기 UI에서 진행하세요.",
@@ -302,6 +392,7 @@ export async function liveVerificationCli(options) {
     if (!help) process.exitCode = 1;
     return;
   }
+  requireLiveConsent(budget);
   try {
     await runLiveVerification(options);
   } catch (error) {

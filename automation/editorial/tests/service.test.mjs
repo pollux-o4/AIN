@@ -3,6 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { STAGES, transition } from "../domain/index.mjs";
+import { EDITORIAL_LIMITS } from "../service/lifecycle.mjs";
 import { EditorialService } from "../service.mjs";
 import { EditorialStore } from "../store.mjs";
 
@@ -81,8 +82,20 @@ async function fixture(t) {
   });
   return { service, store, dir, jobs, calls, stops, dispatches, records };
 }
+// 사람 수정 요청은 편집장 해석 후 사람 승인으로 재개 · ADR-0010
+async function approveBrief(service, id) {
+  const view = service.get(id);
+  if (!view.canApproveBrief) return false;
+  await service.action(id, {
+    operationId: `approve-${view.version}`,
+    type: "approve_brief",
+    expectedVersion: view.version,
+  });
+  return true;
+}
 async function finish(service, id) {
-  for (let i = 0; i < STAGES.length + 1; i++) if (!(await service.advance(id)).continue) return;
+  for (let i = 0; i < STAGES.length + 2; i++)
+    if (!(await service.advance(id)).continue && !(await approveBrief(service, id))) return;
   throw new Error("Did not finish");
 }
 test("duplicate submit, persisted recovery, feedback revisions and exact downloads", async (t) => {
@@ -208,7 +221,31 @@ test("server owns model and limits; worker cannot bypass exhausted budget", asyn
   assert.equal(f.calls.length, 0);
   assert.equal(s.get(run.id).status, "failed");
   assert.equal(s.get(run.id).label, "실패");
-  assert.equal(record.ai.model, "gemini-3.8-flash-medium");
+  assert.equal(record.ai.model, "gemini-4-hydrogen-medium");
+});
+
+test("코드가 거부한 결과의 다시 쓰기는 단계 예산을 쓰지 않는다 · 시간 한도는 그대로", async (t) => {
+  const f = await fixture(t),
+    s = f.service;
+  const run = await s.create({ requestId: "retry-budget", idea: "설명" });
+  const record = s.store.get(run.id);
+  // 실제 모델 실측: 초고 첫 구간 다시 쓰기 1회가 8번째 호출을 써서 검토 전에 한도로 멈춤
+  record.state.retry = { stage: record.state.stage, index: 0, note: "다시", attempts: 1 };
+  record.callsUsed = record.maxCalls;
+  s.store.save(record);
+  assert.equal((await s.advance(run.id)).continue, true);
+  assert.equal(f.calls.length, 1);
+  assert.equal(s.store.get(run.id).callsUsed, record.maxCalls);
+});
+test("요청당 AI 제한은 저장된 실행 설정이 아니라 서버 현재 설정을 따른다", async (t) => {
+  const f = await fixture(t),
+    s = f.service;
+  const run = await s.create({ requestId: "stale-limit", idea: "제한 변경 전 작업" });
+  const record = s.store.get(run.id);
+  record.ai = { ...record.ai, maxDurationMs: 120000 }; // 제한 변경 전에 만든 작업
+  s.store.save(record);
+  await s.advance(run.id);
+  assert.equal(f.calls[0].ai.maxDurationMs, s.ai.maxDurationMs);
 });
 
 test("monitor distinguishes waiting, observed work and lost confirmation without starting AI", async (t) => {
@@ -272,7 +309,10 @@ test("FLOW-001 full initial eight and diagnose reroute nine calls stay bounded",
     STAGES,
   );
   assert.ok(
-    f.calls.every((body) => body.ai.maxCalls === STAGES.length && body.ai.maxRunMs === 600000),
+    f.calls.every(
+      (body) =>
+        body.ai.maxCalls === STAGES.length && body.ai.maxRunMs === EDITORIAL_LIMITS.maxRunMs,
+    ),
   );
   const ready = s.get(run.id);
   assert.equal(ready.needsCompletion, false);
@@ -369,6 +409,13 @@ test("user satisfaction and separate publication authorization never dispatch; f
   assert.equal(view.canSatisfy, false);
   assert.equal(view.canAuthorizePublication, false);
   await s.advance(run.id);
+  // 해석 승인 전에는 수정 루프를 시작하지 않음 · ADR-0010
+  const proposed = s.get(run.id);
+  assert.equal(proposed.status, "awaiting_brief");
+  assert.equal(proposed.canApproveBrief, true);
+  assert.equal(proposed.brief.target, "draft");
+  assert.equal((await s.advance(run.id)).continue, false);
+  await approveBrief(s, run.id);
   const promoted = f.store.get(run.id).state;
   assert.equal(promoted.stage, "draft");
   for (const stage of STAGES.slice(0, -2)) {
@@ -611,7 +658,7 @@ test("mere reconnect retains elapsed budget; paused resume and failed retry rese
   assert.equal(saved.callsUsed, before.callsUsed);
   assert.equal(saved.startedAt, before.startedAt);
   assert.equal(saved.maxCalls, before.maxCalls);
-  now = 601001;
+  now = 1000 + EDITORIAL_LIMITS.maxRunMs + 1;
   await s.advance(run.id);
   assert.equal(s.get(run.id).status, "failed");
   assert.equal(f.calls.length, 1);
@@ -688,4 +735,59 @@ test("archive hides finished work from the list, keeps data and refuses running 
   assert.equal(s.list().length, 0);
   assert.equal(s.get(id).status, "awaiting_user");
   assert.equal(f.store.get(id).events.filter((e) => e.kind === "archived").length, 1);
+  assert.equal(s.get(id).archived, true);
+  assert.deepEqual(await s.restore(id), { id, archived: false });
+  assert.equal(s.get(id).archived, false);
+  assert.deepEqual(
+    s.list().map((r) => r.id),
+    [id],
+  );
+});
+
+test("ADR-0006 agent edits within delegated rounds; final sign-off is human only", async (t) => {
+  const f = await fixture(t),
+    s = f.service;
+  const { id } = await s.create({ requestId: "chief-1", idea: "아키텍처 설명" });
+  await finish(s, id);
+  const act = async (operationId, type, actor, extra = {}) =>
+    s.action(id, { operationId, type, expectedVersion: s.get(id).version, ...extra }, actor);
+  await assert.rejects(() => act("a-sat", "satisfy", "agent"), { status: 403 });
+  await assert.rejects(() => act("a-pub", "authorize_publication", "agent"), { status: 403 });
+  for (const n of [1, 2]) {
+    await act(`a-fb-${n}`, "feedback", "agent", { feedback: `분량 압축 ${n}` });
+    await finish(s, id);
+  }
+  await assert.rejects(() => act("a-fb-3", "feedback", "agent", { feedback: "더" }), {
+    status: 409,
+  });
+  const events = s.store.get(id).events.filter((e) => e.kind === "feedback");
+  assert.deepEqual(
+    events.map((e) => [e.by, e.label]),
+    [
+      ["agent", "편집장 수정 요청"],
+      ["agent", "편집장 수정 요청"],
+    ],
+  );
+  await act("u-fb", "feedback", "user", { feedback: "사람 의견" });
+  await s.advance(id);
+  assert.equal(s.get(id).status, "awaiting_brief");
+  // 사람 지시의 해석은 편집장이 검토 후 대리 승인 · ADR-0010
+  await act("a-approve", "approve_brief", "agent");
+  assert.equal(s.get(id).status, "waiting_ai");
+  await finish(s, id);
+  await act("a-fb-4", "feedback", "agent", { feedback: "다시 압축" });
+  await finish(s, id);
+  await act("u-sat", "satisfy", "user");
+  assert.equal(s.get(id).status, "satisfied");
+});
+
+test("aiFor: 첫 초안까지 기본, 검토·다시 쓰기·피드백 반영은 같은 제공자의 High", async () => {
+  const { aiFor, DEFAULT_AI } = await import("../service/ai-policy.mjs");
+  const high = "gemini-4-hydrogen-high";
+  assert.equal(aiFor({ stage: "review" }, DEFAULT_AI).model, high);
+  assert.equal(aiFor({ stage: "draft", retry: { stage: "draft" } }, DEFAULT_AI).model, high);
+  assert.equal(aiFor({ stage: "outline", feedback: "더 짧게" }, DEFAULT_AI).model, high);
+  assert.deepEqual(aiFor({ stage: "draft" }, DEFAULT_AI), {});
+  // 상향 짝이 없는 모델·제공자는 그대로
+  assert.deepEqual(aiFor({ stage: "review" }, { provider: "fixture", model: "fixture-model" }), {});
 });

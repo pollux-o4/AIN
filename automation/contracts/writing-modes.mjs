@@ -28,8 +28,25 @@ export const readerLevelSchema = z.enum(READER_LEVELS);
 export const directionSchema = z.object({
   mode: z.enum([AUTO, ...WRITING_MODES]).default(AUTO),
   readerLevel: z.enum([AUTO, ...READER_LEVELS]).default(AUTO),
+  // 목표 분량(공백 포함 문자 수) · 없으면 글감·피드백 문장에서 읽음 · ADR-0007
+  targetLength: z
+    .object({ min: z.number().int().min(0), max: z.number().int().positive() })
+    .refine((v) => v.min <= v.max, "min <= max")
+    .optional(),
 });
 export const DEFAULT_DIRECTION = Object.freeze({ mode: AUTO, readerLevel: AUTO });
+
+// 목표 분량 SSoT · 화면 프리셋과 CLI `--length`가 같은 규칙(±10%) 사용 · ADR-0007
+const LENGTH_TOLERANCE = 0.1;
+export const lengthRange = (/** @type {number} */ target) => ({
+  min: Math.round(target * (1 - LENGTH_TOLERANCE)),
+  max: Math.round(target * (1 + LENGTH_TOLERANCE)),
+});
+export const LENGTH_PRESETS = Object.freeze([
+  { value: "short", label: "짧게", target: 2000, hint: "약 2,000자 · 한 가지 핵심" },
+  { value: "medium", label: "보통", target: 4500, hint: "약 4,500자 · 핵심 3~5구간" },
+  { value: "long", label: "길게", target: 8000, hint: "약 8,000자 · 깊이 있는 해설" },
+]);
 
 /** @typedef {z.infer<typeof writingModeSchema>} WritingMode */
 /** @typedef {z.infer<typeof readerLevelSchema>} ReaderLevel */
@@ -47,6 +64,22 @@ export const sectionMode = (/** @type {unknown} */ section) => {
   const parsed = writingModeSchema.safeParse(section.mode);
   return parsed.success ? parsed.data : null;
 };
+
+// 이야기 카드(RES-007 S3·S6·S7·S8): 따라 하기 구간은 한 단계 한 행동이 틀이라 제외 · ADR-0013
+export const STORY_SLOTS = /** @type {const} */ (["hook", "cases", "principleLine", "underline"]);
+export const MAX_CASES = 3;
+// 한 줄 칸의 글자 수 상한(공백 포함) · 밑줄 긋고 싶은 문장은 짧다(RES-007: 공감 상위 인용문 중앙값 25단어)
+// 길고 꼬인 밑줄 문장이 그대로 실린 실측(60~80자) · 구성 검사가 세고 프롬프트 칸 안내가 같은 값을 쓴다
+// shortcut: 한국어 문장 길이의 근거 값이 없어 어림(RES-007 한계), 실제 글 표본이 쌓이면 조정
+export const SLOT_MAX = Object.freeze({ hook: 50, underline: 45, principleLine: 40 });
+export const usesStoryCard = (/** @type {unknown} */ mode) =>
+  writingModeSchema.safeParse(mode).success && mode !== "procedure";
+// 카드를 문장으로 옮길 최소 지면(공백 포함 글자 수) · 이보다 작으면 칸을 낱말로 줄여 글이 깨진다(실제 모델 실측: 250자 구간)
+// section: hook·사례 1개·원칙·밑줄·닫는 줄 / intro: 제목·약속·장면·순서 안내(첫 구간에 더함) / summaryLine: 끝 정리 목록 한 줄(마지막 구간에 구간 수만큼 더함)
+// shortcut: 어림값(칸별 한 문장 40~60자 가정), 실제 글 표본으로 구간 길이 분포를 재면 조정
+export const CARD_SPACE = Object.freeze({ section: 260, intro: 160, summaryLine: 30 });
+// 사례 출처: 자료에 있는 것 | 지어낸 것(본문에서 '가상의 예'로 표시)
+export const CASE_ORIGINS = /** @type {const} */ (["source", "hypothetical"]);
 
 /** 화면에 보이는 글 설계 투영. 편집 서비스 view가 만들고 UI가 그대로 표시한다. */
 const chosenBy = z.enum(["user", "ai"]).nullable();

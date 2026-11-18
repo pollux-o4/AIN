@@ -6,7 +6,15 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { editorialWorkflow } from "../build-editorial-workflow.mjs";
 
-export async function startIsolatedN8n({ root, port, bridgeUrl, token }) {
+/**
+ * @param {object} options
+ * @param {string} options.root 호출자가 만든 빈 폴더
+ * @param {number} options.port
+ * @param {string} options.bridgeUrl
+ * @param {string} options.token
+ * @param {number} [options.waitSeconds] 다시 전달 전 대기 · 생략하면 운영 값
+ */
+export async function startIsolatedN8n({ root, port, bridgeUrl, token, waitSeconds }) {
   const bridge = new URL(bridgeUrl);
   if (bridge.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(bridge.hostname))
     throw new Error("Fixture bridge must use loopback HTTP");
@@ -131,7 +139,7 @@ export async function startIsolatedN8n({ root, port, bridgeUrl, token }) {
       ]),
       { mode: 0o600, flag: "wx" },
     );
-    const workflow = editorialWorkflow({ bridgeUrl });
+    const workflow = editorialWorkflow({ bridgeUrl, ...(waitSeconds ? { waitSeconds } : {}) });
     const workflowPath = join(root, "workflow.json");
     await writeFile(workflowPath, JSON.stringify(workflow), { mode: 0o600, flag: "wx" });
     await command("credential import", ["import:credentials", `--input=${credentialPath}`]);

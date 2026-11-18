@@ -1,38 +1,73 @@
-import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { promisify } from "node:util";
-
-const exec = promisify(execFile);
-
 import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { outputFields } from "../contracts/output-fields.mjs";
-import { nextAction, transition } from "../editorial/domain/index.mjs";
-import { watchTimeline } from "./activity.mjs";
+import { join, resolve } from "node:path";
+import { FIGURE_LIMITS, FIGURE_STAGES } from "../contracts/figure.mjs";
+import { itemFields, outputFields } from "../contracts/output-fields.mjs";
+import { nextAction, readerLength, STAGES, transition } from "../editorial/domain/index.mjs";
+import { finalSteps, watchTimeline } from "./activity.mjs";
 import { promptContext, summarizeInputs } from "./context.mjs";
-import { buildPrompt, resultEvent } from "./prompts.mjs";
+import {
+  finalResultBlock,
+  inlineFigureFiles,
+  withoutFigureBodies,
+  writeFigureInputs,
+} from "./figure-files.mjs";
+import { SessionReaper, sessionLabels } from "./lifecycle.mjs";
+import { buildPrompt, formatRetryPrompt } from "./prompts/index.mjs";
+import { resultEvent } from "./results.mjs";
 import { roleOf } from "./roles.mjs";
 import { RoleSessions } from "./sessions.mjs";
+import { Workers } from "./workers.mjs";
+
+// 요청당 상한 · 구간 초고 실측 96~116초(사고 토큰 포함) · 품질 위해 사고 단계 유지하고 시간 수용
+// 가장 긴 단계(시각자료 생성)가 상한
+const MAX_JOB_MS = FIGURE_LIMITS.generateMs;
+const PROVIDER_CACHE_MS = 60000;
 
 export class Jobs {
   #sessions;
+  #reaper;
   // shortcut: 단일 브리지 프로세스의 작업 잠금 사용, 다중 인스턴스 운영 전 공유 저장소·원자적 잠금 전환
-  constructor({
-    client,
-    root,
-    workRoot,
-    allowedProviders = null,
-    reuseProviders,
-    cancel = async (id) => exec("paseo", ["stop", id], { timeout: 10000 }),
-  }) {
-    Object.assign(this, { client, root, workRoot, allowedProviders, cancel });
+  constructor({ client, root, workRoot, allowedProviders = null, reuseProviders }) {
+    Object.assign(this, { client, root, workRoot, allowedProviders });
     this.locks = new Map();
+    const workers = new Workers(root);
     this.#sessions = new RoleSessions({
       client,
-      root,
+      workers,
       save: (job) => this.save(job),
       reuseProviders,
     });
+    this.#reaper = new SessionReaper({
+      client,
+      workers,
+      owner: resolve(root),
+      workRoot,
+      activeAgentIds: () => this.#activeAgentIds(),
+    });
+  }
+  // 진행 중 작업의 세션은 정리 대상에서 뺀다
+  async #activeAgentIds() {
+    const ids = [];
+    for (const job of await this.#jobs())
+      if (job.agentId && !["completed", "failed"].includes(job.status)) ids.push(job.agentId);
+    return ids;
+  }
+  async #jobs() {
+    let files;
+    try {
+      files = await readdir(this.root);
+    } catch (e) {
+      if (e.code === "ENOENT") return [];
+      throw e;
+    }
+    return Promise.all(
+      files.filter((x) => /^[a-f0-9]{64}\.json$/.test(x)).map((x) => this.read(x.slice(0, -5))),
+    );
+  }
+  /** 쓰지 않는 세션 정리 · all: 대기 담당까지 모두 내려놓음(런타임 종료 시) · ADR-0015 */
+  sweepSessions(options) {
+    return this.#reaper.sweep(options);
   }
   async locked(id, fn) {
     const previous = this.locks.get(id) ?? Promise.resolve();
@@ -70,6 +105,7 @@ export class Jobs {
       await this.cancelAndConfirm(job);
       job.status = "failed";
       job.failureKind = "cancelled";
+      // shortcut: 중단한 실행은 세션을 먼저 정리해 진행 기록을 보존하지 않음, 중단 단계 기록 요구가 생기면 정리 전 finalSteps 호출 검토
       job.error = "Stopped by user";
       return this.save(job);
     });
@@ -99,14 +135,23 @@ export class Jobs {
               .filter(([key]) => Object.hasOwn(output, key))
               .map(([key]) => [
                 key,
-                key === "evidence"
-                  ? output[key].map(({ claim, url }) => ({ claim, url }))
+                // 객체 배열은 기록용 항목만 · SVG 원문 등은 제외
+                itemFields[key]
+                  ? output[key].map((item) =>
+                      Object.fromEntries(itemFields[key].map((field) => [field, item[field]])),
+                    )
                   : output[key],
               ]),
           )
         : null,
       target: job.event?.target ?? null,
       reason: job.event?.reason ?? null,
+      usage: job.usage ?? null,
+      steps: job.steps ?? [],
+      section: job.action.section
+        ? { index: job.action.section.index, total: job.action.section.total }
+        : null,
+      chars: typeof output?.text === "string" ? readerLength(output.text) : null,
     };
   }
   async watchActivity(id, emit) {
@@ -117,11 +162,32 @@ export class Jobs {
     }
     return watchTimeline(this.client.agents.ref(job.agentId), emit);
   }
+  cancel(agentId) {
+    return this.client.cancelAgent(agentId);
+  }
+  // 제공자 목록은 짧게 캐시 · 작업마다 구독을 열고 닫지 않음 · 로그인·한도 변화는 TTL 뒤 반영
+  #providerCache = null;
   async providers() {
-    const data = await this.client.providers.waitForReady({ cwd: this.workRoot, timeoutMs: 15000 });
+    const now = Date.now();
+    if (!this.#providerCache || now - this.#providerCache.at > PROVIDER_CACHE_MS)
+      this.#providerCache = {
+        at: now,
+        data: this.client.providers
+          .waitForReady({ cwd: this.workRoot, timeoutMs: 15000 })
+          .catch((error) => {
+            this.#providerCache = null;
+            throw error;
+          }),
+      };
+    const data = await this.#providerCache.data;
     return data.entries
       .filter((x) => !this.allowedProviders || this.allowedProviders.includes(x.provider))
-      .map((x) => ({ provider: x.provider, status: x.status, models: x.models ?? [] }));
+      .map((x) => ({
+        provider: x.provider,
+        status: x.status,
+        models: x.models ?? [],
+        ...(typeof x.defaultModeId === "string" ? { defaultModeId: x.defaultModeId } : {}),
+      }));
   }
   async create({ state, ai }) {
     const action = nextAction(state);
@@ -131,21 +197,11 @@ export class Jobs {
       state.revision < 1
     )
       throw new Error("Invalid editorial state");
-    if (
-      action.type === "request_ai" &&
-      ![
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review",
-      ].includes(action.stage)
-    )
+    if (action.type === "request_ai" && !STAGES.includes(action.stage))
       throw new Error("Invalid stage");
-    if (!["request_ai", "request_route"].includes(action.type))
+    if (action.type === "request_figure" && !FIGURE_STAGES.includes(action.stage))
+      throw new Error("Invalid stage");
+    if (!["request_ai", "request_route", "request_figure"].includes(action.type))
       throw new Error("No pending AI action");
     if (
       !ai ||
@@ -172,42 +228,38 @@ export class Jobs {
         const model = provider.models.find((m) => m.id === ai.model);
         if (!model) throw new Error("Selected model is unavailable; choose a discovered model");
         const duration = ai.maxDurationMs ?? 60000;
-        if (!Number.isSafeInteger(duration) || duration < 1000 || duration > 120000)
+        if (!Number.isSafeInteger(duration) || duration < 1000 || duration > MAX_JOB_MS)
           throw new Error("Invalid job duration limit");
         const job = {
           id,
           agentId: randomUUID(),
           state,
-          action,
+          action: withoutFigureBodies(action),
           ai,
           deadline: Date.now() + duration,
           providerModel: `${ai.provider}/${model.id}`,
+          // 모드 미지정이면 provider 기본(claude auto · codex auto-review) · 미전달 시 claude가 Always Ask로 떠 도구 작업이 멈춤
+          ...((ai.mode ?? provider.defaultModeId)
+            ? { modeId: ai.mode ?? provider.defaultModeId }
+            : {}),
           status: "starting",
           createdAt: new Date().toISOString(),
-          inputSummary: summarizeInputs(promptContext(state, action)),
+          inputSummary: summarizeInputs(promptContext(state, withoutFigureBodies(action))),
           ...(!ai.pilot && roleOf(action) ? { role: roleOf(action) } : {}),
         };
         await this.save(job);
         const cwd = join(this.workRoot, id);
         await mkdir(cwd, { recursive: true, mode: 0o700 });
         try {
-          const context = promptContext(state, action);
+          const promptAction = action.previous
+            ? { ...action, previous: await writeFigureInputs(cwd, action.previous) }
+            : action;
+          const context = promptContext(state, promptAction);
           if ((await this.#sessions.acquire(job, context)).reused) {
             job.status = "running";
             return await this.save(job);
           }
-          const agent = await this.client.agents.create({
-            idempotencyKey: `editorial-${id}`,
-            agentId: job.agentId,
-            config: { provider: job.providerModel },
-            cwd,
-            prompt: buildPrompt(state, action, ai),
-            title: `블로그 ${action.stage ?? "피드백 라우팅"} r${state.revision} · ${typeof state.idea === "string" ? state.idea.split("\n")[0].slice(0, 50) : state.articleId}`,
-            labels: { source: "ain-n8n", job: id },
-            background: true,
-          });
-          job.agentId = agent.id;
-          await this.#sessions.register(job, agent.id, context);
+          await this.#spawn(job, cwd, buildPrompt(state, promptAction, ai), context);
           job.status = "running";
           return await this.save(job);
         } catch (error) {
@@ -222,16 +274,56 @@ export class Jobs {
       }),
     );
   }
-  async expire() {
-    let files;
+  // 새 세션 생성 · 첫 턴이라 역할·규칙 전체를 보낸다
+  async #spawn(job, cwd, prompt, context) {
+    const { state, action, ai } = job;
+    const agent = await this.client.agents.create({
+      idempotencyKey: `editorial-${job.id}${job.providerRetried ? "-retry" : ""}`,
+      agentId: job.agentId,
+      config: {
+        provider: job.providerModel,
+        ...(typeof ai.thinking === "string" ? { thinkingOptionId: ai.thinking } : {}),
+        ...(job.modeId ? { modeId: job.modeId } : {}),
+      },
+      cwd,
+      prompt,
+      title: `블로그 ${action.stage ?? "피드백 라우팅"}${action.pass ? `·${action.pass}` : ""} r${state.revision} · ${typeof state.idea === "string" ? state.idea.split("\n")[0].slice(0, 50) : state.articleId}`,
+      labels: sessionLabels(resolve(this.root), job.id),
+      background: true,
+    });
+    job.agentId = agent.id;
+    // 재시도 세션은 그사이 생긴 담당 세션을 덮지 않도록 재사용 등록하지 않는다
+    if (!job.providerRetried) await this.#sessions.register(job, agent.id, context);
+  }
+
+  // 일시적 제공자 오류는 새 세션으로 한 번 다시 보낸다 · 오류 난 세션은 이어 쓸 수 없다
+  // shortcut: 이전 시각자료 본문은 작업 파일에 남기지 않아 previous가 있는 작업은 재시도 제외, 재시도 실패가 반복되면 입력 보존 검토
+  async #retryProvider(job, agent) {
+    if (job.providerRetried || job.ai.pilot || job.action.previous || Date.now() >= job.deadline)
+      return false;
+    await this.#sessions.drop(job);
     try {
-      files = await readdir(this.root);
-    } catch (e) {
-      if (e.code === "ENOENT") return;
-      throw e;
+      await agent.archive();
+    } catch {
+      job.cleanupUnconfirmed = true;
     }
-    for (const file of files.filter((x) => /^[a-f0-9]{64}\.json$/.test(x))) {
-      const job = await this.read(file.slice(0, -5));
+    job.providerRetried = true;
+    delete job.workerBoundary;
+    delete job.stepsAfter;
+    delete job.reusedWorker;
+    job.agentId = randomUUID();
+    await this.#spawn(
+      job,
+      join(this.workRoot, job.id),
+      buildPrompt(job.state, job.action, job.ai),
+      null,
+    );
+    job.status = "running";
+    return true;
+  }
+
+  async expire() {
+    for (const job of await this.#jobs()) {
       if (
         job.deadline &&
         Date.now() > job.deadline &&
@@ -304,6 +396,18 @@ export class Jobs {
           : /auth|login|sign.in/i.test(detail)
             ? "authentication"
             : "provider_error";
+        if (job.failureKind === "provider_error") {
+          let retried = false;
+          try {
+            retried = await this.#retryProvider(job, agent);
+          } catch {
+            // 재시도 생성 실패는 원래 오류로 끝낸다
+          }
+          if (retried) {
+            delete job.failureKind;
+            return this.save(job);
+          }
+        }
         job.status = "failed";
         job.error =
           job.failureKind === "usage_limit"
@@ -311,22 +415,59 @@ export class Jobs {
             : job.failureKind === "authentication"
               ? "Selected AI login required"
               : "AI provider failed; inspect Paseo session";
+      } else if (
+        result.status === "idle" &&
+        job.action.type === "request_figure" &&
+        job.action.stage === "figure" &&
+        finalResultBlock(result.lastMessage) === null &&
+        Date.now() < job.deadline
+      ) {
+        // 시각자료 생성(도구 작업)만: codex는 진행 메모와 함께 잠깐 idle로 보일 수 있다 · 결과(JSON)가 올 때까지 진행 중으로 본다
+        // shortcut: 끝내 JSON을 내지 않는 모델은 기한까지 기다린 뒤 시간 초과로 끝남, 제공자가 턴 종료 신호를 주면 그 신호로 교체
+        job.status = "running";
+        return job;
       } else if (result.status === "idle") {
         try {
-          job.event = resultEvent(job, result.lastMessage);
+          const message =
+            job.action.type === "request_figure" && job.action.stage === "figure"
+              ? await inlineFigureFiles(finalResultBlock(result.lastMessage), this.workRoot)
+              : result.lastMessage;
+          try {
+            job.event = resultEvent(job, message);
+          } catch (error) {
+            // 형식 오류는 같은 세션에 한 번 다시 요청 · 세션이 내용을 기억해 비용이 적다
+            if (job.formatRetried || job.ai.pilot) throw error;
+            job.formatRetried = true;
+            job.stepsAfter ??= job.workerBoundary?.seq ?? -1;
+            await this.#sessions.followUp(job, agent, formatRetryPrompt(error));
+            job.status = "running";
+            return this.save(job);
+          }
           transition(job.state, job.event);
           if (job.ai.pilot && job.event.output?.marker !== job.state.articleId)
             throw new Error("Pilot marker mismatch");
           job.usage = this.#sessions.turnUsage(job, agent, result);
           job.status = "completed";
-        } catch {
+        } catch (error) {
           delete job.event;
           job.status = "failed";
+          job.failureKind = "invalid_output";
+          // 어느 검사에서 막혔는지만 남긴다(응답 원문·경로는 남기지 않음)
+          job.diagnostic = String(error?.message ?? error)
+            .replace(/\/[^\s"']+/g, "[PATH]")
+            .slice(0, 600);
           job.error = "AI output did not satisfy the editorial contract; inspect Paseo session";
         }
       } else {
         job.status = "needs_attention";
         job.error = "Unknown provider status";
+      }
+      if (["completed", "failed"].includes(job.status) && agent.timeline) {
+        try {
+          job.steps = await finalSteps(agent, job.stepsAfter ?? job.workerBoundary?.seq);
+        } catch {
+          // 기록 보존 실패는 편집 결과에 영향 없음 · 지도에서 '기록 없음'으로 보인다
+        }
       }
       if (["failed", "needs_attention"].includes(job.status)) await this.#sessions.drop(job);
       if (["completed", "failed"].includes(job.status)) await this.#sessions.release(job, agent);

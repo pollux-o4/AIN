@@ -1,10 +1,77 @@
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { AUTO, DEFAULT_DIRECTION, directionSchema } from "../../contracts/writing-modes.mjs";
-import { startIsolatedN8n } from "../../n8n/testing/runtime.mjs";
+import { inProcessDispatcher } from "../../n8n/testing/in-process.mjs";
 import { Jobs } from "../../paseo/index.mjs";
+import { promptData, promptTask } from "../../paseo/prompts/index.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 import { EditorialService, EditorialStore } from "../index.mjs";
+import { STORY } from "./story-card.mjs";
+
+// 실시간 fixture: 초고는 HELD_MS 동안 진행 중(테스트 제한 90초보다 김) · 내용은 STREAM_MS에 걸쳐 흘러나옴
+const HELD_MS = 120000;
+const STREAM_MS = 7000;
+
+// 시각자료 fixture: 실제 AI가 아닌 고정 도식 · 앵커는 fixture 초안의 문장 그대로
+const figureSvg = (title, steps) =>
+  `<svg viewBox="0 0 640 220" role="img"><rect width="640" height="220" fill="#ffffff"/>` +
+  `<text x="320" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1e1b2e">${title}</text>` +
+  steps
+    .map((step, i) => {
+      const x = 40 + i * (560 / steps.length);
+      const width = 560 / steps.length - 30;
+      return (
+        `<rect x="${x}" y="80" width="${width}" height="70" fill="#dfe3fb" stroke="#1e1b2e" stroke-width="3"/>` +
+        `<text x="${x + width / 2}" y="122" text-anchor="middle" font-size="17" fill="#1e1b2e">${step}</text>` +
+        (i < steps.length - 1
+          ? `<path d="M${x + width + 4} 115 h22 m-8 -8 l8 8 l-8 8" stroke="#1e1b2e" stroke-width="3" fill="none"/>`
+          : "")
+      );
+    })
+    .join("") +
+  "</svg>";
+const FIGURE_ANCHORS = [
+  [
+    "주문은 고객이 무엇을 샀는지 기록하는 책임을 집니다.",
+    "주문·결제·배송의 책임 흐름",
+    ["주문", "결제", "배송"],
+  ],
+  [
+    "결제는 요청을 보낸 뒤 승인 결과를 확인하는 두 단계로 진행됩니다.",
+    "결제 요청과 확인의 순서",
+    ["결제 요청", "승인 확인"],
+  ],
+];
+function figureOutputs(data) {
+  return {
+    figure_plan: {
+      candidates: [
+        ...FIGURE_ANCHORS.map(([anchor, claim]) => ({
+          anchor,
+          claim,
+          reason: "이유",
+          scene: "장면",
+          kind: "diagram",
+        })),
+        // 본문에 없는 문장: 화면에 후보로 나오면 안 됨
+        {
+          anchor: "초안에 없는 문장입니다.",
+          claim: "버려져야 하는 후보",
+          reason: "이유",
+          scene: "장면",
+        },
+      ],
+    },
+    figure: {
+      figures: (data.candidates ?? []).map(({ id, anchor, claim }) => ({
+        id,
+        svg: figureSvg(claim, FIGURE_ANCHORS.find(([a]) => a === anchor)?.[2] ?? ["?"]),
+        alt: `${claim}을 왼쪽에서 오른쪽으로 이어지는 상자로 나타낸 도식`,
+        caption: claim,
+      })),
+    },
+  };
+}
 
 export function fixtureOutputs(data) {
   const direction = directionSchema.parse(data.direction ?? DEFAULT_DIRECTION);
@@ -30,22 +97,33 @@ export function fixtureOutputs(data) {
     },
     outline: {
       sections: [
-        { title: "주문", mode, keyPoint: "주문 상태와 책임을 나눕니다." },
+        { title: "주문", mode, keyPoint: "주문 상태와 책임을 나눕니다.", ...STORY },
         {
           title: "결제",
           mode: secondaryMode,
           keyPoint: "결제 요청과 확인 순서를 살펴봅니다.",
+          ...STORY,
         },
-        { title: "배송", mode, keyPoint: "결제와 배송의 연결을 정리합니다." },
+        { title: "배송", mode, keyPoint: "결제와 배송의 연결을 정리합니다.", ...STORY },
       ],
       rationale: "책임과 연결 관계 순서",
     },
     route: {
       target: data.feedback?.includes("진단") ? "diagnose" : "draft",
-      reason: "사용자가 요청한 수정 위치",
+      reason: data.feedback?.includes("해석 보정")
+        ? "보정 의견을 반영한 수정 의도"
+        : "사용자가 요청한 수정 위치",
+      level: "line",
+      priorities: ["주문·결제·배송 사례 구체화"],
+      preserve: ["쇼핑몰 예시"],
+      assumptions: ["문장 수준 수정으로 충분하다고 가정"],
     },
     draft: {
-      text: `# 쇼핑몰 아키텍처\n\n${data.feedback ? "수정한 초안입니다. 주문·결제·배송의 책임을 구체적으로 설명합니다." : "첫 초안입니다. 주문과 결제를 나누는 이유를 설명합니다."}\n\n요청: ${data.idea}\n\n[참고 자료](https://example.test/evidence)`,
+      text: `# 쇼핑몰 아키텍처\n\n${data.feedback ? "수정한 초안입니다. 주문·결제·배송의 책임을 구체적으로 설명합니다." : "첫 초안입니다. 주문과 결제를 나누는 이유를 설명합니다."}\n\n요청: ${data.idea}\n\n${
+        data.idea.includes("시각자료")
+          ? `## 주문\n\n${FIGURE_ANCHORS[0][0]} 결제와 배송은 이 기록을 기준으로 움직입니다.\n\n## 결제\n\n${FIGURE_ANCHORS[1][0]} 확인이 끝나야 배송이 시작됩니다.\n\n`
+          : ""
+      }[참고 자료](https://example.test/evidence)`,
       changeSummary: data.feedback
         ? "주문·결제·배송의 책임을 구체화했습니다."
         : "주문과 결제를 나누는 이유를 설명하는 초안을 작성했습니다.",
@@ -74,19 +152,8 @@ if (import.meta.main) {
     },
     agents: {
       create: async (options) => {
-        const data = JSON.parse(options.prompt.split("자료:\n")[1]);
-        const stage = options.prompt.includes("피드백에 따라 가장 먼저")
-          ? "route"
-          : [
-              "diagnose",
-              "draft",
-              "review",
-              "outline",
-              "topic",
-              "audience",
-              "value",
-              "research",
-            ].find((s) => options.prompt.includes(`${s} 산출물 반환`));
+        const data = promptData(options.prompt);
+        const stage = promptTask(options.prompt);
         const key = `${data.idea}:${stage}`;
         const slow = data.idea.includes("중단") && stage === "draft" && !slowed.has(key);
         if (slow) slowed.add(key);
@@ -94,9 +161,11 @@ if (import.meta.main) {
         if (broken) failed.add(key);
         agents.set(options.agentId, {
           created: Date.now(),
-          delay: slow ? 15000 : data.idea.includes("실시간") && stage === "draft" ? 7000 : 500,
+          // 실시간 테스트는 중단으로 끝난다 · 초고가 테스트보다 먼저 끝나면 중단할 대상이 사라지므로
+          // 테스트 제한 시간보다 길게 잡는다(벽시계 경주에 기대지 않음 · TIME-001) · 내용은 STREAM_MS 동안 흘러나온다
+          delay: slow ? 15000 : data.idea.includes("실시간") && stage === "draft" ? HELD_MS : 50,
           broken,
-          output: fixtureOutputs(data)[stage],
+          output: (stage.startsWith("figure") ? figureOutputs(data) : fixtureOutputs(data))[stage],
           stopped: false,
         });
         return { id: options.agentId };
@@ -116,11 +185,31 @@ if (import.meta.main) {
             return {
               agent: { status: a.stopped ? "error" : elapsed < a.delay ? "running" : "idle" },
               entries: [
+                // 공개 진행 기록 fixture: 설명 문장 → 도구 실행(인자는 화면에 나오면 안 됨) → 결과 JSON
+                {
+                  timestamp: new Date(a.created).toISOString(),
+                  item: { type: "assistant_message", text: "자료를 읽고 구성을 잡겠습니다." },
+                },
+                {
+                  timestamp: new Date(a.created).toISOString(),
+                  item: {
+                    type: "tool_call",
+                    name: "shell",
+                    status: elapsed < a.delay / 2 ? "running" : "completed",
+                    detail: { type: "read", filePath: "private-fixture-path.md" },
+                  },
+                },
                 {
                   timestamp: new Date(a.created + Math.min(elapsed, a.delay)).toISOString(),
                   item: {
                     type: "assistant_message",
-                    text: text.slice(0, Math.max(24, Math.ceil((text.length * elapsed) / a.delay))),
+                    text: text.slice(
+                      0,
+                      Math.max(
+                        24,
+                        Math.ceil((text.length * elapsed) / Math.min(a.delay, STREAM_MS)),
+                      ),
+                    ),
                   },
                 },
               ],
@@ -135,14 +224,14 @@ if (import.meta.main) {
         },
       }),
     },
+    cancelAgent: async (id) => {
+      agents.get(id).stopped = true;
+    },
   };
   const jobs = new Jobs({
     client,
     root: join(root, "jobs"),
     workRoot: join(root, "work"),
-    cancel: async (id) => {
-      agents.get(id).stopped = true;
-    },
   });
   const store = new EditorialStore(join(root, "state.sqlite"));
   let runtime;
@@ -228,15 +317,9 @@ if (import.meta.main) {
   }
   for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, onSignal);
   try {
-    const n8nRoot = join(root, "n8n");
-    await mkdir(n8nRoot, { mode: 0o700 });
     if (stopping) throw new Error("Fixture stopped during startup");
-    starting = startIsolatedN8n({
-      root: n8nRoot,
-      port: n8nPort,
-      bridgeUrl: `http://127.0.0.1:${port}`,
-      token,
-    });
+    // 화면 e2e는 n8n과 같은 계약의 프로세스 내 전달자 사용 · n8n 연결은 test:n8n:runtime 담당
+    starting = Promise.resolve(inProcessDispatcher(service));
     runtime = await starting;
     if (stopping) await stop();
     else {

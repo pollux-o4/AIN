@@ -5,7 +5,8 @@ import { ready } from "./writing";
 test("Vite: 세션 인증 → 초안 → 정확한 TXT 프록시와 Tailwind 레이아웃", async ({
   page,
 }, testInfo) => {
-  const origin = "http://127.0.0.1:5173";
+  // 개발 서버(5173)와 겹치지 않는 테스트 전용 포트
+  const origin = "http://127.0.0.1:5183";
   expect(await page.context().cookies(origin)).toEqual([]);
   const sessionResponse = page.waitForResponse(`${origin}/write/session`);
   await page.goto(`${origin}/write/`);
@@ -19,6 +20,7 @@ test("Vite: 세션 인증 → 초안 → 정확한 TXT 프록시와 Tailwind 레
     `${origin}/write/@fs${process.cwd()}/.local/editorial-web/index.html`,
   );
   expect(privateArtifact.status()).toBe(403);
+  await page.getByRole("button", { name: "새 글 쓰기" }).click();
   const idea = `Vite 프록시 ${testInfo.project.name} ${Date.now()}`;
   await page.getByLabel("글감과 원하는 결과").fill(idea);
   await page.getByRole("button", { name: "초안 만들기", exact: true }).click();

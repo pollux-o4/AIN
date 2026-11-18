@@ -41,4 +41,13 @@ export const outputFields = {
     ["findings", "검토 의견"],
     ["preservationCheck", "원문 보존 확인"],
   ],
+  figure_plan: [["candidates", "시각자료 위치 후보"]],
+  figure: [["figures", "만든 시각자료"]],
+};
+// 객체 배열 필드에서 기록·미리보기에 보일 항목 · 나머지(SVG 원문 등)는 노출하지 않음
+/** @type {Record<string, readonly string[]>} */
+export const itemFields = {
+  evidence: ["claim", "url"],
+  candidates: ["claim", "anchor"],
+  figures: ["alt", "caption"],
 };

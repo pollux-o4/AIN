@@ -5,7 +5,6 @@ import type { ActionCommand, Direction, Run } from "./api";
 const memory = new Map<string, unknown>();
 export const keys = {
   input: "ain-editorial-input",
-  current: "ain-editorial-current",
   create: "ain-editorial-create",
   operation: "ain-editorial-operation",
   feedback: "ain-editorial-feedback",
@@ -48,7 +47,6 @@ export function remove(key: string) {
 }
 export const storageWarning =
   "브라우저의 임시 저장을 사용할 수 없습니다. 제출 전에는 이 화면을 닫지 마세요.";
-export const currentId = () => read(keys.current, z.string());
 export const savedFeedback = () => read(keys.feedback, feedbackSchema);
 export function createRequest(idea: string, source: string, direction: Direction) {
   const signature = JSON.stringify({ idea, source, direction });

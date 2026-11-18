@@ -61,9 +61,12 @@
         "specifyBody": "json",
         "jsonBody": "={{ { executionId: $execution.id } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 120000
         }
       },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "localPaseoBridge",
@@ -171,6 +174,6 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5d7c7e81-c21e-4307-b1eb-fa3a2a02ef0c",
+  "versionId": "a9fced12-e551-429d-bb69-34039787a0cc",
   "tags": []
 }

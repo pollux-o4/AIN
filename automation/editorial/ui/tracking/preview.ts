@@ -1,4 +1,4 @@
-import { outputFields } from "../../../contracts/output-fields.mjs";
+import { itemFields, outputFields } from "../../../contracts/output-fields.mjs";
 
 // Only public output fields are previewed; partial JSON is never treated as a saved artifact.
 function strings(source: string) {
@@ -23,10 +23,12 @@ export function previewFields(text: string, stage: string) {
       const content = first ? strings(first[0]).join("") : "";
       return content ? [{ label, text: content }] : [];
     }
-    if (field === "evidence" && value.startsWith("[")) {
-      const claims = [...value.matchAll(/"claim"\s*:\s*("(?:[^"\\]|\\.)*(?:"|$))/g)].flatMap(
-        (item) => strings(item[1]),
-      );
+    // 객체 배열은 대표 항목만 보임(근거의 주장, 시각자료의 설명) · SVG 원문 등 제외
+    const shown = itemFields[field]?.[0];
+    if (shown && value.startsWith("[")) {
+      const claims = [
+        ...value.matchAll(new RegExp(`"${shown}"\\s*:\\s*("(?:[^"\\\\]|\\\\.)*(?:"|$))`, "g")),
+      ].flatMap((item) => strings(item[1]));
       return claims.length ? [{ label, text: claims.join("\n") }] : [];
     }
     if (value.startsWith("[")) {

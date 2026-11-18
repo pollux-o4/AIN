@@ -1,10 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "automation/paseo/{setup,providers,pilot,article-e2e,contract-e2e}.mjs",
+    "automation/paseo/{setup,providers,pilot,article-e2e,contract-e2e,eval}.mjs",
     "automation/n8n/build-{workflow,editorial-workflow}.mjs",
     "automation/{editorial,n8n,paseo}/tests/**/*.mjs",
-    "tests/**/*.{mjs,ts}"
+    "tests/**/*.{mjs,ts}",
+    "playwright.ai-writing.config.ts"
   ],
   "project": [
     "automation/**/*.{mjs,js,ts,tsx}",
@@ -12,6 +13,6 @@
     "*.config.ts",
     "automation/editorial/ui/**/*.css"
   ],
-  "ignoreDependencies": ["@swc/core"],
+  "ignoreDependencies": ["@swc/core", "galmuri"],
   "ignoreBinaries": ["mise", "n8n"]
 }

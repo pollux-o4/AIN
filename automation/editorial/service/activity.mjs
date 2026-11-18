@@ -1,5 +1,5 @@
 import { flowIssue } from "../domain/index.mjs";
-import { pendingState, stageName } from "../monitor.mjs";
+import { pendingState, stageName, workStage } from "../monitor.mjs";
 
 // The editorial endpoint owns run/revision identity; the pipe only forwards snapshots.
 export function observeActivity(service, id, emit) {
@@ -9,12 +9,13 @@ export function observeActivity(service, id, emit) {
     generation = 0,
     latest = {},
     lastWire;
-  const keyOf = (run) => `${run.state.revision}:${run.state.stage}:${run.pending?.jobId ?? ""}`;
+  const keyOf = (run) =>
+    `${run.state.revision}:${workStage(run.state)}:${run.pending?.jobId ?? ""}`;
   function publish(run) {
     if (closed) return;
     const active = pendingState(run.state) && !flowIssue(run.state) && !run.issue;
     if (active && run.pending?.jobId && !latest.phase) return;
-    const stage = run.state.status === "waiting_route" ? "route" : run.state.stage;
+    const stage = workStage(run.state);
     const phase = !active
       ? run.state.status === "paused"
         ? "paused"
@@ -33,6 +34,7 @@ export function observeActivity(service, id, emit) {
       text: latest.text ?? "",
       truncated: latest.truncated ?? false,
       lastOutputAt: latest.lastOutputAt ?? null,
+      steps: latest.steps ?? [],
     };
     const wire = JSON.stringify(snapshot);
     if (wire !== lastWire) {

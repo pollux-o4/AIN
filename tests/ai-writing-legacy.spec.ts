@@ -28,7 +28,7 @@ test("이전 3단계: 열람은 불변 → 명시적 보완 응답 유실 → �
     canFeedback: false,
     monitor: { events: [], executionId: null, canResume: false },
   });
-  await page.getByRole("button", { name: new RegExp(`이전 초안 ${device}`) }).click();
+  await page.getByRole("link", { name: new RegExp(`^이전 초안 ${device}`) }).click();
   await expect(page).toHaveURL(new RegExp(`#${id}$`));
   await expect(page.locator("#completion-notice")).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("요구사항 보완 필요");

@@ -1,6 +1,50 @@
 import { z } from "zod";
+import { activityStepSchema } from "./activity.mjs";
+
+// 자원 사용량 합계 · tokens null = 기록 없음(0과 구분)
+const cost = {
+  ms: z.number(),
+  tokens: z.number().nullable(),
+  calls: z.number(),
+  wasted: z.number(),
+};
+const outcome = z.enum(["accepted", "rejected", "failed", "running"]);
+const usageSchema = z.object({
+  ...cost,
+  revisions: z.array(
+    z.object({
+      revision: z.number(),
+      ...cost,
+      stages: z.array(
+        z.object({
+          stage: z.string(),
+          name: z.string(),
+          ...cost,
+          attempts: z.array(
+            z.object({
+              label: z.string(),
+              ms: z.number(),
+              tokens: z.number().nullable(),
+              chars: z.number().nullable(),
+              outcome,
+            }),
+          ),
+        }),
+      ),
+    }),
+  ),
+  hotspots: z.array(
+    z.object({
+      label: z.string(),
+      ms: z.number(),
+      tokens: z.number().nullable(),
+      outcome,
+    }),
+  ),
+});
 
 export const historySchema = z.object({
+  usage: usageSchema,
   journey: z.array(
     z.object({
       revision: z.number(),
@@ -32,6 +76,8 @@ export const historySchema = z.object({
       target: z.string().nullable(),
       reason: z.string().nullable(),
       unavailable: z.boolean(),
+      // 끝난 AI 실행의 진행 기록 · 지도에서 단계를 눌러 다시 본다(LIVE-001 같은 비노출 규칙)
+      steps: z.array(activityStepSchema).default([]),
     }),
   ),
 });

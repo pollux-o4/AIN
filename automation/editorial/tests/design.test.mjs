@@ -111,7 +111,11 @@ test("design projects mixed outline sections and ignores stale or malformed AI a
   addArtifact(saved, "outline", { ...outline, sections: [{ title: "깨진 구간" }] });
   assert.deepEqual(design(saved).sections, []);
   assert.equal(design(saved).mode, null);
-  saved.state.direction = { mode: "argue", readerLevel: "auto" };
+  saved.state.requirementLog.push({
+    revision: 2,
+    source: "feedback",
+    changes: [{ kind: "mode", op: "set", value: "argue", quote: "주장 글로" }],
+  });
   assert.equal(design(saved).mode, "argue");
   assert.equal(design(saved).modeBy, "user");
 });

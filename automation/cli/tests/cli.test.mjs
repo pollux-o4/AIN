@@ -34,8 +34,8 @@ async function fixture(t) {
       calls.push(["create", body]);
       return view();
     },
-    action: (id, body) => {
-      calls.push(["action", id, body]);
+    action: (id, body, actor) => {
+      calls.push(["action", id, body, actor]);
       return view();
     },
     archive: (id) => {
@@ -43,6 +43,14 @@ async function fixture(t) {
       return { id, archived: true };
     },
     download: () => ({ text: "본문\n", filename: "a.txt" }),
+    export: (id, options) => {
+      calls.push(["export", id, options]);
+      return {
+        body: Buffer.from([0x50, 0x4b, 0, 1]),
+        contentType: "application/zip",
+        filename: "a.zip",
+      };
+    },
   };
   const route = editorialHttp({
     service,
@@ -55,12 +63,14 @@ async function fixture(t) {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   t.after(() => server.close());
   const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const written = new Map();
   const io = (token = agentToken) => ({
     readFile: async () => "자료",
+    writeFile: async (path, body) => written.set(path, body),
     sleep: async () => {},
     client: async () => new AinClient({ baseUrl, token }),
   });
-  return { calls, baseUrl, io };
+  return { calls, baseUrl, io, written };
 }
 
 test("agent_001 CLI drives the write API with a separate token", async (t) => {
@@ -70,6 +80,9 @@ test("agent_001 CLI drives the write API with a separate token", async (t) => {
   const created = JSON.parse(
     (await run(["new", "--idea", "글감", "--mode", "explain", "--source-file", "x"])).out,
   );
+  await run(["new", "--idea", "글감", "--length", "4500"]);
+  assert.deepEqual(f.calls.at(-1)[1].direction.targetLength, { min: 4050, max: 4950 });
+  f.calls.pop();
   assert.equal(created.id, ID);
   assert.deepEqual(f.calls[0][1].direction, { mode: "explain", readerLevel: "auto" });
   assert.equal(f.calls[0][1].source, "자료");
@@ -78,10 +91,18 @@ test("agent_001 CLI drives the write API with a separate token", async (t) => {
   assert.equal(waited.text, "# 초안\n\n본문");
   await run(["feedback", ID, "사례를", "추가"]);
   assert.equal(f.calls.at(-1)[2].feedback, "사례를 추가");
+  assert.equal(f.calls.at(-1)[3], "agent");
   assert.equal(f.calls.at(-1)[2].expectedVersion, 7);
-  await run(["satisfy", ID]);
-  assert.equal(f.calls.at(-1)[2].type, "satisfy");
+  assert.equal((await run(["satisfy", ID])).code, 2);
   assert.equal((await run(["download", ID])).out, "본문\n");
+  // 바이너리 묶음은 표준 출력이 아니라 파일로 · 바이트 그대로
+  await assert.rejects(() => run(["export", ID, "--format", "zip"]), /--out/);
+  const saved = JSON.parse(
+    (await run(["export", ID, "--format", "zip", "--motion", "static", "--out", "a.zip"])).out,
+  );
+  assert.deepEqual(saved, { saved: "a.zip", bytes: 4, format: "zip" });
+  assert.deepEqual([...f.written.get("a.zip")], [0x50, 0x4b, 0, 1]);
+  assert.deepEqual(f.calls.at(-1)[2], { revision: undefined, format: "zip", motion: "static" });
   assert.deepEqual(JSON.parse((await run(["delete", ID])).out), { id: ID, archived: true });
   await assert.rejects(() => run(["new", "--idea", "x", "--mode", "poem"]), /--mode/);
   assert.equal((await run(["nope"])).code, 2);

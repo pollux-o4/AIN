@@ -3,11 +3,17 @@
 - 현재 실행: EDIT-001의 편집 애플리케이션 · n8n은 작업 ID 전달·서버 continue 대기만 담당 · ADR-0004
 - 내부 순수 계약: editorial/domain/index의 `transition(state,event)` → `{state,action}` · 외부 부작용 없음
 - 단계: diagnose→topic→audience→value→research→outline→draft→review · 구조·필수 내용·현재 revision 선행 결과 검증 · FLOW-001
-- 사용자 이벤트: start·feedback·complete_requirements·pause·resume·retry·satisfy·authorize_publication
-- 실행 결과 이벤트: complete·route·fail · 사용자와 어댑터 역할 구분 · id·expectedVersion·revision 검증
+- 사용자 이벤트: start·feedback·complete_requirements·pause·resume·retry·satisfy·authorize_publication·request_figures·select_figures·confirm_figures·discard_figures
+- 실행 결과 이벤트: complete·route·figure_result·fail · 사용자와 어댑터 역할 구분 · id·expectedVersion·revision 검증
+- 편집 메모: 사람 피드백 → route가 의도·수준·우선순위·살릴 것·합격 기준으로 번역 · 수준이 복귀 단계 결정 · review 합격 판정 revise면 자동 재작성 · ADR-0008
+- 해석 승인: 사람 피드백은 route 후 `awaiting_brief`에서 멈춤 · `approve_brief`(보정 가능)로 착수 · `revise_brief`로 재해석 · 편집장(에이전트) 지시는 사전 승인 · ADR-0010
+- 구간별 초고: 분량 예산이 있으면 outline 구간마다 작성·예산 검사 후 합침 · ADR-0009
+- 구간 카드: procedure 외 카드 구간은 hook·cases(1~3)·principleLine·underline 필수 · 빈 칸이면 outline 1회 다시, 반복이면 `failed` · 초고는 칸을 그대로 옮기고 검토는 S1~S10 점검표와 코드 지표로 판정 · ADR-0013
+- 요구사항 가드: review 완료 시 코드 판정 요구(분량) 미충족이면 자동 재작성 최대 2회 · ADR-0007
 - 수정: 현재 결과 이력 보존·revision 증가 → 라우팅 → 검증된 선행 결과만 재사용 출처와 함께 승계 → 이후 단계 재생성
 - 반복: 사용자 요청으로만 진행 · AI가 만족·승인·발행을 결정하지 않음 · 실패/권한/예산/중단 불명확 시 사용자 확인
 - 판단: awaiting_user → 사용자 satisfy → satisfied → 별도 authorize_publication → publication_ready · 실제 발행 없음
+- 시각자료(선택): satisfied → request_figures → 위치 후보 → select_figures → 생성(초안 → 내용 → 시각 3층) → confirm_figures → satisfied · 본문·확정 불변 · 언제든 discard_figures · ADR-0011
 - 보완: 기존 축약·누락 결과는 보존 · 자동 새 호출 없음 · 명시적 보완과 중단 확인 후 전체 단계 실행
 - 글 품질: 목적·독자·의미·목소리 유지 · 설명·서사·주장·절차에 맞는 구성 · 근거 없는 사실/출처·정확성 보증·독자 연구 주장 금지
 - 근거: 사용자 제공 자료 중심 · 직접 확인 불가 내용은 uncertainties · URL 자체를 읽는 웹 조사와 실제 발행은 별도

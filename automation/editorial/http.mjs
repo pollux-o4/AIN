@@ -1,10 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import MarkdownIt from "markdown-it";
+import { articleHtml } from "./article-html.mjs";
 import { readAsset } from "./assets.mjs";
 import { readJson } from "./http-json.mjs";
 import { streamActivity } from "./http-stream.mjs";
 
-const markdown = new MarkdownIt({ html: false, linkify: false }).disable("image");
 const json = (res, status, data) => {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -130,7 +129,7 @@ export function editorialHttp({
         return true;
       }
       const match = path.match(
-        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/download|\/history)?$/,
+        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/restore|\/download|\/export|\/history|\/figures\/f[1-9])?$/,
       );
       if (!match) {
         json(res, 404, { error: "화면을 찾을 수 없습니다." });
@@ -139,6 +138,39 @@ export function editorialHttp({
       const [, id, action] = match;
       if (req.method === "GET" && action === "/history") {
         json(res, 200, await service.history(id));
+        return true;
+      }
+      if (req.method === "GET" && action?.startsWith("/figures/")) {
+        const file = service.figure(id, action.slice(9));
+        const download = new URL(req.url, origin).searchParams.has("download");
+        res.writeHead(200, {
+          "Content-Type": "image/svg+xml; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          // AI가 만든 파일: 직접 열어도 스크립트·외부 요청 불가
+          "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+          ...(download ? { "Content-Disposition": `attachment; filename="${file.filename}"` } : {}),
+        });
+        res.end(file.svg);
+        return true;
+      }
+      if (req.method === "GET" && action === "/export") {
+        const query = new URL(req.url, origin).searchParams;
+        const file = service.export(id, {
+          revision: query.get("revision") ?? undefined,
+          format: query.get("format") ?? undefined,
+          motion: query.get("motion") ?? undefined,
+        });
+        res.writeHead(200, {
+          "Content-Type": file.contentType,
+          "Content-Disposition": `attachment; filename="${file.filename}"`,
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          // 내려받기 전용 · 이 출처에서 직접 열려도 실행·외부 요청 불가
+          "Content-Security-Policy":
+            "default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox",
+        });
+        res.end(file.body);
         return true;
       }
       if (req.method === "GET" && action === "/download") {
@@ -154,17 +186,19 @@ export function editorialHttp({
         return true;
       }
       if (req.method === "POST" && action === "/actions") {
-        json(res, 200, await service.action(id, await readJson(req)));
+        json(res, 200, await service.action(id, await readJson(req), agent ? "agent" : "user"));
         return true;
       }
       if (req.method === "POST" && action === "/archive") {
         json(res, 200, await service.archive(id));
         return true;
       }
+      if (req.method === "POST" && action === "/restore") {
+        json(res, 200, await service.restore(id));
+        return true;
+      }
       if (req.method === "GET" && !action) {
         const view = service.get(id);
-        const heading = `# ${view.title}\n`;
-        const body = view.text.startsWith(heading) ? view.text.slice(heading.length) : view.text;
         const executionIds = new Set(
           (view.monitor?.events ?? []).map((event) => event.executionId).filter(Boolean),
         );
@@ -173,7 +207,7 @@ export function editorialHttp({
           id,
           url: `${n8nUrl}/workflow/blogEditorialServiceV1/executions/${encodeURIComponent(id)}`,
         }));
-        json(res, 200, { ...view, html: markdown.render(body), executionLinks });
+        json(res, 200, { ...view, html: articleHtml(view), executionLinks });
         return true;
       }
       json(res, 405, { error: "지원하지 않는 요청입니다." });

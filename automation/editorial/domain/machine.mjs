@@ -1,6 +1,23 @@
 // 사용자 입력과 AI 결과의 계약만 처리; 파일·CMS·발행 부작용 없음.
 import { stageOutputSchemas } from "../../contracts/ai-output.mjs";
 import { DEFAULT_DIRECTION, directionSchema } from "../../contracts/writing-modes.mjs";
+import {
+  FIGURE_AWAITING,
+  FIGURE_USER_EVENTS,
+  FIGURE_WAITING,
+  figureAction,
+  figureIssue,
+  figureStage,
+  figureTransition,
+} from "./figures.mjs";
+import { ensureLog, formChanges, record } from "./ledger.mjs";
+import {
+  AUTO_CORRECTION_LIMIT,
+  blockingUnmet,
+  correctionPlan,
+  unmetRequirements,
+} from "./requirements.mjs";
+import { acceptOutline, acceptPart, currentSection } from "./sections.mjs";
 
 export const STAGES = Object.freeze(Object.keys(stageOutputSchemas));
 const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -15,6 +32,9 @@ function requireThat(condition, message) {
 function ai(state, stage) {
   state.status = "waiting_ai";
   state.stage = stage;
+  // 초고 단계에 새로 들어오면 구간 진행 초기화 · ADR-0009
+  delete state.draftParts;
+  delete state.retry;
 }
 function outputValid(stage, output) {
   const schema = stageOutputSchemas[stage];
@@ -86,19 +106,29 @@ function contractIssue(state) {
   if (["paused", "failed"].includes(status)) {
     status = state.resumeStatus;
     if (["paused", "failed"].includes(status)) return "Invalid resume status";
-    if (state.status === "failed" && !["waiting_ai", "waiting_route"].includes(status))
+    if (
+      state.status === "failed" &&
+      !["waiting_ai", "waiting_route", FIGURE_WAITING].includes(status)
+    )
       return "Invalid failed work status";
   }
   if (
-    !["waiting_ai", "waiting_route", "awaiting_user", "satisfied", "publication_ready"].includes(
-      status,
-    )
+    ![
+      "waiting_ai",
+      "waiting_route",
+      "awaiting_brief",
+      "awaiting_user",
+      "satisfied",
+      "publication_ready",
+      FIGURE_WAITING,
+      ...FIGURE_AWAITING,
+    ].includes(status)
   )
     return "Invalid editorial status";
   if (status !== "waiting_ai" && state.stage !== "review")
     return "Presented or routed work requires review stage";
-  if (status === "waiting_route") {
-    // 라우팅 전에는 직전 완료 revision 유지; 선택된 선행 결과만 route에서 승계.
+  if (status === "waiting_route" || status === "awaiting_brief") {
+    // 라우팅·해석 승인 전에는 직전 완료 revision 유지; 선택된 선행 결과만 route에서 승계.
     const previous = state.history.at(-1);
     if (!isRecord(previous) || previous.revision !== state.revision - 1)
       return "Missing prior complete revision for feedback route";
@@ -117,7 +147,7 @@ function contractIssue(state) {
   const issue = artifactsIssue(state.artifacts, required, state.revision);
   if (issue) return issue;
   if (
-    ["satisfied", "publication_ready"].includes(status) &&
+    ["satisfied", "publication_ready", FIGURE_WAITING, ...FIGURE_AWAITING].includes(status) &&
     state.satisfiedRevision !== state.revision
   )
     return "Satisfaction must reference current revision";
@@ -128,7 +158,11 @@ function contractIssue(state) {
       !isText(state.approval.eventId))
   )
     return "Publication approval must reference current revision";
-  return null;
+  return figureIssue(state, status);
+}
+// 진행 중(또는 멈춘) AI 작업의 단계 키: 수정 해석·시각자료 작업은 편집 단계와 별개 이름
+export function workStage(state) {
+  return figureStage(state) ?? (state.status === "waiting_route" ? "route" : state.stage);
 }
 export function nextAction(state) {
   const reason = flowIssue(state);
@@ -139,6 +173,9 @@ export function nextAction(state) {
       stage: state.stage,
       revision: state.revision,
       feedback: state.feedback ?? null,
+      ...(state.stage === "draft" && currentSection(state)
+        ? { section: currentSection(state) }
+        : {}),
     };
   if (state.status === "waiting_route")
     return {
@@ -147,9 +184,87 @@ export function nextAction(state) {
       feedback: state.feedback,
       revision: state.revision,
     };
+  if (state.status === FIGURE_WAITING) return figureAction(state);
   if (state.status === "publication_ready")
     return { type: "publication_adapter_required", revision: state.revision, executed: false };
   return { type: "wait_for_user", status: state.status, revision: state.revision };
+}
+// 새 수정 회차: 현재 결과를 이력에 보존하고 수정 지시를 건다
+// source: person(사용자·편집장) | auto(요구사항 가드) · 이력에 함께 보존
+function beginRevision(state, feedback, source) {
+  state.history.push({
+    plan: [...(state.plan ?? STAGES)],
+    revision: state.revision,
+    artifacts: structuredClone(state.artifacts),
+    feedback,
+    feedbackSource: source,
+    // 본문이 바뀌면 앵커가 무효 · 만든 시각자료는 이력에만 남김
+    ...(state.figure ? { figure: state.figure } : {}),
+  });
+  delete state.figure;
+  state.revision += 1;
+  state.feedback = feedback;
+  state.feedbackSource = source;
+  // 사람 피드백은 새 편집 메모로 해석 · 자동 보정은 같은 메모 기준 유지
+  if (source === "person") delete state.brief;
+  state.approval = null;
+  state.satisfiedRevision = null;
+  delete state.unmet;
+}
+// 복귀 단계 이후 산출물 무효화 · 원문과 이전 산출물은 history에 보존.
+function routeTo(state, target, reason) {
+  const prefix = STAGES.slice(0, STAGES.indexOf(target));
+  requireThat(
+    !artifactsIssue(state.artifacts, prefix, state.revision - 1),
+    "Requirements contract incomplete for route prerequisites",
+  );
+  state.artifacts = Object.fromEntries(
+    prefix.map((stage) => [
+      stage,
+      {
+        ...state.artifacts[stage],
+        revision: state.revision,
+        reusedFromRevision: state.artifacts[stage].revision,
+      },
+    ]),
+  );
+  state.plan = [...STAGES];
+  state.routeReason = reason;
+  state.routeTarget = target;
+  ai(state, target);
+}
+// 확정된 편집 메모로 수정 착수 · 해석한 요구 변경을 장부에 반영 · ADR-0010·0016
+function startBrief(state) {
+  record(state, "feedback", state.brief.requirementChanges);
+  routeTo(state, state.brief.target, state.brief.intent);
+}
+// 편집 수준이 복귀 범위를 정함: 구조 편집은 늦어도 구성부터, 문장·교열은 초고부터 · RES-006
+function levelTarget(target, level) {
+  if (level === "line" || level === "copy") return "draft";
+  if (level === "developmental" && STAGES.indexOf(target) > STAGES.indexOf("outline"))
+    return "outline";
+  return target;
+}
+// 검토 합격 판정(데스크 체크) → 미충족 항목 · 형식은 코드 판정과 같음
+function reviewVerdict(state) {
+  const review = state.artifacts.review?.output;
+  if (review?.verdict !== "revise") return [];
+  const from = ["outline", "draft"].includes(review.reviseFrom) ? review.reviseFrom : "draft";
+  const criteria = review.unmetCriteria?.length ? review.unmetCriteria : review.findings;
+  return [{ kind: "review", target: from, message: `검토 판정 미충족: ${criteria.join(" / ")}` }];
+}
+// review 완료 가드: 코드로 판정한 요구사항 미충족이면 상한 안에서 구성부터 다시 · ADR-0007
+function presentOrCorrect(state) {
+  const unmet = [...unmetRequirements(state), ...reviewVerdict(state)];
+  const plan = correctionPlan(unmet, STAGES);
+  if (plan && (state.autoCorrections ?? 0) < AUTO_CORRECTION_LIMIT) {
+    beginRevision(state, plan.message, "auto");
+    state.autoCorrections = (state.autoCorrections ?? 0) + 1;
+    routeTo(state, plan.target, plan.message);
+    return;
+  }
+  state.status = "awaiting_user";
+  if (unmet.length) state.unmet = unmet;
 }
 export function transition(current, event) {
   requireThat(event && isText(event.id), "Event id required");
@@ -162,6 +277,9 @@ export function transition(current, event) {
     "pause",
     "resume",
     "retry",
+    "approve_brief",
+    "revise_brief",
+    ...FIGURE_USER_EVENTS,
   ];
   requireThat(
     event.actor === (userEvents.includes(event.type) ? "user" : "adapter"),
@@ -198,7 +316,9 @@ export function transition(current, event) {
       seen: { [event.id]: JSON.stringify(event) },
       approval: null,
       satisfiedRevision: null,
+      requirementLog: [],
     };
+    record(state, "form", formChanges(state.direction));
     return { state, action: nextAction(state) };
   }
   const serialized = JSON.stringify(event);
@@ -223,6 +343,7 @@ export function transition(current, event) {
     `Requirements contract incomplete: ${issue}`,
   );
   const state = structuredClone(current);
+  ensureLog(state);
   const before = state.status;
   switch (event.type) {
     case "complete_requirements": {
@@ -243,7 +364,8 @@ export function transition(current, event) {
       state.artifacts = {};
       state.approval = null;
       state.satisfiedRevision = null;
-      for (const key of ["resumeStatus", "error", "feedback", "routeReason"]) delete state[key];
+      for (const key of ["resumeStatus", "error", "feedback", "routeReason", "figure"])
+        delete state[key];
       ai(state, "diagnose");
       break;
     }
@@ -255,36 +377,40 @@ export function transition(current, event) {
         "Unexpected or stale AI result",
       );
       outputValid(event.stage, event.output);
-      state.artifacts[event.stage] = {
-        revision: state.revision,
-        output: structuredClone(event.output),
-      };
+      let output = structuredClone(event.output);
+      const section = event.stage === "draft" ? currentSection(state) : null;
+      if (section) {
+        requireThat(event.section === section.index, "Unexpected or stale draft section");
+        output = acceptPart(state, output);
+        if (!output) break; // 같은 단계에서 다음(또는 다시 쓸) 구간 대기 · 예산 위반 반복이면 failed
+      }
+      if (event.stage === "outline" && !acceptOutline(state, output)) break; // 예산 검증 · ADR-0009
+      state.artifacts[event.stage] = { revision: state.revision, output };
+      // 글감 문장의 요구는 한 번만 장부에 · 다시 진단해도 그 뒤의 피드백 변경을 덮지 않음 · ADR-0016
+      if (event.stage === "diagnose" && !state.requirementLog.some((e) => e.source === "idea"))
+        record(state, "idea", output.requirementChanges);
       const next = (state.plan ?? STAGES).find(
         (stage) => STAGES.indexOf(stage) > STAGES.indexOf(event.stage),
       );
       if (next) ai(state, next);
-      else state.status = "awaiting_user";
+      else presentOrCorrect(state);
       break;
     }
     case "feedback":
       requireThat(
-        ["awaiting_user", "satisfied", "publication_ready"].includes(state.status),
+        ["awaiting_user", "satisfied", "publication_ready", ...FIGURE_AWAITING].includes(
+          state.status,
+        ),
         "Feedback requires a presented result",
       );
       requireThat(
         event.reviewedRevision === state.revision && isText(event.feedback),
         "Feedback must reference current revision",
       );
-      state.history.push({
-        plan: [...(state.plan ?? STAGES)],
-        revision: state.revision,
-        artifacts: structuredClone(state.artifacts),
-        feedback: event.feedback,
-      });
-      state.revision += 1;
-      state.feedback = event.feedback;
-      state.approval = null;
-      state.satisfiedRevision = null;
+      beginRevision(state, event.feedback, "person");
+      state.autoCorrections = 0;
+      // 편집장(에이전트) 지시는 지시자 본인이 해석을 확정 · 사람 지시만 해석 승인 대기 · ADR-0010
+      state.briefPreapproved = event.briefPreapproved === true;
       state.status = "waiting_route";
       break;
     case "route": {
@@ -296,33 +422,45 @@ export function transition(current, event) {
         STAGES.includes(event.target) && isText(event.reason),
         "Route must choose diagnose or an editorial stage with a reason",
       );
-      // 복귀 단계 이후 산출물 무효화 · 원문과 이전 산출물은 history에 보존.
-      const index = STAGES.indexOf(event.target);
-      const prefix = STAGES.slice(0, index);
-      requireThat(
-        !artifactsIssue(state.artifacts, prefix, state.revision - 1),
-        "Requirements contract incomplete for route prerequisites",
-      );
-      state.artifacts = Object.fromEntries(
-        prefix.map((stage) => [
-          stage,
-          {
-            ...state.artifacts[stage],
-            revision: state.revision,
-            reusedFromRevision: state.artifacts[stage].revision,
-          },
-        ]),
-      );
-      state.plan = [...STAGES];
-      state.routeReason = event.reason;
-      ai(state, event.target);
+      // 편집 메모는 사람 승인 전까지 제안 · 수정 착수는 approve_brief에서 · ADR-0010
+      const brief = { intent: event.reason, ...(isRecord(event.brief) ? event.brief : {}) };
+      state.brief = { ...brief, target: levelTarget(event.target, brief.level) };
+      if (state.briefPreapproved) startBrief(state);
+      else state.status = "awaiting_brief";
       break;
     }
+    case "approve_brief": {
+      requireThat(
+        state.status === "awaiting_brief" && event.reviewedRevision === state.revision,
+        "Brief approval requires the current proposed brief",
+      );
+      const edit = isRecord(event.edit) ? event.edit : {};
+      requireThat(
+        edit.target === undefined || STAGES.includes(edit.target),
+        "Brief target must be an editorial stage",
+      );
+      state.brief = { ...state.brief, ...edit, approvedBy: "user" };
+      startBrief(state);
+      break;
+    }
+    case "revise_brief":
+      requireThat(
+        state.status === "awaiting_brief" &&
+          event.reviewedRevision === state.revision &&
+          isText(event.note),
+        "Brief revision requires the current proposed brief and a note",
+      );
+      // 해석 보정 의견을 수정 요청에 덧붙여 다시 해석 · 이전 제안은 폐기
+      state.feedback = `${state.feedback}\n\n해석 보정: ${event.note}`;
+      delete state.brief;
+      state.status = "waiting_route";
+      break;
     case "satisfy":
       requireThat(
         state.status === "awaiting_user" && event.reviewedRevision === state.revision,
         "Satisfaction requires current presented revision",
       );
+      requireThat(!blockingUnmet(state).length, "Satisfaction blocked by unmet requirements");
       state.satisfiedRevision = state.revision;
       state.status = "satisfied";
       break;
@@ -333,7 +471,12 @@ export function transition(current, event) {
           event.reviewedRevision === state.revision,
         "Separate approval for current satisfied revision required",
       );
-      state.approval = { revision: state.revision, eventId: event.id };
+      // 승인 대상은 넘길 결과물 전체: 본문 + 확인된 시각자료(없으면 본문만) · FIGURE-001
+      state.approval = {
+        revision: state.revision,
+        eventId: event.id,
+        figures: state.figure?.items.map((item) => item.id) ?? [],
+      };
       state.status = "publication_ready";
       break;
     case "pause":
@@ -348,7 +491,8 @@ export function transition(current, event) {
       break;
     case "fail":
       requireThat(
-        ["waiting_ai", "waiting_route"].includes(state.status) && isText(event.error),
+        ["waiting_ai", "waiting_route", FIGURE_WAITING].includes(state.status) &&
+          isText(event.error),
         "Failure must reference pending AI work",
       );
       requireThat(
@@ -366,7 +510,7 @@ export function transition(current, event) {
       delete state.error;
       break;
     default:
-      throw new Error(`Unsupported event: ${event.type}`);
+      if (!figureTransition(state, event)) throw new Error(`Unsupported event: ${event.type}`);
   }
   const resultingIssue = flowIssue(state);
   requireThat(

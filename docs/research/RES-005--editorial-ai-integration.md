@@ -1,8 +1,8 @@
 # RES-005 · AIN 편집 AI 반영안
 
-- 상태: 제안 · 구현·스키마 변경 미적용
+- 상태: 일부 적용 · 적용: 단계 산출물 선택 필드(audience·value·outline 설계 카드·analogySystem)·mode별 규칙·코드 지표 `draftMetrics` · 미적용: 다중 이름 후보·오해 반박 누락 지표·혼동 보정 정규화(편집장 판정으로 대체 중, ADR-0006)·필드 필수화
 - 관심사: RES-004 절차를 AIN 8단계 산출물·지표·규칙·피드백 루프·검증으로 옮기는 설계
-- 관련: FLOW-002 진단·sectionModes·검토 · `automation/paseo/prompts.mjs` · `automation/contracts/ai-output.mjs` · PILOT-001 독자 과업
+- 관련: FLOW-002 진단·sectionModes·검토 · `automation/paseo/prompts/` · `automation/contracts/ai-output.mjs` · PILOT-001 독자 과업
 - 제약: FLOW-002 "개념 설명 순서의 일괄 강제 제외" 유지 · sectionModes는 현재 자유 문자열(예: `explanation`) · mode 이름(explain·procedure·argue·narrate)은 제안 분류
 - 변경 이유: AIN 계약·단계 설계 변경
 
