@@ -87,10 +87,7 @@ export function promptContext(state, action) {
     ...((stage === "review" || route) && typeof artifacts.draft?.text === "string"
       ? {
           draftCharacterCount: readerLength(artifacts.draft.text),
-          draftMetrics: draftMetrics(artifacts.draft.text, {
-            outline: artifacts.outline,
-            value: artifacts.value,
-          }),
+          draftMetrics: draftMetrics(artifacts.draft.text, { outline: artifacts.outline }),
         }
       : {}),
     baseline,

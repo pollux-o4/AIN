@@ -16,6 +16,7 @@ import {
 import { requirementValue } from "../../editorial/domain/index.mjs";
 import {
   HYPE_HINT,
+  LEAD,
   NATURAL_KOREAN,
   resolveDirection,
   reviewChecks,
@@ -74,19 +75,18 @@ const STAGE_SPECS = {
     ],
   }),
   audience: () => ({
-    task: "독자 카드를 정리한다. 구성 단계와 초고 단계는 설명 수준과 도입 장면을 이 카드에서 참고한다.",
+    task: "독자 카드를 정리한다. 구성 단계와 초고 단계는 설명 수준과 도입부 재료를 이 카드에서 참고한다.",
     steps: [
       "reader와 intent는 diagnose 단계의 판단과 어긋나지 않게 적는다.",
       "readerTask에는 독자가 글을 읽은 뒤 할 수 있게 될 일을 1문장으로 적는다.",
       "knows·unknownTerms·misconceptions·homonyms에는 글감과 자료에서 근거를 찾을 수 있는 항목만 적고, 해당하는 내용이 없으면 빈 배열로 둔다.",
-      "scene에는 독자가 이 문제로 지금 겪고 있는 구체적 장면 하나를 2~3문장으로 적는다. 본문은 이 장면으로 시작한다. 주인공은 한 사람으로 정하되, 자료에 등장인물이 있으면 그 인물을 쓰고, 없으면 이름을 붙인 가상 인물(예: '가상의 인물 민지 씨')로 정한다.",
+      "scene에는 독자가 이 문제를 겪는 구체적 상황 하나를 2~3문장으로 적는다. 독자가 무엇을 하려다 어디에서 막히는지가 드러나게 쓴다. 초고는 이 상황을 도입부의 재료로 쓴다. 자료에 등장인물이 있으면 그 인물의 상황을 쓰고, 없으면 대상 독자 자신의 상황으로 적는다.",
       VOICE.slot("scene"),
     ],
     criteria: [
       "readerTask가 '…할 수 있다'로 끝나는 1문장인가",
-      "scene에 주인공 한 사람, 시간이나 장소 가운데 하나 이상, 그리고 눈에 보이는 구체적 행동이 들어 있는가",
-      "scene이 자료에 근거한 상황인가, 만약 가상의 상황이라면 주인공을 '가상의 인물 …'로 명시하였는가",
-      "scene이 오늘날의 독자가 실제로 겪을 수 있는 상황인가",
+      "scene에 독자가 하려던 일과 막히는 지점이 구체적으로 드러나 있는가",
+      "scene이 자료에 근거하거나 오늘날의 대상 독자가 실제로 겪을 수 있는 상황인가",
       "근거가 없는 항목을 채우려고 내용을 지어내지 않았는가",
     ],
   }),
@@ -94,7 +94,7 @@ const STAGE_SPECS = {
     task: "독자에게 줄 결과와 약속을 정하고, 그 목적에 필요하지 않은 내용은 범위에서 뺀다.",
     steps: [
       "outcome에는 audience.readerTask를 이룬 결과를 1문장으로 적는다.",
-      "promise에는 같은 내용을 독자에게 건네는 약속 문장 1개로 적는다. 이 문장은 도입부에서 도입 장면 바로 뒤에 글자 그대로 쓰인다.",
+      "promise에는 같은 내용을 독자에게 건네는 약속 문장 1개로 적는다. 초고는 이 문장의 뜻을 살려 도입부에 싣는다.",
       VOICE.slot("promise"),
       "preserve에는 글감과 원문에서 꼭 지켜야 할 조건·사실·목소리를 적는다.",
       "readerTask를 이루는 데 필요 없는 내용은 excluded에 적는다. 다만 requirements.length가 지정되어 있으면 다룰 범위를 그 분량에 맞게 조절한다.",
@@ -112,14 +112,14 @@ const STAGE_SPECS = {
       "source와 idea에서 글의 근거로 삼을 사실을 골라 evidence에 claim과 출처(url)로 적는다. 이때 자료의 어느 문장에서 나왔는지 짚을 수 있는 사실만 적는다.",
       "글을 쓰는 데 필요하지만 자료만으로 확인되지 않는 내용은 uncertainties에 적는다.",
       "cases에는 사례 후보를 3~6개 적는다. 사례는 교훈을 풀이하는 요약이 아니라 구체적 장면이어야 하며, 주인공이 언제·어디서 무엇을 했고 눈에 보이는 결과(사물·횟수·시간 등)가 어땠는지를 담아야 한다.",
-      "자료에 들어 있는 사례는 origin을 source로 적는다. 자료에 없어 새로 짠 가상 사례는 origin을 hypothetical로 적되, audience.scene의 주인공이 그 뒤에 겪는 장면으로 이어 쓴다(사례마다 새 인물을 만들지 않는다).",
+      "자료에 들어 있는 사례는 origin을 source로 적는다. 자료에 없어 새로 짠 가상 사례는 origin을 hypothetical로 적는다. 가상 사례가 여럿이면 한 인물이 이어서 겪는 장면으로 쓴다(사례마다 새 인물을 만들지 않는다).",
     ],
     criteria: [
       "모든 claim이 자료의 문장으로 확인되며 기억이나 추측으로 쓰지 않았는가",
       "새로 짠 가상 사례의 origin이 모두 hypothetical이고 실존 인물·기관·통계를 지어내지 않았는가(장면 속 수치는 상황 묘사에만 쓰고 효과나 비율의 근거로 내세우지 않았는가)",
       "사례마다 주인공의 구체적 행동 하나와 눈에 보이는 결과가 들어 있으며, '위험해졌다·편해졌다' 같은 추상적 평가만 쓰지 않았는가",
       "사례에 교훈이나 원칙을 풀이하는 문장이 섞이지 않았는가",
-      "가상 사례의 주인공이 audience.scene의 주인공과 동일 인물인가",
+      "가상 사례가 여럿이면 모두 같은 인물이 겪는 일인가",
       "사례가 오늘날의 독자가 실제로 겪을 수 있는 상황인가",
       "evidence와 uncertainties 중 적어도 하나는 비어 있지 않은가",
     ],
@@ -155,7 +155,7 @@ const STAGE_SPECS = {
       `${slotCheck("principleLine", "principleLine")} 단서('…라도', '…인 만큼')와 ${HYPE_HINT}가 없는가`,
       "keyPoint·hook·underline·principleLine을 순서대로 읽었을 때 같은 말의 되풀이가 아니라 논리적으로 한 걸음씩 나아가는가",
       `본문에 실릴 각 항목의 ${VOICE.check}`,
-      "도입 장면(audience.scene)과 같은 사건을 cases에서 처음부터 다시 쓰지 않았는가",
+      "도입부 재료(audience.scene)와 같은 사건을 cases에서 처음부터 다시 쓰지 않았는가",
       "procedure가 아닌 모든 구간에 hook·cases·underline·principleLine이 빠짐없이 채워졌는가(시스템이 검사하여 누락 시 거부한다)",
       "requirements.length가 지정되어 있으면 모든 구간에 budget이 적혀 있고 그 합계가 허용 범위 안이며, 각 구간의 budget이 위에서 정한 최소 분량 이상인가(시스템이 검사하여 기준을 벗어나면 거부한다)",
     ],
@@ -179,7 +179,7 @@ const STAGE_SPECS = {
             : []),
         ...(!section || section.index === 0
           ? [
-              "도입부: 첫 줄은 '# 제목'(outline.title을 그대로 적고, 없으면 약속이 담긴 제목을 쓴다)으로 시작한다. 첫 문단은 audience.scene을 2~4문장의 장면으로 쓰며(첫 문장은 주인공의 행동으로 시작하고 주인공·시간·장소를 빼놓지 않는다), 둘째 문단은 value.promise(글자 그대로)와 이 글이 다룰 전개 순서 1문장으로 쓴다. 도입부에 audience.unknownTerms의 용어를 쓸 때는 그 자리에서 바로 풀이한다.",
+              `도입부: 첫 줄은 '# 제목'(outline.title을 그대로 적고, 없으면 독자가 얻을 것이 담긴 제목을 쓴다)으로 시작한다. ${LEAD.draft}`,
             ]
           : []),
         section
@@ -219,7 +219,7 @@ const STAGE_SPECS = {
         `checks에는 아래 기준마다 id·pass·note를 하나씩 적는다. note에는 판정의 근거가 된 본문 표현이나 측정값을 적는다.\n${checks.map(({ id, ask }) => `   - ${id}: ${ask}`).join("\n")}`,
         "통과하지 못한 기준과 그 밖의 문제점은 findings에 한 항목씩 적는다.",
         "분량은 draftCharacterCount(공백·줄바꿈 포함 유니코드 문자 수)로만 판단하며 추정 수치를 쓰지 않는다. 문장·문단·구간 길이와 소제목·구간 카드 반영 여부는 시스템이 세거나 글자를 대조하여 계산한 draftMetrics 값만 인용한다. 그 밖의 기준은 본문을 직접 읽고 판단하되 근거가 되는 표현을 인용한다.",
-        "verdict는 다음 가운데 하나라도 해당하면 revise로, 모두 해당하지 않으면 pass로 판정한다. (가) brief(수정 해석)가 있고 acceptance.criteria·priorities를 채우지 못한 경우 (나) draftMetrics.cardTransfer의 missing·notInSummary 목록에 구간이 남았거나 titleMatches 또는 promiseInLead가 false인 경우 (다) S10이나 R 기준을 통과하지 못한 경우. 다만 단순 문체 취향이나 분량 수치는 revise 사유로 삼지 않는다(분량은 시스템이 따로 검사한다).",
+        "verdict는 다음 가운데 하나라도 해당하면 revise로, 모두 해당하지 않으면 pass로 판정한다. (가) brief(수정 해석)가 있고 acceptance.criteria·priorities를 채우지 못한 경우 (나) draftMetrics.cardTransfer의 missing·notInSummary 목록에 구간이 남았거나 titleMatches가 false인 경우 (다) S10이나 R 기준을 통과하지 못한 경우. 다만 단순 문체 취향이나 분량 수치는 revise 사유로 삼지 않는다(분량은 시스템이 따로 검사한다).",
         "verdict가 revise이면 unmetCriteria에 못 채운 사유를 적고, reviseFrom에 다시 시작할 단계를 적되 구간 카드 자체에 결함이 있으면 outline을, 그 밖의 경우에는 draft를 적는다.",
       ],
       rules: seasoningRules("review", direction),

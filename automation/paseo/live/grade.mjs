@@ -44,7 +44,6 @@ export const GRADERS = [
       return (
         !t ||
         (t.titleMatches !== false &&
-          t.promiseInLead !== false &&
           [t.missingHooks, t.missingUnderlines, t.missingPrincipleLines, t.notInSummary].every(
             empty,
           ))

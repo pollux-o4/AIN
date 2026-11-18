@@ -213,7 +213,7 @@ function leadIssue(state, text) {
   const expected = title ? line(`# ${title}`) : null;
   if (expected ? first === expected : /^# \S/.test(first)) return null;
   return {
-    note: `원고는 '${expected ?? "# 제목"}' 줄로 시작하고, 이어서 도입부(도입 장면과 약속 문장)를 쓴 뒤 첫 소제목으로 들어간다.`,
+    note: `원고는 '${expected ?? "# 제목"}' 줄로 시작하고, 이어서 도입부를 쓴 뒤 첫 소제목으로 들어간다.`,
     error: `초고가 ${RETRY_LIMIT.draft}회 다시 써도 글 제목 줄로 시작하지 않음.`,
   };
 }

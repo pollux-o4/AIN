@@ -79,11 +79,8 @@ test("ADR-0013: 구간 카드의 항목이 초고에 글자 그대로 옮겨졌�
     missingPrincipleLines: [],
     notInSummary: [card.title],
   });
-  // 약속 문장은 도입부(첫 소제목 앞)에 그대로 실려야 한다
-  const lead = { promise: "지난 주말 나는 마트에서 두부를 빼먹었습니다." };
-  assert.equal(draftMetrics(story, { outline, value: lead }).cardTransfer.promiseInLead, true);
-  const body = { promise: "기억이 아니라 종이가 장을 봅니다." };
-  assert.equal(draftMetrics(story, { outline, value: body }).cardTransfer.promiseInLead, false);
+  // 약속 문장은 뜻을 살려 고쳐 쓸 수 있으므로 글자 대조하지 않는다(ADR-0021)
+  assert.equal("promiseInLead" in draftMetrics(story, { outline }).cardTransfer, false);
   assert.deepEqual(draftMetrics(story, { outline }).missingHeadings, []);
   assert.deepEqual(
     draftMetrics(story.replace("## 목록이 실수를 줄인다\n", ""), { outline }).missingHeadings,

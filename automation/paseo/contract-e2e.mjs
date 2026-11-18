@@ -292,10 +292,7 @@ export async function runLiveVerification({
         cardSections: outline.sections.filter((section) => usesStoryCard(sectionMode(section)))
           .length,
         sections: outline.sections.length,
-        metrics: draftMetrics(final.artifacts.draft.output.text, {
-          outline,
-          value: final.artifacts.value.output,
-        }),
+        metrics: draftMetrics(final.artifacts.draft.output.text, { outline }),
         verdict: review.verdict ?? null,
         failedChecks: (review.checks ?? []).filter((c) => !c.pass).map((c) => c.id),
         // 미통과 근거(검토가 적은 판정 이유) · 반복 평가에서 같은 지적이 되풀이되는지 본다

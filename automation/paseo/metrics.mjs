@@ -1,4 +1,4 @@
-// 코드 지표: 세거나 글자 그대로 대조할 수 있는 것만 · 뜻을 읽어야 하는 판단(말투·과장·도입 장면·용어 풀이)은 검토(LLM)의 몫
+// 코드 지표: 세거나 글자 그대로 대조할 수 있는 것만 · 뜻을 읽어야 하는 판단(말투·과장·도입부 역할·용어 풀이)은 검토(LLM)의 몫
 // 낱말 일치로 뜻을 어림하던 지표는 오판 근거가 되어 뺐다(되묻는 문장 속 "누구나"가 과장어로 잡힌 실측) · ADR-0013
 // 분량은 여기서 세지 않음 · 원천 readerLength(draftCharacterCount) · ADR-0009
 import {
@@ -63,7 +63,7 @@ function sectionShape(part) {
 }
 
 // 구성 카드의 항목이 초고에 글자 그대로 옮겨졌는지 · 항목이 있는 카드 구간만 · ADR-0013
-function cardTransfer(text, outline, value) {
+function cardTransfer(text, outline) {
   const cards = (outline?.sections ?? []).filter(
     (section) => usesStoryCard(sectionMode(section)) && STORY_SLOTS.some((name) => section[name]),
   );
@@ -76,10 +76,6 @@ function cardTransfer(text, outline, value) {
   return {
     ...(outline?.title
       ? { titleMatches: plain(text.match(/^#\s+(.+)$/m)?.[1] ?? "") === plain(outline.title) }
-      : {}),
-    // 약속 문장이 도입부(첫 소제목 앞)에 그대로 실렸는지 · 독자가 얻을 것을 먼저 알게 하는 줄(S1)
-    ...(typeof value?.promise === "string"
-      ? { promiseInLead: plain(splitArticle(text).lead).includes(plain(value.promise)) }
       : {}),
     missingHooks: missing("hook"),
     missingUnderlines: missing("underline"),
@@ -155,14 +151,14 @@ export const METRIC_BASIS = Object.freeze({
 
 /**
  * @param {string} text 초고 본문(마크다운)
- * @param {{ outline?: Record<string, any>, value?: { promise?: string } }} [design]
+ * @param {{ outline?: Record<string, any> }} [design]
  */
-export function draftMetrics(text, { outline, value } = {}) {
+export function draftMetrics(text, { outline } = {}) {
   const sentences = sentencesOf(text);
   const lengths = sentences.map(chars).sort((a, b) => a - b);
   const headings = [...text.matchAll(/^#{2,6}\s.+$/gm)].map((m) => m.index);
   const gaps = headings.map((at, i) => (headings[i + 1] ?? text.length) - at);
-  const transfer = cardTransfer(text, outline, value);
+  const transfer = cardTransfer(text, outline);
   return {
     sentenceLength: { median: percentile(lengths, 0.5), p90: percentile(lengths, 0.9) },
     longestParagraph: Math.max(0, ...paragraphsOf(text).map(chars)),
