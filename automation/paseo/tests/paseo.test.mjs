@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import test from "node:test";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import test, { after } from "node:test";
 import { transition } from "../../editorial/domain/index.mjs";
+import { scratchDir } from "../../runtime/scratch.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 import { Jobs } from "../jobs.mjs";
 import { GUARD } from "../prompts/frame.mjs";
+
+const scratch = await scratchDir("paseo-tests");
+after(() => scratch.release());
 
 const valid = JSON.stringify({
   purpose: "검증 fixture",
@@ -23,9 +27,7 @@ const start = () =>
     idea: "테스트 과업",
   }).state;
 async function setup(statuses = [{ status: "idle", lastMessage: valid }]) {
-  const base = resolve(".local/paseo-tests");
-  await mkdir(base, { recursive: true });
-  const root = await mkdtemp(join(base, "run-"));
+  const root = await mkdtemp(join(scratch.path, "run-"));
   const calls = [];
   const archived = [];
   const remaining = [...statuses];

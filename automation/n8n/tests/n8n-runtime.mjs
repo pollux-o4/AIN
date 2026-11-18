@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { readdir } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
+import { scratchDir } from "../../runtime/scratch.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 import { startIsolatedN8n } from "../testing/runtime.mjs";
 
@@ -27,6 +27,7 @@ const server = makeServer({
   },
 });
 let runtime;
+let scratch;
 try {
   await new Promise((done, reject) => {
     server.once("error", reject);
@@ -41,9 +42,8 @@ try {
   assert.equal(unauthorized.status, 401);
   await unauthorized.body?.cancel();
   assert.equal(calls.length, 0);
-  const base = resolve(".local/n8n-runtime-tests");
-  await mkdir(base, { recursive: true });
-  const root = await mkdtemp(join(base, "run-"));
+  scratch = await scratchDir("n8n-runtime");
+  const root = scratch.path;
   await assert.rejects(
     () => startIsolatedN8n({ root, port: 5678, bridgeUrl, token }),
     /Invalid isolated n8n port/,
@@ -96,4 +96,5 @@ try {
 } finally {
   await runtime?.stop();
   await new Promise((done) => server.close(done));
+  await scratch?.release({ failed: process.exitCode !== undefined && process.exitCode !== 0 });
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
+import { testScratch } from "../../runtime/scratch.mjs";
 import { STAGES, transition } from "../domain/index.mjs";
 import { EDITORIAL_LIMITS } from "../service/lifecycle.mjs";
 import { EditorialService } from "../service.mjs";
@@ -24,7 +24,7 @@ const output = {
   review: { findings: [], preservationCheck: "핵심 유지" },
 };
 async function fixture(t) {
-  const dir = await mkdtemp(".local/editorial-test-");
+  const dir = await testScratch(t, "editorial-test");
   const store = new EditorialStore(join(dir, "state.sqlite"));
   t.after(() => service.store.close());
   const records = new Map(),

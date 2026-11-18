@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
@@ -17,6 +17,7 @@ import {
 } from "../editorial/domain/index.mjs";
 import { EditorialService, EditorialStore } from "../editorial/index.mjs";
 import { startIsolatedN8n } from "../n8n/testing/runtime.mjs";
+import { scratchDir } from "../runtime/scratch.mjs";
 import { makeServer } from "../runtime/server.mjs";
 import { Jobs } from "./index.mjs";
 import { liveCase } from "./live/cases.mjs";
@@ -59,8 +60,9 @@ export async function runLiveVerification({
 } = {}) {
   assert.equal(typeof article, "boolean");
   assert.equal(STAGES.length, 8);
-  await mkdir(resolve(".local"), { recursive: true, mode: 0o700 });
-  const root = await mkdtemp(resolve(".local/contract-live-"));
+  // 통과한 실행은 보고를 표준 출력으로 남기고 폴더를 지운다 · 실패한 실행은 진단용으로 남김
+  const scratch = await scratchDir("contract-live");
+  const root = scratch.path;
   const controller = new AbortController();
   const { signal } = controller;
   const onSignal = (name) => {
@@ -374,6 +376,7 @@ export async function runLiveVerification({
       { report },
     );
   if (!quiet) console.log(JSON.stringify(report));
+  await scratch.release();
   return report;
 }
 

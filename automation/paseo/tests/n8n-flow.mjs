@@ -1,17 +1,17 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { FIGURE_PASSES } from "../../contracts/figure.mjs";
 import { nextAction, STAGES, transition } from "../../editorial/domain/index.mjs";
 import { EditorialService, EditorialStore } from "../../editorial/index.mjs";
 import { startIsolatedN8n } from "../../n8n/testing/runtime.mjs";
+import { scratchDir } from "../../runtime/scratch.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 
 // FLOW-001/FLOW-002: real service/store and n8n transport; Jobs is a deterministic fixture.
-const base = resolve(".local/paseo-flow-tests");
-await mkdir(base, { recursive: true });
-const root = await mkdtemp(join(base, "run-"));
+const scratch = await scratchDir("paseo-flow");
+const root = scratch.path;
 const calls = [];
 const records = new Map();
 let forceFailure = false;
@@ -271,4 +271,5 @@ try {
   await runtime?.stop();
   await new Promise((done) => server.close(done));
   store.close();
+  await scratch.release({ failed: process.exitCode !== undefined && process.exitCode !== 0 });
 }

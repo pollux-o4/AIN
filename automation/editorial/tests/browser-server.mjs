@@ -1,9 +1,9 @@
-import { mkdir, mkdtemp } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { AUTO, DEFAULT_DIRECTION, directionSchema } from "../../contracts/writing-modes.mjs";
 import { inProcessDispatcher } from "../../n8n/testing/in-process.mjs";
 import { Jobs } from "../../paseo/index.mjs";
 import { promptData, promptTask } from "../../paseo/prompts/index.mjs";
+import { scratchDir } from "../../runtime/scratch.mjs";
 import { makeServer } from "../../runtime/server.mjs";
 import { EditorialService, EditorialStore } from "../index.mjs";
 import { STORY } from "./story-card.mjs";
@@ -136,8 +136,8 @@ export function fixtureOutputs(data) {
 }
 
 if (import.meta.main) {
-  await mkdir(".local/editorial-e2e", { recursive: true });
-  const root = await mkdtemp(resolve(".local/editorial-e2e/run-"));
+  const scratch = await scratchDir("editorial-e2e");
+  const root = scratch.path;
   const port = 3356,
     n8nPort = 5728,
     token = "fixture-editorial-token-not-a-live-secret";
@@ -309,6 +309,7 @@ if (import.meta.main) {
         server.closeAllConnections();
       });
       store.close();
+      await scratch.release();
     })();
     return stopping;
   }
