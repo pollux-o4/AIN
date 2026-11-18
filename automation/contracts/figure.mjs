@@ -103,22 +103,27 @@ export const figureOutputExamples = {
     candidates: [
       {
         anchor: "초안의 해당 문장을 글자 그대로 적는다.",
-        claim: "string",
+        claim: "그림이 보여 줄 대상과 그 관계를 1문장으로 적는다.",
         reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 적는다.",
         analogy: "본문에서 쓴 비유 대상을 적고, 없으면 생략한다.",
         scene: "그 핵심을 보여 줄 원인 → 결과 장면을 적는다.",
         kind: "structure|flow|comparison|hierarchy|cycle|chart|table|scene",
       },
     ],
-    skipped: [{ unit: "units에 있는 항목을 글자 그대로 적는다.", reason: "string" }],
+    skipped: [
+      {
+        unit: "units에 있는 항목을 글자 그대로 적는다.",
+        reason: "그림이 도움이 되지 않는 이유를 1문장으로 적는다.",
+      },
+    ],
   },
   figure: {
     figures: [
       {
         id: "f1",
         svgFile: "/작업 폴더/f1.svg",
-        alt: "string",
-        caption: "string",
+        alt: "그림을 볼 수 없는 독자를 위한 대체 설명 1~2문장을 적는다.",
+        caption: "그림 아래에 놓을 한 줄 설명을 적는다.",
         notes: "이번 층에서 바꾼 사항과 다음 층에서 살필 남은 과제를 적는다.",
       },
     ],

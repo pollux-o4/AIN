@@ -116,7 +116,7 @@ test("FIGURE-001 프롬프트: 확정 본문만 주고 본문 수정 금지 · �
   state = transition(state, resultEvent(job, out)).state;
   assert.equal(state.status, "waiting_figure");
   for (const [pass, role] of [
-    ["content", /역할은 내용 편집자이다[\s\S]*판정[\s\S]*구도부터 새로 그린다/],
+    ["content", /판정하고 바로잡아[\s\S]*판정[\s\S]*구도부터 새로 그린다/],
     ["visual", /역할은 시각 마감 담당이다[\s\S]*형태부터 다시 그린다[\s\S]*prefers-reduced-motion/],
   ]) {
     action = nextAction(state);

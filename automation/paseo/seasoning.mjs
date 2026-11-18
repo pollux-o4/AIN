@@ -57,7 +57,7 @@ export const BASE = {
   ],
   review: [
     "[구간 적용] 해당 구간의 mode 규칙만 검토한다. explain 설계 카드를 다른 mode의 평가 기준으로 적용하지 않는다.",
-    "findings에 해당 기준 ID(P1~P6·S1~S10)·구간·문제 표현·이유를 명시한다.",
+    "findings에 checks의 기준 ID·구간·문제 표현·이유를 명시한다.",
     "preservationCheck에는 핵심 내용을 독자의 언어로 3문장으로 재진술(paraphrase)하고 원문과 불일치하는 지점을 표시한다. AI 기반의 대리 지표를 실제 독자 검증 결과인 것처럼 주장하지 않는다.",
   ],
 };

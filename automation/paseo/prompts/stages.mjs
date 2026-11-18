@@ -129,7 +129,7 @@ const STAGE_SPECS = {
     steps: [
       "title에는 topic.titleCandidates 가운데 value.promise를 가장 잘 전하는 제목 하나를 글자 그대로 옮겨 적는다. 다만 알맞은 후보가 없으면 약속형 제목을 새로 만든다.",
       `글의 구간을 나눈 뒤, 구간마다 하나의 핵심 원칙(keyPoint)을 정하여 title·mode·keyPoint를 기재한다. mode는 ${WRITING_MODES.join("|")} 중 하나를 고른다. 주된 mode는 requirements.mode를 우선하고, 지정된 값이 없으면 diagnose.primaryMode를 따른다. 기본은 주된 mode 하나로 통일하되, 내용상 필요한 경우에만 구간별로 다른 mode를 섞는다.`,
-      "소제목 계층 구조(ADR-0014)를 정한다. 구간 안에 독자가 나중에 다시 찾아볼 대등한 항목이 2개 이상 있으면 subsections로 나누며, 하위 항목도 같은 기준으로 다시 나눌 수 있다. 계층 깊이는 내용의 포함 관계에 따라 정하며 따로 상한을 두지 않는다. 같은 단계의 항목은 3~5개를 목표로 하되, 하위 항목이 하나뿐이면 나누지 않는다. 하위 항목의 본문 분량은 해당 구간의 budget에 포함된다.",
+      "소제목 계층 구조를 정한다. 구간 안에 독자가 나중에 다시 찾아볼 대등한 항목이 2개 이상 있으면 subsections로 나누며, 하위 항목도 같은 기준으로 다시 나눌 수 있다. 계층 깊이는 내용의 포함 관계에 따라 정하며 따로 상한을 두지 않는다. 같은 단계의 항목은 3~5개를 목표로 하되, 하위 항목이 하나뿐이면 나누지 않는다. 하위 항목의 본문 분량은 해당 구간의 budget에 포함된다.",
       "제목과 소제목의 역할을 계층별로 나눈다. 글 제목은 이 글을 읽고 무엇을 알게 되는지를 비유 없이 바로 알 수 있게 쓴다. 구간 title은 그 구간에서 독자가 얻을 답을 짧고 자연스러운 말로 담아, 소제목만 훑어도 글 전체의 구조가 드러나게 한다. 하위 항목의 title은 독자가 다시 찾아볼 대상을 짧은 이름으로 쓰고 같은 단계의 항목끼리 같은 형태를 유지한다. 모든 제목은 정해진 문형에 맞추지 않으며, 독자의 호기심을 끄는 질문은 소제목에 두지 않고 hook에 둔다.",
       "독자 수준은 requirements.readerLevel을 우선하고, 지정된 값이 없으면 diagnose.readerLevel을 따른다. 개념은 prerequisite 의존 순서에 따라 배치하고 구간별 level을 적는다. value.excluded에 들어 있는 내용은 구간으로 넣지 않으며, 핵심 흐름 밖의 심화·호기심 구간은 optional을 true로 둔다.",
       `procedure가 아닌 구간에는 구간 카드의 항목인 hook(여는 질문: 구간의 첫 문장이 될 질문이나 통념을 뒤집는 주장), cases(research.cases에서 고른 사례 1~${MAX_CASES}개의 장면 원형), underline(강조 문장), principleLine(마무리 문장)을 모두 적는다.`,
@@ -218,7 +218,7 @@ const STAGE_SPECS = {
         "작성자와 독립된 시각에서 오류를 점검한다. 단정·수치·필수조건을 source 및 research와 대조하고, 주체와 대상이나 개념과 기능의 혼동, 독자의 이해를 막는 지점을 확인한다.",
         `checks에는 아래 기준마다 id·pass·note를 하나씩 적는다. note에는 판정의 근거가 된 본문 표현이나 측정값을 적는다.\n${checks.map(({ id, ask }) => `   - ${id}: ${ask}`).join("\n")}`,
         "통과하지 못한 기준과 그 밖의 문제점은 findings에 한 항목씩 적는다.",
-        "분량은 draftCharacterCount(공백·줄바꿈 포함 유니코드 문자 수)로만 판단하며 추정 수치를 쓰지 않는다. 문장·문단·구간 길이와 소제목·구간 카드 반영 여부는 시스템이 재고 글자 대조로 계산한 draftMetrics 값만 인용한다. 그 밖의 기준은 본문을 직접 읽고 판단하되 근거가 되는 표현을 인용한다.",
+        "분량은 draftCharacterCount(공백·줄바꿈 포함 유니코드 문자 수)로만 판단하며 추정 수치를 쓰지 않는다. 문장·문단·구간 길이와 소제목·구간 카드 반영 여부는 시스템이 세거나 글자를 대조하여 계산한 draftMetrics 값만 인용한다. 그 밖의 기준은 본문을 직접 읽고 판단하되 근거가 되는 표현을 인용한다.",
         "verdict는 다음 가운데 하나라도 해당하면 revise로, 모두 해당하지 않으면 pass로 판정한다. (가) brief(수정 해석)가 있고 acceptance.criteria·priorities를 채우지 못한 경우 (나) draftMetrics.cardTransfer의 missing·notInSummary 목록에 구간이 남았거나 titleMatches 또는 promiseInLead가 false인 경우 (다) S10이나 R 기준을 통과하지 못한 경우. 다만 단순 문체 취향이나 분량 수치는 revise 사유로 삼지 않는다(분량은 시스템이 따로 검사한다).",
         "verdict가 revise이면 unmetCriteria에 못 채운 사유를 적고, reviseFrom에 다시 시작할 단계를 적되 구간 카드 자체에 결함이 있으면 outline을, 그 밖의 경우에는 draft를 적는다.",
       ],

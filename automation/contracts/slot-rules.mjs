@@ -37,4 +37,4 @@ export const slotGuide = (name) =>
 
 /** 검토 AI·자기 점검용 질문 @param {keyof typeof SLOT_RULES} name @param {string} label */
 export const slotCheck = (name, label) =>
-  `${label}이(가) 다음 역할을 하는가: ${SLOT_RULES[name].role} (${SLOT_RULES[name].max}자 이내는 시스템이 세어 넘으면 거부한다)`;
+  `${label} 항목이 다음 역할에 맞는가: ${SLOT_RULES[name].role} (${SLOT_RULES[name].max}자를 넘으면 시스템이 거부한다)`;

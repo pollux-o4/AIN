@@ -2,7 +2,7 @@
 import { routeOutputExample } from "../../contracts/ai-output.mjs";
 
 export const routeSpec = () => ({
-  task: "편집장으로서 사람의 피드백을 수정 해석(brief)으로 정리한다. 뒤이은 단계(구성·초고·검토)는 이 수정 해석을 공통 기준으로 따른다.",
+  task: "사람의 피드백을 수정 해석(brief)으로 정리한다. 뒤이은 단계(구성·초고·검토)는 이 수정 해석을 공통 기준으로 따른다.",
   steps: [
     "피드백 문구만 따로 떼어 보지 말고, 현재 적용되는 요구사항(requirements), 원래 글감(idea), 직전 review findings, draftMetrics, 작업 이력을 함께 살펴 독자 목적에 비추어 문제의 원인을 진단한다.",
     "level은 developmental(목적·독자·범위·구성 문제이거나 분량의 20%를 넘는 변경), line(문단·문장 흐름 수정), copy(표기·일관성 교정) 가운데 하나로 정한다.",
