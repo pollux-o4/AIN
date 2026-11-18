@@ -5,6 +5,7 @@ import test from "node:test";
 import { figureOutputSchemas, svgIssue } from "../../contracts/figure.mjs";
 import { actionRequestSchema } from "../../contracts/requests.mjs";
 import { testScratch } from "../../runtime/scratch.mjs";
+import { articleHtml } from "../article-html.mjs";
 import { coverageGap } from "../domain/figures.mjs";
 import { flowIssue, nextAction, placeFigures, STAGES, transition } from "../domain/index.mjs";
 import { editorialHttp } from "../http.mjs";
@@ -201,6 +202,48 @@ test("ADR-0017 위치 제안 집계: 빠진 단위·후보 한 개는 개선 신
   );
 });
 
+test("ADR-0022 일관성 계약: 공통 규칙과 두 후보 이상이 가리키는 반복 대상만 그 그림 작업에 넘긴다", () => {
+  const style = { accent: " 주황 #f5a623 ", base: "남색 선 2px", labels: "12px 굵게" };
+  const contract = {
+    candidates: [
+      {
+        anchor: ANCHOR,
+        claim: "책임 경계",
+        reason: "이유",
+        scene: "장면",
+        motifs: ["상자", "상자", "없는 대상"],
+      },
+      {
+        anchor: ANCHOR2,
+        claim: "결제 순서",
+        reason: "이유",
+        scene: "장면",
+        motifs: ["상자", "카드"],
+      },
+    ],
+    style,
+    motifs: [
+      { name: "상자", look: "갈색 종이 상자" },
+      { name: "상자", look: "중복은 버림" },
+      { name: "카드", look: "한 후보에만 나오면 계약에서 뺌" },
+    ],
+  };
+  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", contract);
+  assert.deepEqual(state.figure.style, { ...style, accent: "주황 #f5a623" });
+  assert.deepEqual(state.figure.motifs, [{ name: "상자", look: "갈색 종이 상자" }]);
+  assert.deepEqual(
+    state.figure.candidates.map((c) => c.motifs),
+    [["상자"], ["상자", "카드"]],
+  );
+  state = send(state, "select_figures", { ...reviewed, figures: ["f2"] });
+  const action = nextAction(state);
+  assert.deepEqual([action.style, action.motifs], [state.figure.style, state.figure.motifs]);
+  // 계약이 없던 이전 제안은 그대로 진행
+  const legacy = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  const plain = nextAction(send(legacy, "select_figures", { ...reviewed, figures: ["f1"] }));
+  assert.deepEqual([plain.style, plain.motifs, legacy.figure.motifs], [undefined, undefined, []]);
+});
+
 test("FIGURE-001 시각자료 없이: 버리면 확정 상태로 돌아가고 승인은 본문만 대상", () => {
   let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
   state = send(state, "discard_figures", reviewed);
@@ -239,6 +282,30 @@ test("FIGURE-001 배치: 앵커 문단 뒤에만 끼우고 본문 글자는 그�
   assert.ok(parts[0].text.endsWith("그래서 둘을 나눕니다."));
   // 코드 블록 안 문장은 블록이 끝난 뒤에 놓음
   assert.ok(parts[4].text.endsWith("```"));
+});
+
+test("FIGURE-001 위치 선택: 후보 자리를 같은 배치 규칙으로 본문에 표시하고 그림은 넣지 않음", () => {
+  const candidates = [
+    { id: "f1", anchor: ANCHOR },
+    { id: "f2", anchor: ANCHOR2 },
+  ];
+  const view = {
+    id: "r1",
+    version: 1,
+    title: "제목",
+    text: TEXT,
+    figure: { phase: "choose", candidates, items: [] },
+  };
+  const html = articleHtml(view);
+  assert.deepEqual(
+    [...html.matchAll(/data-candidate="(\w+)"/g)].map((m) => m[1]),
+    ["f1", "f2"],
+  );
+  assert.doesNotMatch(html, /<figure/);
+  assert.doesNotMatch(
+    articleHtml({ ...view, figure: { ...view.figure, phase: "review" } }),
+    /figure-slot/,
+  );
 });
 
 test("FIGURE-001 계약: 실행·외부 참조 SVG 거부, 네임스페이스 보충, 선택 id 검증", () => {
@@ -365,6 +432,12 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     id: "f2",
     anchor: ANCHOR2,
     claim: "결제 요청과 확인 순서",
+    // 위치 제안의 그림 계획을 사람이 고르기 전에 본다
+    reason: "이유",
+    scene: "장면",
+    analogy: null,
+    kind: null,
+    motifs: [],
     section: "결제",
   });
   assert.deepEqual(

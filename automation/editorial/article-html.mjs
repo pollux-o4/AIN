@@ -1,5 +1,6 @@
 import MarkdownIt from "markdown-it";
 import cjkFriendly from "markdown-it-cjk-friendly";
+import { FIGURE_MARKS } from "../contracts/figure.mjs";
 import { placeFigures } from "./domain/index.mjs";
 
 const markdown = new MarkdownIt({ html: false, linkify: false })
@@ -12,7 +13,7 @@ function figureHtml(view, item) {
   const pending = view.figure.phase !== "confirmed";
   const src = `/write/api/runs/${view.id}/figures/${item.id}?v=${view.version}`;
   return (
-    `<figure class="figure" data-figure="${text(item.id)}"${pending ? ' data-pending=""' : ""}>` +
+    `<figure class="figure" ${FIGURE_MARKS.figure}="${text(item.id)}"${pending ? ' data-pending=""' : ""}>` +
     `<img src="${text(src)}" alt="${text(item.alt)}" loading="lazy">` +
     `<figcaption>${pending ? '<span class="figure-flag">확인 전</span>' : ""}${text(item.caption ?? item.claim)}</figcaption>` +
     "</figure>"
@@ -27,7 +28,12 @@ export function renderArticle({ title, text: source, figures }, renderFigure) {
     .join("");
 }
 export const escapeHtml = text;
+// 위치 선택 중에는 후보 자리를 같은 배치 규칙(placeFigures)으로 표시 · 화면이 이 빈 자리에 선택 단추를 채운다
+const slotHtml = (candidate) =>
+  `<div class="${FIGURE_MARKS.slotClass}" ${FIGURE_MARKS.candidate}="${text(candidate.id)}"></div>`;
 export function articleHtml(view) {
+  if (view.figure?.phase === "choose")
+    return renderArticle({ ...view, figures: view.figure.candidates }, slotHtml);
   return renderArticle({ ...view, figures: view.figure?.items ?? [] }, (item) =>
     figureHtml(view, item),
   );

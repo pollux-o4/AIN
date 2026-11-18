@@ -9,8 +9,12 @@ import { StageLog } from "../tracking/StageLog";
 import { isPending } from "../tracking/useRunTracking";
 import { CompletionNotice, DraftApproval } from "./Actions";
 import { BriefApproval } from "./BriefApproval";
+import { dockLabels } from "./dockLabels";
 import { FeedbackForm } from "./FeedbackForm";
-import { FigureChoice, FigureReview } from "./Figures";
+import { locateFigure } from "./figures/articleMarks";
+import { FigureChoice } from "./figures/FigureChoice";
+import { FigureReview } from "./figures/FigureReview";
+import type { FigureChoiceState } from "./figures/usePicked";
 
 // 사용자 입력·결정은 모두 이 도크에서 받는다(DOCK-001) · 본문 흐름 밖에 떠 있어 읽던 위치를 잃지 않는다.
 type Tab = "decide" | "live" | "log" | "feedback";
@@ -29,12 +33,21 @@ type Props = {
   onAction: (command: ActionCommand) => Promise<void>;
   onNotice: (message: string) => void;
   picked?: StagePick | null;
+  figureChoice?: FigureChoiceState | null;
 };
 
-export function WorkDock({ run, online, disabled, onAction, onNotice, picked }: Props) {
+export function WorkDock({
+  run,
+  online,
+  disabled,
+  onAction,
+  onNotice,
+  picked,
+  figureChoice: choice,
+}: Props) {
   const pending = isPending(run.status);
   // 작업이 사람을 기다리는 결정 · 도착하면 도크를 펼쳐 알린다
-  const figureChoice = run.canSelectFigures && run.figure ? run.figure : null;
+  const figureChoice = choice && run.figure ? run.figure : null;
   const figureReview = run.canConfirmFigures && run.figure ? run.figure : null;
   const blocking =
     Boolean(run.canApproveBrief && run.brief) ||
@@ -97,31 +110,19 @@ export function WorkDock({ run, online, disabled, onAction, onNotice, picked }: 
   };
   // 결정을 보내면 접어 본문을 돌려준다 · 새 결정이 오면 위 effect가 다시 펼침
   const decide = (command: ActionCommand) => onAction(command).then(() => setOpen(false));
-  // 본문 속 시각자료로 이동 · 도크를 접어 자리를 보이게 한다
+  // 본문 속 자리로 이동 · 도크를 접어 자리를 보이게 한다
   const locate = (id: string) => {
     setOpen(false);
-    document
-      .querySelector(`#article [data-figure="${id}"]`)
-      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    locateFigure(id);
   };
-  const decideTitle = figureChoice
-    ? "시각자료 위치 선택"
-    : figureReview
-      ? "시각자료 확인"
-      : run.canApproveBrief
-        ? "수정 해석 확인"
-        : run.needsCompletion
-          ? "필수 단계 보완"
-          : "초안 확정";
-  const closedLabel = blocking
-    ? "확인이 필요해요"
-    : pending
-      ? "진행 내용 보기"
-      : run.canSatisfy
-        ? "확정하거나 고치기"
-        : run.canAuthorizePublication
-          ? "다음 단계 정하기"
-          : "고쳐 달라고 하기";
+  const labels = dockLabels({
+    run,
+    blocking,
+    pending,
+    drafting: Boolean(text),
+    picked: choice ? choice.picked.length : null,
+    reviewingFigures: Boolean(figureReview),
+  });
   // 조상 transform(등장 애니메이션)이 fixed 기준을 바꾸지 않게 body로 띄운다
   return createPortal(
     <aside
@@ -136,7 +137,7 @@ export function WorkDock({ run, online, disabled, onAction, onNotice, picked }: 
           {open && tabs.length === 1 && tab && (
             <span className="dock-title">
               {tab === "decide"
-                ? decideTitle
+                ? labels.decideTitle
                 : tab === "log" && picked
                   ? `${picked.name} 기록`
                   : tabNames[tab]}
@@ -170,19 +171,8 @@ export function WorkDock({ run, online, disabled, onAction, onNotice, picked }: 
             <span className="dock-glyph">
               <Icon name={open ? "close" : pending ? "eye" : "pen"} />
             </span>
-            <span className="dock-label">{open ? "접기" : closedLabel}</span>
-            {!open && (blocking || pending || text) && (
-              <span
-                className="dock-dot"
-                title={
-                  blocking
-                    ? "답을 기다리고 있어요"
-                    : pending
-                      ? "AI가 작업 중이에요"
-                      : "작성 중인 요청이 있어요"
-                }
-              />
-            )}
+            <span className="dock-label">{open ? "접기" : labels.closedLabel}</span>
+            {!open && labels.dot && <span className="dock-dot" title={labels.dot} />}
           </button>
         </div>
         <section
@@ -205,12 +195,12 @@ export function WorkDock({ run, online, disabled, onAction, onNotice, picked }: 
                     />
                   </section>
                 )}
-                {figureChoice && (
+                {figureChoice && choice && (
                   <section aria-label="시각자료 위치 선택">
                     <FigureChoice
-                      key={`${run.id}:${run.version}`}
-                      run={run}
                       figure={figureChoice}
+                      choice={choice}
+                      onLocate={locate}
                       disabled={disabled}
                       onAction={decide}
                     />

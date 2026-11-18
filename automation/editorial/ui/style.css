@@ -65,6 +65,11 @@ body {
 }
 
 /* 골격 */
+/* 고정 헤더·떠 있는 도크 단추 뒤로 스크롤 목표가 숨지 않게(본문 이동·포커스 이동 모두) */
+html {
+  scroll-padding-top: 88px;
+  scroll-padding-bottom: 96px;
+}
 header {
   position: sticky;
   top: 0;
@@ -1922,9 +1927,10 @@ article th {
   overflow: visible;
   clip-path: none;
 }
+/* 펼친 글 단계가 시작되는 왼쪽에 둔다 · 오른쪽은 열린 작업 도크가 덮는다 */
 .journey .phase-unfold {
   display: block;
-  margin: 0 var(--px) 0 auto;
+  margin: 0 auto 0 var(--px);
   font-size: 12px;
 }
 .node {
@@ -1941,9 +1947,13 @@ article th {
     transform 260ms var(--ease),
     background 200ms;
 }
+/* 단계가 모두 펼쳐져 칸이 좁아져도 이름끼리 붙지 않게 낱말 단위로 줄바꿈 */
 #pipeline li span,
 .chest > span {
-  white-space: nowrap;
+  max-width: 100%;
+  padding-inline: 2px;
+  word-break: keep-all;
+  line-height: 1.35;
 }
 li[data-status="done"] .node {
   background: var(--accent);
@@ -2683,6 +2693,96 @@ fieldset.dock-presets {
   color: var(--ink);
   background: var(--surface);
   font-weight: 650;
+}
+/* 위치 선택: 후보 앵커 문단 뒤 자리 · 고른 자리만 강조(색 외에 체크 표시로도 구분) */
+#article :has(+ .figure-slot) {
+  border-left: 3px solid var(--line);
+  padding-left: 12px;
+}
+#article :has(+ .figure-slot:has([aria-pressed="true"])) {
+  border-left-color: var(--accent);
+}
+#article .figure-slot {
+  margin: 4px 0 24px;
+}
+#article .figure-slot + .figure-slot {
+  margin-top: -16px;
+}
+.figure-locate {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.figure-slot-toggle {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 10px 12px;
+  border: var(--px, 1px) dashed var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+.figure-slot-toggle[aria-pressed="true"] {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.figure-slot-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: var(--px, 1px) solid currentColor;
+}
+.figure-slot-text {
+  display: grid;
+  gap: 2px;
+}
+.figure-slot-text small {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+/* 그림 계획: 무엇을(굵게) 아래 구도·비유·이유 · 고르기 전에 읽히도록 본문보다 작게 */
+.figure-plan {
+  display: grid;
+  gap: 6px;
+}
+.figure-plan > strong {
+  font-weight: 650;
+}
+.figure-plan-rows {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.figure-plan-rows b {
+  margin-right: 4px;
+  font-weight: 650;
+  color: var(--ink);
+}
+/* 만든 그림의 계획: 기본은 접힘 · 펼치면 그림 아래에서 계획과 결과를 나란히 비교 */
+#article .figure-plan-notes {
+  margin-top: 10px;
+  text-align: left;
+  font-size: 13.5px;
+}
+#article .figure-plan-notes summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+#article .figure-plan-notes[open] summary {
+  margin-bottom: 8px;
+  color: var(--ink);
 }
 #figure-files {
   display: flex;

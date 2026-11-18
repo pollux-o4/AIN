@@ -12,6 +12,11 @@ export const FIGURE_LIMITS = Object.freeze({
   // 그림 담당이 글 맥락을 이어받는 인계 · 위치 제안이 판단한 이유·비유·장면
   reason: 500,
   scene: 500,
+  // 그림 사이 일관성 계약 · 공통 시각 규칙 한 항목과 반복 대상 이름·생김새 · ADR-0022
+  style: 200,
+  motifs: 12,
+  motifName: 40,
+  motifLook: 300,
   // anatomy Figure(부품 40~80개)는 100~200KB · 모델은 파일로 내고 어댑터가 읽는다(svgFile)
   svg: 400000,
   alt: 300,
@@ -60,6 +65,25 @@ const svg = z
       : trimmed.replace(/^<svg/, `<svg ${SVG_NS}`);
   });
 
+// 시각화 유형: 이름과 그 유형이 드러내는 관계 · 위치 제안 지시문과 화면 표시가 같은 목록을 쓴다
+export const FIGURE_KINDS = Object.freeze({
+  structure: { name: "구성", shows: "구성 요소와 그 배치" },
+  flow: { name: "흐름", shows: "순서·절차·흐름" },
+  comparison: { name: "비교", shows: "둘 이상의 대비" },
+  hierarchy: { name: "분류", shows: "분류·포함 관계" },
+  cycle: { name: "순환", shows: "반복되는 순환" },
+  chart: { name: "수량", shows: "수량·변화" },
+  table: { name: "표", shows: "여러 기준의 대조" },
+  scene: { name: "장면", shows: "비유 장면" },
+});
+// 본문 HTML 속 시각자료 표시 · 서버가 붙이고 화면이 찾는다(같은 이름을 양쪽에 따로 적지 않는다)
+export const FIGURE_MARKS = Object.freeze({
+  figure: "data-figure",
+  candidate: "data-candidate",
+  slotClass: "figure-slot",
+});
+// 공통 시각 규칙 항목 · 계약 검사·저장·화면이 같은 목록을 쓴다 · ADR-0022
+export const FIGURE_STYLE_KEYS = /** @type {const} */ (["accent", "base", "labels"]);
 export const FIGURE_STAGES = /** @type {const} */ (["figure_plan", "figure"]);
 // 생성은 층을 나눈 세 번의 AI 작업: 초안(구도) → 내용(비유·인과 정확성) → 시각(마감·움직임) · ADR-0011
 export const FIGURE_PASSES = /** @type {const} */ (["draft", "content", "visual"]);
@@ -75,9 +99,25 @@ export const figureOutputSchemas = {
           analogy: advisory(z.string().max(100)),
           scene: text(FIGURE_LIMITS.scene),
           kind: advisory(z.string().max(40)),
+          // 이 그림에 나오는 반복 대상 이름 · motifs의 name과 글자 그대로 같아야 이어진다
+          motifs: advisory(z.array(z.string().max(FIGURE_LIMITS.motifName))),
         }),
       )
       .min(1),
+    // 그림 사이 일관성 계약 · 그림은 한 장씩 따로 만들므로 같은 규칙·생김새를 미리 정해 넘긴다 · ADR-0022
+    style: advisory(
+      z.looseObject(
+        Object.fromEntries(FIGURE_STYLE_KEYS.map((key) => [key, text(FIGURE_LIMITS.style)])),
+      ),
+    ),
+    motifs: advisory(
+      z.array(
+        z.looseObject({
+          name: text(FIGURE_LIMITS.motifName),
+          look: text(FIGURE_LIMITS.motifLook),
+        }),
+      ),
+    ),
     // 후보를 두지 않은 단위와 그 이유 · 코드가 단위 목록과 글자 그대로 대조해 빠진 단위를 센다
     skipped: advisory(
       z.array(z.looseObject({ unit: z.string().max(200), reason: text(FIGURE_LIMITS.skipReason) })),
@@ -107,7 +147,19 @@ export const figureOutputExamples = {
         reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 적는다.",
         analogy: "본문에서 쓴 비유 대상을 적고, 없으면 생략한다.",
         scene: "그 핵심을 보여 줄 원인 → 결과 장면을 적는다.",
-        kind: "structure|flow|comparison|hierarchy|cycle|chart|table|scene",
+        kind: Object.keys(FIGURE_KINDS).join("|"),
+        motifs: ["이 그림에 나오는 반복 대상의 name을 적고, 없으면 생략한다."],
+      },
+    ],
+    style: {
+      accent: "원인 → 결과 경로에만 쓸 강조색 하나를 색 이름과 hex로 적는다.",
+      base: "모든 그림이 함께 쓸 바탕색·선 색·보조색과 선 굵기를 적는다.",
+      labels: "라벨 글자 크기·굵기·배치 방식을 적는다.",
+    },
+    motifs: [
+      {
+        name: "두 후보 이상에 나오는 대상의 이름을 짧게 적는다.",
+        look: "모든 그림에서 같은 모습으로 그릴 수 있도록 형태·부품·색을 구체적으로 적는다.",
       },
     ],
     skipped: [

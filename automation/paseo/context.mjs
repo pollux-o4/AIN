@@ -23,6 +23,9 @@ function figureContext(state, action) {
     // 위치 제안이 빠짐없이 검토할 단위(도입부·모든 소제목)
     ...(action.units ? { units: action.units } : {}),
     ...(action.candidates ? { candidates: action.candidates } : {}),
+    // 그림 사이 일관성 계약(공통 시각 규칙·반복 대상 생김새) · ADR-0022
+    ...(action.style ? { style: action.style } : {}),
+    ...(action.motifs ? { motifs: action.motifs } : {}),
     ...(action.progress ? { progress: action.progress } : {}),
     ...(action.pass ? { pass: action.pass } : {}),
     // 앞 층 결과: svgFile(작업 폴더 파일)·alt·caption·notes

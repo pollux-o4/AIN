@@ -61,9 +61,20 @@ const runSchema = z.object({
           id: z.string(),
           anchor: z.string(),
           claim: z.string(),
+          // 그림 계획 · 이전 응답에는 없다
+          reason: z.string().nullable().default(null),
+          analogy: z.string().nullable().default(null),
+          scene: z.string().nullable().default(null),
+          kind: z.string().nullable().default(null),
+          motifs: z.array(z.string()).default([]),
           section: z.string().nullable(),
         }),
       ),
+      style: z
+        .object({ accent: z.string(), base: z.string(), labels: z.string() })
+        .nullable()
+        .default(null),
+      motifs: z.array(z.object({ name: z.string(), look: z.string() })).default([]),
       selected: z.array(z.string()),
       coverage: z
         .object({

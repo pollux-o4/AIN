@@ -2,6 +2,7 @@
 // phase: propose(AI 위치 제안) → choose(사람 선택) → generate(그림 한 장씩 초안→내용→시각 층) → review(사람 확인) → confirmed
 import { headingNodes } from "../../contracts/article-structure.mjs";
 import { FIGURE_LIMITS, FIGURE_PASSES, figureOutputSchemas } from "../../contracts/figure.mjs";
+import { bindConsistency, consistencyFor } from "./figure-consistency.mjs";
 
 const PHASE_STATUS = {
   propose: ["waiting_figure"],
@@ -102,6 +103,8 @@ export function figureAction(state) {
     figureId: id,
     progress: { index: figure.selected.indexOf(id) + 1, total: figure.selected.length },
     candidates: figure.candidates.filter((c) => c.id === id),
+    // 그림 사이 일관성 계약 · ADR-0022
+    ...consistencyFor(figure, id),
     // 앞 층 결과(svg·메모)를 다음 층이 이어받아 다듬는다
     ...(figure.draft ? { previous: [figure.draft] } : {}),
     ...(figure.note ? { note: figure.note } : {}),
@@ -139,7 +142,7 @@ function acceptCandidates(state, output) {
   const text = draftText(state);
   const seen = new Set();
   const candidates = [];
-  for (const { anchor, claim, reason, analogy, scene, kind } of output.candidates) {
+  for (const { anchor, claim, reason, analogy, scene, kind, motifs } of output.candidates) {
     const sentence = anchor.trim();
     if (!text.includes(sentence) || seen.has(sentence)) continue;
     seen.add(sentence);
@@ -151,6 +154,7 @@ function acceptCandidates(state, output) {
       ...(analogy?.trim() ? { analogy: analogy.trim() } : {}),
       scene: scene.trim(),
       ...(kind ? { kind } : {}),
+      ...(motifs ? { motifs } : {}),
     });
     if (candidates.length === FIGURE_LIMITS.candidates) break;
   }
@@ -225,11 +229,15 @@ export function figureTransition(state, event) {
       );
       const output = figureOutputSchemas[event.stage].parse(event.output);
       if (event.stage === "figure_plan") {
-        const candidates = acceptCandidates(state, output);
+        const { candidates, ...consistency } = bindConsistency(
+          output,
+          acceptCandidates(state, output),
+        );
         state.figure = {
           ...figure,
           phase: "choose",
           candidates,
+          ...consistency,
           coverage: coverageOf(draftText(state), candidates, output.skipped ?? []),
         };
         state.status = "awaiting_figure_choice";

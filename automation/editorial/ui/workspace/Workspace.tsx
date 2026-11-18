@@ -1,30 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { type ActionCommand, figureUrl, type Run } from "../shared/api";
 import { Icon } from "../shared/Icon";
 import { withOccurrenceKeys } from "../shared/listKeys";
 import { ExecutionRecord, Monitor, WorkHeading } from "../tracking/Monitor";
+import { Article } from "./Article";
 import { Artifacts } from "./Artifacts";
 import { EditMemo } from "./EditMemo";
 import { ExportMenu } from "./ExportMenu";
+import { ArticleFigures } from "./figures/ArticleFigures";
+import { useFigureChoice } from "./figures/usePicked";
 import { type StagePick, WorkDock } from "./WorkDock";
 import { WritingDesign } from "./WritingDesign";
 
-function Article({ html }: { html: string }) {
-  const article = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const element = article.current;
-    if (!element || !html) return;
-    Array.from(element.children).forEach((child, index) => {
-      if (child instanceof HTMLElement) child.style.setProperty("--i", String(index));
-    });
-    element.classList.remove("fresh");
-    void element.offsetWidth;
-    element.classList.add("fresh");
-  }, [html]);
-  // HTML은 동일 출처 서버의 markdown-it(html: false) 렌더링 결과만 사용한다.
-  // biome-ignore lint/security/noDangerouslySetInnerHtml: 동일 출처 서버가 markdown-it html:false로 렌더링한 HTML만 사용
-  return <article id="article" ref={article} dangerouslySetInnerHTML={{ __html: html }} />;
-}
 export function Workspace({
   run,
   online,
@@ -40,6 +27,7 @@ export function Workspace({
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [picked, setPicked] = useState<StagePick | null>(null);
+  const figureChoice = useFigureChoice(run);
   const previous =
     run?.previous.filter((draft) => draft.text && draft.revision !== run.textRevision) ?? [];
   return (
@@ -61,7 +49,16 @@ export function Workspace({
               </span>
               <ExportMenu run={run} online={online} />
             </div>
-            <Article html={run.html} />
+            <Article html={run.html}>
+              {(article) => (
+                <ArticleFigures
+                  article={article}
+                  html={run.html}
+                  choice={figureChoice}
+                  figure={run.figure}
+                />
+              )}
+            </Article>
             {run.figure?.phase === "confirmed" && (
               <p id="figure-files" className="hint">
                 확인한 시각자료 파일:{" "}
@@ -96,6 +93,7 @@ export function Workspace({
             onAction={onAction}
             onNotice={onNotice}
             picked={picked}
+            figureChoice={figureChoice}
           />
           <details id="stage-details" className="advanced" hidden={!run.artifacts.length}>
             <summary>상세 작성 자료</summary>

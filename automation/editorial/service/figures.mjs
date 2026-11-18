@@ -12,12 +12,23 @@ export function figureView(state) {
   return {
     phase: figure.phase,
     note: figure.note ?? null,
-    candidates: (figure.candidates ?? []).map(({ id, anchor, claim }) => ({
-      id,
-      anchor,
-      claim,
-      section: anchorSection(text, anchor),
-    })),
+    // 위치 제안이 세운 그림 계획(무엇을·왜·어떤 구도로) · 사람이 고르기 전에 만들 그림을 가늠하고 보완하게
+    candidates: (figure.candidates ?? []).map(
+      ({ id, anchor, claim, reason, analogy, scene, kind, motifs }) => ({
+        id,
+        anchor,
+        claim,
+        reason: reason ?? null,
+        analogy: analogy ?? null,
+        scene: scene ?? null,
+        kind: kind ?? null,
+        motifs: motifs ?? [],
+        section: anchorSection(text, anchor),
+      }),
+    ),
+    // 그림 사이 일관성 계약 · ADR-0022
+    style: figure.style ?? null,
+    motifs: figure.motifs ?? [],
     selected: figure.selected ?? [],
     // 위치 제안이 글의 단위를 얼마나 훑었는지(세기) · 부족하면 gap 문장
     coverage: figure.coverage ? { ...figure.coverage, gap: coverageGap(figure.coverage) } : null,

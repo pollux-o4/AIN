@@ -1,5 +1,6 @@
 // 내보내기: 확정된 글을 소비처와 무관한 표준 형식으로 · 어디서 쓸지는 받는 쪽이 정함 · ADR-0012
 import { z } from "zod";
+import { FIGURE_MARKS } from "../../contracts/figure.mjs";
 import { toTxt } from "../../contracts/txt.mjs";
 import { escapeHtml, renderArticle } from "../article-html.mjs";
 import { placeFigures } from "../domain/index.mjs";
@@ -21,7 +22,7 @@ const figureFile = (id, motion) => `figures/${id}${motion === "static" ? ".stati
 // 그림은 <img>로만 넣는다: 문서 CSS·id 충돌 없이 격리되고 스크립트가 돌지 않으며 SVG 자체 움직임은 그대로 재생
 function figureHtml(item, src) {
   return (
-    `<figure data-figure="${escapeHtml(item.id)}">` +
+    `<figure ${FIGURE_MARKS.figure}="${escapeHtml(item.id)}">` +
     `<img src="${escapeHtml(src)}" alt="${escapeHtml(item.alt)}" loading="lazy" decoding="async">` +
     (item.caption ? `<figcaption>${escapeHtml(item.caption)}</figcaption>` : "") +
     "</figure>"

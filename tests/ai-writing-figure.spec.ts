@@ -70,6 +70,21 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   }
   await checkAccessibility(page, testInfo, "figure-choice");
 
+  // 본문 자리와 도크 목록은 같은 선택 상태 · 본문에서 빼면 도크에서도 빠진다
+  const slots = page.locator("#article .figure-slot button");
+  await expect(slots).toHaveCount(2);
+  // 계획 단계: 유형과 반복 대상(같은 모습으로 그릴 다른 후보)을 본문 자리에서 바로 읽는다
+  await expect(slots.nth(0)).toContainText("흐름");
+  await expect(slots.nth(0)).toContainText("주문서 · 후보 2에도 나옴");
+  await expect(choice.locator("#figure-style")).toContainText("주황 #f5a623");
+  await choice.getByRole("button", { name: "본문에서 고르기" }).click();
+  await slots.nth(0).click();
+  await expect(slots.nth(0)).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".dock-toggle")).toContainText("1곳 골랐어요");
+  await openDock(page, "확인");
+  await expect(choice.getByRole("checkbox").nth(0)).not.toBeChecked();
+  await choice.getByRole("checkbox").nth(0).check();
+
   // 아무것도 고르지 않으면 만들 수 없음 · 고른 곳만 생성
   await choice.getByRole("checkbox").nth(1).uncheck();
   await choice.getByRole("checkbox").nth(0).uncheck();
@@ -86,6 +101,16 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   const figures = page.locator("#article figure");
   await expect(figures).toHaveCount(2);
   await expect(figures.first()).toContainText("확인 전");
+  // 만든 그림의 계획은 접혀 있다가 펼쳐서 결과와 비교한다
+  const plan = figures.first().locator("details.figure-plan-notes");
+  await expect(plan).not.toHaveAttribute("open");
+  // 확인 대기로 열린 도크(모바일은 시트)를 접어 본문을 본다
+  const dockToggle = page.locator("#work-dock .dock-toggle");
+  if ((await dockToggle.getAttribute("aria-expanded")) === "true") await dockToggle.click();
+  await plan.locator("summary").evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await plan.locator("summary").click();
+  await expect(plan).toContainText("주문·결제·배송의 책임 흐름");
+  await openDock(page, "확인");
   await expect(authorize).toBeHidden();
   expect(await articleText(page)).toBe(body);
   for (const image of await page.locator("#article figure img, #figure-review img").all())
