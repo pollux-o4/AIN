@@ -1,10 +1,10 @@
 // 구간별 초고: 구성(outline)의 구간을 하나씩 쓰고 구간 예산을 코드로 검사 · ADR-0009
 // 지면 단위 원고(뉴스룸 budget)와 같은 방식 · 모델이 전체 분량을 지키지 못한 실측(7~9천 자) 근거
 import { splitArticle } from "../../contracts/article-structure.mjs";
+import { SECTION_LINES, SLOT_RULES } from "../../contracts/slot-rules.mjs";
 import {
   CARD_SPACE,
   MAX_CASES,
-  SLOT_MAX,
   STORY_SLOTS,
   sectionMode,
   usesStoryCard,
@@ -96,9 +96,9 @@ function cardIssue(output) {
     if (Array.isArray(section.cases) && section.cases.length > MAX_CASES)
       missing.push(`cases는 ${MAX_CASES}개 이하`);
     // 한 줄 칸은 짧아야 밑줄·닫는 줄 구실을 한다 · 글자 수만 센다(뜻은 검토의 몫 · JUDGE-001)
-    for (const [name, max] of Object.entries(SLOT_MAX)) {
-      const size = typeof section[name] === "string" ? readerLength(section[name].trim()) : 0;
-      if (size > max) missing.push(`${name} ${size}자 → ${max}자 이내`);
+    for (const name of SECTION_LINES) {
+      const over = overLimit(name, section[name]);
+      if (over) missing.push(over);
     }
     return missing.length ? [`${index + 1}번 "${titleOf(section)}": ${missing.join("·")}`] : [];
   });
@@ -107,7 +107,24 @@ function cardIssue(output) {
     : null;
 }
 
-const OUTLINE_CHECKS = [budgetIssue, (_state, output) => cardIssue(output)];
+// 짧은 항목의 글자 수 상한(규칙표) · 넘으면 위반 문구, 아니면 null · 세기만 한다(뜻은 검토 · JUDGE-001)
+function overLimit(name, value) {
+  const { max } = SLOT_RULES[name];
+  const size = typeof value === "string" ? readerLength(value.trim()) : 0;
+  return size > max ? `${name} ${size}자 → ${max}자 이내` : null;
+}
+
+// 글 제목 검사: 구성이 정한 제목은 규칙표 상한 안이어야 한다
+function titleIssue(output) {
+  const over = overLimit("title", output.title);
+  return over ? `글 제목을 고친다 → ${over}.` : null;
+}
+
+const OUTLINE_CHECKS = [
+  budgetIssue,
+  (_state, output) => cardIssue(output),
+  (_state, output) => titleIssue(output),
+];
 
 // 구성 결과 수용 · 위반이면 거부(다시 또는 실패) · 수용 시 true
 export function acceptOutline(state, output) {

@@ -68,10 +68,6 @@ export const sectionMode = (/** @type {unknown} */ section) => {
 // 이야기 카드(RES-007 S3·S6·S7·S8): 따라 하기 구간은 한 단계 한 행동이 틀이라 제외 · ADR-0013
 export const STORY_SLOTS = /** @type {const} */ (["hook", "cases", "principleLine", "underline"]);
 export const MAX_CASES = 3;
-// 한 줄 칸의 글자 수 상한(공백 포함) · 밑줄 긋고 싶은 문장은 짧다(RES-007: 공감 상위 인용문 중앙값 25단어)
-// 길고 꼬인 밑줄 문장이 그대로 실린 실측(60~80자) · 구성 검사가 세고 프롬프트 칸 안내가 같은 값을 쓴다
-// shortcut: 한국어 문장 길이의 근거 값이 없어 어림(RES-007 한계), 실제 글 표본이 쌓이면 조정
-export const SLOT_MAX = Object.freeze({ hook: 50, underline: 45, principleLine: 40 });
 export const usesStoryCard = (/** @type {unknown} */ mode) =>
   writingModeSchema.safeParse(mode).success && mode !== "procedure";
 // 카드를 문장으로 옮길 최소 지면(공백 포함 글자 수) · 이보다 작으면 칸을 낱말로 줄여 글이 깨진다(실제 모델 실측: 250자 구간)

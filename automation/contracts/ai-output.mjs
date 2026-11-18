@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requirementChangeSchema } from "./requirements.mjs";
-import { CASE_ORIGINS, readerLevelSchema, SLOT_MAX, writingModeSchema } from "./writing-modes.mjs";
+import { slotGuide } from "./slot-rules.mjs";
+import { CASE_ORIGINS, readerLevelSchema, writingModeSchema } from "./writing-modes.mjs";
 
 // Preserve provider extensions (including the pilot marker), also within evidence.
 // Shape and nonempty content are canonical here; ordering/revision/approval belong to the domain.
@@ -21,14 +22,14 @@ const maybe = (schema) =>
 // 판단 보조 필드: 형식이 틀리면 그 필드만 버리고 핵심 결과는 살림 · 실측: 메모 필드 하나로 회차 전체 실패
 /** @template {z.ZodType} T @param {T} schema */
 const advisory = (schema) => schema.optional().catch(undefined);
-// 구간 카드: 구성이 칸을 채우고 초고는 칸을 문장으로 옮김 · 이전 실행 결과는 칸이 없어도 파싱 호환
+// 구간 카드: 구성이 항목을 채우고 초고는 항목을 문장으로 옮김 · 이전 실행 결과는 칸이 없어도 파싱 호환
 // 설명 카드(concrete~checkQuestion) RES-005 · 이야기 카드(hook~underline) RES-007 · 필수 여부는 domain/sections가 판정
 // 하위 마디: 구간 안 나란한 항목 · 내용의 포함 관계만큼 다시 나뉜다(깊이 상한 없음) · ADR-0014
 /** @type {z.ZodType<{ title: string, keyPoint?: string, subsections?: unknown[] }>} */
 const subsectionCard = z.lazy(() =>
   z.looseObject({
     title: slot(
-      "다시 찾아올 항목의 짧은 이름표 형태인 하위 소제목이며 형제 항목과 동일한 문장 형태로 작성한다(예: 줄 세우기 — 정렬).",
+      "독자가 다시 찾아볼 항목을 짧은 명칭으로 쓴 하위 소제목이며, 형제 항목과 같은 형태로 작성한다.",
     ),
     keyPoint: maybe(slot("이 하위 항목이 전달할 핵심 내용 1문장을 기재한다.")),
     // 형식이 어긋나면 하위 마디만 버리고 구간은 살린다(예시 문구를 그대로 옮긴 응답 등)
@@ -37,7 +38,7 @@ const subsectionCard = z.lazy(() =>
 );
 const sectionCard = z.looseObject({
   title: slot(
-    "이름표와 이 구간의 결론을 담은 소제목이다(예: 생각하는 방식 4가지: 외울 필요 없이 태도로 나뉜다).",
+    "독자가 이 구간에서 얻을 답을 짧고 자연스러운 말로 담은 소제목이다. 정해진 문형(예: 콜론으로 이름과 결론을 잇는 틀)에 맞추지 않는다.",
   ),
   mode: writingModeSchema,
   keyPoint: slot("이 구간에서 전달할 핵심 원칙 하나를 1문장으로 기재한다."),
@@ -52,22 +53,12 @@ const sectionCard = z.looseObject({
   checkQuestion: maybe(
     slot("explain 구간에 한하여 본문 내용만으로 답할 수 있는 확인 질문을 기재한다."),
   ),
-  hook: maybe(
-    slot(`구간의 첫 문장이 될 질문 또는 통념을 뒤집는 주장을 ${SLOT_MAX.hook}자 이내로 기재한다.`),
-  ),
+  hook: maybe(slot(slotGuide("hook"))),
   cases: list(
     "원칙을 직접 서술하지 않고 장면으로 드러내는 사례이며, 주인공이 언제·어디서 무엇을 하였고 관찰 가능한 결과가 어떠하였는지를 2~3문장으로 기재한다.",
   ).optional(),
-  principleLine: maybe(
-    slot(
-      `구간을 마무리하는 한 줄 원칙이며, 단서 없이 명령형 또는 단정형 1문장으로 ${SLOT_MAX.principleLine}자 이내로 기재한다.`,
-    ),
-  ),
-  underline: maybe(
-    slot(
-      `밑줄 문장으로서 'A가 아니라 B' 형식의 대비 또는 구체적인 사물 비유를 담은 1문장을 ${SLOT_MAX.underline}자 이내로 기재한다.`,
-    ),
-  ),
+  principleLine: maybe(slot(slotGuide("principleLine"))),
+  underline: maybe(slot(slotGuide("underline"))),
   subsections: z
     .array(subsectionCard)
     .optional()
@@ -97,7 +88,7 @@ export const stageOutputSchemas = {
     problem: slot("독자가 겪는 문제 하나를 독자가 사용하는 언어로 1문장으로 기재한다."),
     scope: slot("이 글에서 다루는 내용과 다루지 않는 내용을 구분하여 기재한다."),
     titleCandidates: list(
-      "제목 후보를 약속형·궁금증형·경고형 순서로 각각 1개씩 기재한다.",
+      `제목 후보를 약속형·궁금증형·경고형 순서로 각각 1개씩 기재한다. 각 후보는 ${slotGuide("title")}`,
     ).optional(),
   }),
   // RES-005 독자 카드·범위 · 선택 필드라 이전 결과도 파싱 호환
@@ -153,13 +144,17 @@ export const stageOutputSchemas = {
       "Research requires evidence or uncertainty",
     ),
   outline: z.looseObject({
-    title: maybe(slot("topic.titleCandidates에서 선택한 글 제목을 원문 그대로 기재한다.")),
+    title: maybe(
+      slot(
+        `topic.titleCandidates에서 선택한 글 제목을 원문 그대로 기재한다. ${slotGuide("title")}`,
+      ),
+    ),
     sections: z.array(z.union([text, sectionCard])).min(1),
     rationale: slot("구간을 이 순서로 배열한 이유를 기재한다."),
     analogySystem: z
       .looseObject({
         source: slot(
-          "explain 구간이 포함된 경우 글 전체에 일관되게 사용할 비유 대상 하나를 기재한다.",
+          "독자가 바로 떠올리는 일상 사물 하나가 글 전체의 개념과 직접 대응하는 경우에 그 사물을 기재한다. 그런 사물이 없으면 analogySystem을 생략한다.",
         ),
         mapping: list("비유 요소와 개념 요소의 대응 관계를 기재한다."),
         limits: list("비유가 실제 개념과 일치하지 않는 한계 지점을 기재한다."),

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { stageOutputExamples, stageOutputSchemas } from "../../contracts/ai-output.mjs";
+import { SLOT_RULES } from "../../contracts/slot-rules.mjs";
 import { nextAction, STAGES, transition } from "../../editorial/domain/index.mjs";
 import { STORY } from "../../editorial/tests/story-card.mjs";
 import { GUARD } from "../prompts/frame.mjs";
@@ -565,4 +566,18 @@ test("ADR-0014: 끝 정리는 구간이 아니라 마지막 구간에 붙고, �
   assert.equal(sections.length, 2);
   assert.match(sections[1], /## 한눈에 정리/);
   assert.ok(Array.isArray(stageOutputExamples.outline.sections[0].subsections));
+});
+
+test("ADR-0020 짧은 항목 규칙은 한 곳에서 안내·구성 기준·검토 점검표로 함께 나간다", () => {
+  const { role, max } = SLOT_RULES.title;
+  const s1 = CHECKS.find((check) => check.id === "S1").ask;
+  assert.ok(s1.includes(role) && s1.includes(`${max}자`), "검토 점검표");
+  let state = started();
+  while (state.stage !== "outline")
+    state = transition(
+      state,
+      resultEvent(job(state, state.stage), JSON.stringify(outputs[state.stage])),
+    ).state;
+  const prompt = buildPrompt(state, nextAction(state));
+  assert.ok(prompt.split(role).length - 1 >= 2, "항목 안내와 구성 기준 모두에 같은 역할 문장");
 });

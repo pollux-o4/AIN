@@ -6,15 +6,22 @@ import {
   subsectionHeading,
   summaryHeading,
 } from "../../contracts/article-structure.mjs";
+import { slotCheck } from "../../contracts/slot-rules.mjs";
 import {
   CARD_SPACE,
   MAX_CASES,
   READER_LEVELS,
-  SLOT_MAX,
   WRITING_MODES,
 } from "../../contracts/writing-modes.mjs";
 import { requirementValue } from "../../editorial/domain/index.mjs";
-import { HYPE_HINT, resolveDirection, reviewChecks, seasoningRules, VOICE } from "../seasoning.mjs";
+import {
+  HYPE_HINT,
+  NATURAL_KOREAN,
+  resolveDirection,
+  reviewChecks,
+  seasoningRules,
+  VOICE,
+} from "../seasoning.mjs";
 
 // 요구 장부가 정한 서술 방식·독자 수준 · 없으면 진단이 판단 · ADR-0016
 const chosen = (state, key) => requirementValue(state, key) ?? null;
@@ -118,19 +125,21 @@ const STAGE_SPECS = {
     ],
   }),
   outline: (state) => ({
-    task: "구간별 구성 카드를 작성한다. 작성 담당자는 카드의 각 칸을 문장으로 옮기는 작업만 수행하므로, 글의 완성도와 수준은 이 카드에서 결정된다.",
+    task: "구간별 구성 카드를 작성한다. 작성 담당자는 카드의 각 항목을 문장으로 옮기는 작업만 수행하므로, 글의 완성도와 수준은 이 카드에서 결정된다.",
     steps: [
       "title에는 topic.titleCandidates 가운데 value.promise를 가장 잘 전달하는 제목 하나를 글자 그대로 옮겨 기재한다. 다만, 적절한 후보가 없는 경우에는 약속형 제목을 새로 작성한다.",
       `글의 구간을 나눈 뒤, 구간마다 하나의 핵심 원칙(keyPoint)을 정하여 title·mode·keyPoint를 기재한다. mode는 ${WRITING_MODES.join("|")} 중 하나를 선택한다. 주된 mode는 requirements.mode를 우선하고, 지정된 값이 없으면 diagnose.primaryMode를 따른다. 기본은 주된 mode 하나로 통일하되, 내용상 필요한 경우에만 구간별로 다른 mode를 혼합한다.`,
       "소제목 계층 구조(ADR-0014)를 정한다. 구간 내부에 독자가 추후 다시 찾아볼 대등한 항목이 2개 이상 있으면 subsections로 분할하며, 하위 마디 역시 동일한 기준으로 다시 분할할 수 있다. 계층 깊이는 내용의 포함 관계에 따라 정하며 별도의 상한을 두지 않는다. 한 단계의 형제 항목은 3~5개를 목표로 하되, 하위 항목이 하나뿐이면 분할하지 않는다. 하위 마디의 본문 분량은 해당 구간의 budget에 포함된다.",
-      "제목과 소제목의 역할을 계층별로 구분한다. 글 제목은 읽기 전의 약속을 제시하고, 구간 title은 이름표와 결론을 담아 훑어 읽는 독자에게 전체 지도를 제공하며, 하위 title은 다시 찾아오는 독자가 해당 항목을 쉽게 식별할 수 있도록 짧은 이름표 형태로 작성하되 형제 항목끼리 동일한 문장 형태를 유지한다. 독자의 호기심을 유발하는 질문은 소제목이 아니라 hook에 배치한다.",
+      "제목과 소제목의 역할을 계층별로 구분한다. 글 제목은 이 글을 읽고 무엇을 알게 되는지를 비유 없이 바로 알 수 있게 쓴다. 구간 title은 그 구간에서 독자가 얻을 답을 짧고 자연스러운 말로 담아, 소제목만 훑어도 글 전체의 구조가 드러나게 한다. 하위 title은 독자가 다시 찾아볼 항목을 짧은 명칭으로 쓰고 형제 항목끼리 같은 형태를 유지한다. 모든 제목은 정해진 문형에 맞추지 않으며, 독자의 호기심을 유발하는 질문은 소제목에 두지 않고 hook에 둔다.",
       "독자 수준은 requirements.readerLevel을 우선하고, 지정된 값이 없으면 diagnose.readerLevel을 따른다. 개념은 prerequisite 의존 순서에 따라 배치하고 구간별 level을 기재한다. value.excluded에 속한 내용은 구간으로 구성하지 않으며, 핵심 흐름 밖의 심화·호기심 구간은 optional을 true로 설정한다.",
       `procedure가 아닌 구간에는 이야기 카드 항목인 hook(구간의 첫 문장이 될 질문이나 통념을 뒤집는 주장), cases(research.cases에서 선별한 사례 1~${MAX_CASES}개의 장면 원형), underline(밑줄 문장) 및 principleLine(구간을 마무리하는 한 줄 원칙)을 모두 기재한다.`,
       VOICE.slot("title·구간 title·hook·cases·underline·principleLine"),
       "cases에는 audience.scene의 내용을 반복하지 않고 그 이후에 이어지는 장면을 기재한다. keyPoint·hook·underline·principleLine은 서로 다른 내용으로 작성하며, 동일한 문장을 어휘만 바꾸어 반복하지 않는다.",
-      "explain 구간에 한하여 설계 카드인 concrete·walkthrough·refute·checkQuestion과 비유 체계인 analogySystem(mapping·limits)을 작성한다. 다만, 숙련 독자 대상인 경우에는 concrete와 walkthrough의 작성을 선택 사항으로 둔다. 다른 mode 구간에는 explain 설계 카드를 사용하지 않는다.",
+      NATURAL_KOREAN,
+      "여러 구간의 같은 항목(underline·principleLine 등)을 모두 같은 문형으로 쓰지 않는다. 문형은 내용에 맞게 정한다.",
+      "explain 구간에 한하여 설계 카드인 concrete·walkthrough·refute·checkQuestion을 작성한다. analogySystem(mapping·limits)은 독자가 바로 떠올리는 일상 사물 하나가 개념과 직접 대응하는 경우에만 작성하고, 그런 사물이 없으면 생략한다. 독자가 한 번 더 옮겨 생각해야 하는 추상적 비유(예: 분류 체계를 다른 사물의 배치에 빗대는 것)는 쓰지 않는다. 다만, 숙련 독자 대상인 경우에는 concrete와 walkthrough의 작성을 선택 사항으로 둔다. 다른 mode 구간에는 explain 설계 카드를 사용하지 않는다.",
       "requirements.length가 지정되어 있으면 구간마다 budget(공백 포함 글자 수, 정수)을 기재하되, 전체 합계를 지정 범위의 중앙값 부근에 맞춘다(초고는 예산보다 다소 길어지는 경향이 있으므로 상한 쪽에 여유를 둔다). 범위를 맞추기 어려우면 구간 수를 2~8개 사이로 조정하여 줄인다. 글 제목과 도입부는 첫 구간의 budget에, 끝 정리 목록은 마지막 구간의 budget에 포함한다.",
-      `budget은 카드의 각 칸을 문장으로 전개할 분량이다. 이야기 카드 구간은 ${CARD_SPACE.section}자 이상으로 배정하고, 첫 구간에는 글머리 몫 ${CARD_SPACE.intro}자를, 마지막 구간에는 끝 정리 몫(구간 수 × ${CARD_SPACE.summaryLine}자)을 가산한다. 전체 합계가 허용 범위를 초과하면 각 구간의 budget을 삭감하지 말고 구간 수를 줄인다.`,
+      `budget은 카드의 각 항목을 문장으로 전개할 분량이다. 이야기 카드 구간은 ${CARD_SPACE.section}자 이상으로 배정하고, 첫 구간에는 글머리 몫 ${CARD_SPACE.intro}자를, 마지막 구간에는 끝 정리 몫(구간 수 × ${CARD_SPACE.summaryLine}자)을 가산한다. 전체 합계가 허용 범위를 초과하면 각 구간의 budget을 삭감하지 말고 구간 수를 줄인다.`,
       ...(state.retry?.stage === "outline"
         ? [
             "retryNote에는 직전 구성이 반려된 사유가 기재되어 있다. 지적된 사항을 모두 수정하여 다시 작성한다.",
@@ -138,15 +147,16 @@ const STAGE_SPECS = {
         : []),
     ],
     criteria: [
-      "본문을 제외하고 제목과 소제목만 남겼을 때 글의 약속(제목), 전체 지도(구간 title) 및 재참조할 항목 이름(하위 title)이 명확히 드러나는가",
+      "본문을 제외하고 제목과 소제목만 남겼을 때 글이 알려 주는 것(제목), 글 전체의 구조(구간 title) 및 다시 찾아볼 항목 명칭(하위 title)이 비유 없이 바로 읽히는가",
       "subsections가 존재하는 마디마다 하위 항목이 2개 이상이며 형제 title이 동일한 문장 형태를 취하고 있는가",
       "구간마다 원칙이 하나이고 keyPoint가 1문장인가",
       "hook에서 제기한 질문이나 주장에 대한 답이 같은 구간의 keyPoint에 포함되어 있는가",
       `cases가 구간마다 1~${MAX_CASES}개이며 모두 해당 구간의 keyPoint를 직접 뒷받침하는가(흥미롭더라도 원칙과 무관한 사례는 제외하였는가)`,
-      `underline이 'A가 아니라 B' 형식의 대비이거나 구체적인 사물 비유를 담은 1문장이며 ${SLOT_MAX.underline}자 이내인가(시스템이 글자 수를 산출하여 초과 시 거부한다)`,
-      `principleLine이 명령형·단정형 1문장이고 ${SLOT_MAX.principleLine}자 이내이며 단서('…라도', '…인 만큼')와 ${HYPE_HINT}가 없는가`,
+      slotCheck("title", "title"),
+      slotCheck("underline", "underline"),
+      `${slotCheck("principleLine", "principleLine")} 단서('…라도', '…인 만큼')와 ${HYPE_HINT}가 없는가`,
       "keyPoint·hook·underline·principleLine을 순서대로 읽었을 때 동일한 내용의 반복이 아니라 논리적으로 한 단계씩 전개되는가",
-      `본문에 수록될 각 칸의 ${VOICE.check}`,
+      `본문에 수록될 각 항목의 ${VOICE.check}`,
       "도입 장면(audience.scene)과 동일한 사건을 cases에서 처음부터 다시 서술하지 않았는가",
       "procedure가 아닌 모든 구간에 hook·cases·underline·principleLine이 빠짐없이 채워졌는가(시스템이 검사하여 누락 시 거부한다)",
       "requirements.length가 지정된 경우 모든 구간에 budget이 기재되어 있고 그 합계가 허용 범위 안에 있으며, 각 구간의 budget이 위에서 정한 최소 분량 이상인가(시스템이 검사하여 기준을 벗어나면 거부한다)",
@@ -227,11 +237,11 @@ const STAGE_SPECS = {
 };
 
 const WHOLE_DRAFT_TASK =
-  "구성 카드를 순서대로 문장으로 옮겨 글 전체를 작성한다. 다룰 내용은 이미 구성 카드에서 정해졌으므로, 작성 담당자는 카드의 각 칸을 독자가 읽기 쉬운 문장으로 풀어 쓰는 역할만 수행한다.";
+  "구성 카드를 순서대로 문장으로 옮겨 글 전체를 작성한다. 다룰 내용은 이미 구성 카드에서 정해졌으므로, 작성 담당자는 카드의 각 항목을 독자가 읽기 쉬운 문장으로 풀어 쓰는 역할만 수행한다.";
 
 // 구간별 초고 한 호출의 과업 · ADR-0009
 const sectionTask = ({ index, total, title }) =>
-  `구간별 초고 ${index + 1}/${total}: "${title}". 구성 카드에서 이 구간의 각 칸을 문장으로 옮겨 작성한다. 다룰 내용은 구성 카드에서 이미 정해졌으며, 다른 구간은 작성하지 않는다.`;
+  `구간별 초고 ${index + 1}/${total}: "${title}". 구성 카드에서 이 구간의 각 항목을 문장으로 옮겨 작성한다. 다룰 내용은 구성 카드에서 이미 정해졌으며, 다른 구간은 작성하지 않는다.`;
 
 /** @param {any} state @param {{stage: string, section?: any}} action */
 export function stageSpec(state, action) {

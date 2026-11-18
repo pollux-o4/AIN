@@ -258,3 +258,22 @@ test("ADR-0013 한 줄 칸은 글자 수 상한을 넘으면 거부한다(뜻은
   s = complete(s, { sections: [card, { ...card, title: "뒤" }], rationale: "r" });
   assert.equal(s.stage, "draft");
 });
+
+test("ADR-0020 글 제목도 규칙표 상한을 넘으면 구성을 반려한다(세기만)", () => {
+  let s = step(null, "start", { articleId: "title", idea: "설명" });
+  while (s.stage !== "outline") s = complete(s, base[s.stage]);
+  const card = { title: "앞", mode: "explain", keyPoint: "k", ...STORY };
+  const outline = (title) => ({
+    title,
+    sections: [card, { ...card, title: "뒤" }],
+    rationale: "r",
+  });
+  s = complete(
+    s,
+    outline("알고리즘이 무엇이고 왜 중요하며 어떻게 나뉘는지 한 번에 알 수 있습니다"),
+  );
+  assert.equal(s.stage, "outline");
+  assert.match(s.retry.note, /글 제목을 고친다 → title \d+자 → 25자 이내/);
+  s = complete(s, outline("알고리즘, 뜻부터 갈래까지"));
+  assert.equal(s.stage, "draft");
+});
