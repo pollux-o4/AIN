@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { buildPrompt } from "./prompts/index.mjs";
-import { deltaContext } from "./roles.mjs";
+import { deltaContext, sessionEndsAfter } from "./roles.mjs";
 
 async function workerTimeline(agent, limit) {
   const page = await agent.timeline.refetch({ direction: "tail", projection: "canonical", limit });
@@ -111,8 +111,11 @@ export class RoleSessions {
   }
 
   // 재사용 대기 담당 외의 끝난 세션은 보관해 agy 프로세스(세션당 약 250MiB)를 종료한다.
+  // 이어 맡을 작업이 없는 담당(마친 그림의 세션)은 대기시키지 않고 바로 내려놓는다 · ADR-0017
   async release(job, agent) {
-    if (job.status === "completed" && this.#reusable(job) && !job.providerRetried) return;
+    const keep = this.#reusable(job) && !job.providerRetried && !sessionEndsAfter(job.action);
+    if (job.status === "completed" && keep) return;
+    if (job.status === "completed" && this.#reusable(job)) await this.drop(job);
     try {
       await agent.archive();
     } catch {

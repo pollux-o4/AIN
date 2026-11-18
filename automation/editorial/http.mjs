@@ -129,7 +129,7 @@ export function editorialHttp({
         return true;
       }
       const match = path.match(
-        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/restore|\/download|\/export|\/history|\/figures\/f[1-9])?$/,
+        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/restore|\/download|\/export|\/history|\/figures\/f[1-9]\d?)?$/,
       );
       if (!match) {
         json(res, 404, { error: "화면을 찾을 수 없습니다." });

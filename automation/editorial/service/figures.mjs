@@ -1,3 +1,4 @@
+import { coverageGap, currentOf } from "../domain/figures.mjs";
 import { anchorSection, placedFigures } from "../domain/index.mjs";
 import { fail } from "./lifecycle.mjs";
 
@@ -18,6 +19,10 @@ export function figureView(state) {
       section: anchorSection(text, anchor),
     })),
     selected: figure.selected ?? [],
+    // 위치 제안이 글의 단위를 얼마나 훑었는지(세기) · 부족하면 gap 문장
+    coverage: figure.coverage ? { ...figure.coverage, gap: coverageGap(figure.coverage) } : null,
+    // 생성 중인 그림 한 장과 층 · 마친 그림 수는 items
+    current: figure.phase === "generate" ? currentOf(figure) : null,
     items: (figure.items ?? []).map(({ id, anchor, claim, alt, caption }) => ({
       id,
       anchor,

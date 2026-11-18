@@ -6,6 +6,7 @@ import {
   requestObjectSchema,
 } from "../contracts/requests.mjs";
 import { DEFAULT_DIRECTION, directionSchema } from "../contracts/writing-modes.mjs";
+import { coverageGap } from "./domain/figures.mjs";
 import { continuesStage, flowIssue } from "./domain/index.mjs";
 import { exportArticle, exportOptionsSchema } from "./export/index.mjs";
 import {
@@ -230,8 +231,18 @@ export class EditorialService {
           if (run.state.status === "awaiting_brief")
             recordEvent(run, this.now(), "brief_ready", "수정 해석 확인 대기");
           // 준비됨 ≠ 확인됨: 사람의 선택·확인은 별도 기록 · FIGURE-001
-          if (run.state.status === "awaiting_figure_choice")
-            recordEvent(run, this.now(), "figure_candidates_ready", "시각자료 위치 후보 준비됨");
+          if (run.state.status === "awaiting_figure_choice") {
+            const { coverage } = run.state.figure;
+            recordEvent(run, this.now(), "figure_candidates_ready", "시각자료 위치 후보 준비됨", {
+              reason: `후보 ${coverage?.candidates ?? run.state.figure.candidates.length}개`,
+            });
+            // 근본 개선 신호: 위치 제안이 단위를 빠뜨렸거나 후보가 한두 개뿐 · ADR-0017
+            const gap = coverageGap(coverage);
+            if (gap)
+              recordEvent(run, this.now(), "figure_coverage_low", "시각자료 후보 부족", {
+                reason: gap,
+              });
+          }
           if (run.state.status === "awaiting_figure_review")
             recordEvent(run, this.now(), "figures_ready", "시각자료 준비됨 · 확인 대기");
           run.pending = null;

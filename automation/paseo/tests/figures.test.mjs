@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import test from "node:test";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import test, { after } from "node:test";
 import { stageOutputExamples } from "../../contracts/ai-output.mjs";
 import { nextAction, transition } from "../../editorial/domain/index.mjs";
+import { scratchDir } from "../../runtime/scratch.mjs";
 import { Jobs } from "../jobs.mjs";
 import { buildPrompt, promptData } from "../prompts/index.mjs";
 import { resultEvent } from "../results.mjs";
-import { roleOf } from "../roles.mjs";
+import { roleOf, sessionEndsAfter, sessionKeyOf } from "../roles.mjs";
+
+const scratch = await scratchDir("paseo-tests");
+after(() => scratch.release());
 
 // FIGURE-001: 시각자료 담당(illustrator) · 본문 불변 · AI는 fixture
 const ANCHOR = "주문과 결제는 책임이 다릅니다.";
@@ -46,6 +50,27 @@ const plan = {
   ],
 };
 const data = promptData;
+
+test("ADR-0017 담당 세션: 그림마다 따로, 내용 편집 층은 그린 담당과 분리", () => {
+  const step = (pass, figureId) => ({ type: "request_figure", stage: "figure", pass, figureId });
+  assert.deepEqual(
+    [
+      sessionKeyOf({ type: "request_figure", stage: "figure_plan" }),
+      sessionKeyOf(step("draft", "f1")),
+      sessionKeyOf(step("content", "f1")),
+      sessionKeyOf(step("visual", "f1")),
+      sessionKeyOf(step("draft", "f2")),
+    ],
+    ["illustrator", "illustrator:f1", "figure_editor:f1", "illustrator:f1", "illustrator:f2"],
+  );
+  assert.equal(roleOf(step("content", "f1")), "figure_editor");
+  // 마친 그림의 세션은 대기시키지 않음: 초안 층 뒤에만 이어 맡을 작업이 있다
+  assert.deepEqual(
+    ["draft", "content", "visual"].map((pass) => sessionEndsAfter(step(pass, "f1"))),
+    [false, true, true],
+  );
+  assert.equal(sessionEndsAfter({ type: "request_figure", stage: "figure_plan" }), false);
+});
 
 test("FIGURE-001 프롬프트: 확정 본문만 주고 본문 수정 금지 · 생성은 고른 후보만", () => {
   let state = proposing();
@@ -109,9 +134,7 @@ test("FIGURE-001 프롬프트: 확정 본문만 주고 본문 수정 금지 · �
 });
 
 test("FIGURE-001 작업: 시각자료 요청은 담당 세션 하나 · 본문에 없는 앵커는 실패로 남김", async () => {
-  const base = resolve(".local/paseo-tests");
-  await mkdir(base, { recursive: true });
-  const root = await mkdtemp(join(base, "run-"));
+  const root = await mkdtemp(join(scratch.path, "run-"));
   const calls = [];
   const replies = [
     JSON.stringify(plan),

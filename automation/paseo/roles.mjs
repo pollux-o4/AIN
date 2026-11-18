@@ -15,8 +15,45 @@ export const STAGE_ROLES = Object.freeze({
   figure_plan: "illustrator",
   figure: "illustrator",
 });
-export const roleOf = (/** @type {{type: string, stage?: string}} */ action) =>
-  STAGE_ROLES[action.type === "request_route" ? "route" : (action.stage ?? "")] ?? null;
+// 시각자료 생성 층의 담당: 내용 편집 층은 그린 담당과 분리(작성·검토 분리와 같은 독립성) · ADR-0017
+const FIGURE_PASS_ROLES = Object.freeze({
+  draft: "illustrator",
+  content: "figure_editor",
+  visual: "illustrator",
+});
+/** 담당(프롬프트의 역할 문장) */
+export function roleOf(/** @type {{type: string, stage?: string, pass?: string}} */ action) {
+  if (action.type === "request_figure" && action.stage === "figure")
+    return FIGURE_PASS_ROLES[action.pass ?? "draft"] ?? "illustrator";
+  return STAGE_ROLES[action.type === "request_route" ? "route" : (action.stage ?? "")] ?? null;
+}
+/**
+ * 담당 세션 열쇠 · 시각자료 생성은 그림 한 장이 작업 단위라 그림마다 세션을 따로 둔다
+ * (다른 그림의 맥락이 한 세션에 쌓이지 않게) · ADR-0017
+ */
+export function sessionKeyOf(
+  /** @type {{type: string, stage?: string, pass?: string, figureId?: string}} */ action,
+) {
+  const role = roleOf(action);
+  return role && action.type === "request_figure" && action.figureId
+    ? `${role}:${action.figureId}`
+    : role;
+}
+
+/**
+ * 이 작업 뒤 같은 세션 열쇠로 이어질 작업이 없는가 · 그림 한 장의 세션은 그 그림이 끝나면 바로 내려놓는다
+ * (그린 담당은 시각 층, 내용 편집 담당은 내용 층이 마지막)
+ */
+export function sessionEndsAfter(
+  /** @type {{type: string, stage?: string, pass?: string, figureId?: string}} */ action,
+) {
+  return (
+    action.type === "request_figure" &&
+    action.stage === "figure" &&
+    Boolean(action.figureId) &&
+    (action.pass ?? "draft") !== "draft"
+  );
+}
 
 const digest = (/** @type {unknown} */ value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 16);

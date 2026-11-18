@@ -15,7 +15,7 @@ import {
 import { SessionReaper, sessionLabels } from "./lifecycle.mjs";
 import { buildPrompt, formatRetryPrompt } from "./prompts/index.mjs";
 import { resultEvent } from "./results.mjs";
-import { roleOf } from "./roles.mjs";
+import { sessionKeyOf } from "./roles.mjs";
 import { RoleSessions } from "./sessions.mjs";
 import { Workers } from "./workers.mjs";
 
@@ -245,7 +245,7 @@ export class Jobs {
           status: "starting",
           createdAt: new Date().toISOString(),
           inputSummary: summarizeInputs(promptContext(state, withoutFigureBodies(action))),
-          ...(!ai.pilot && roleOf(action) ? { role: roleOf(action) } : {}),
+          ...(!ai.pilot && sessionKeyOf(action) ? { role: sessionKeyOf(action) } : {}),
         };
         await this.save(job);
         const cwd = join(this.workRoot, id);

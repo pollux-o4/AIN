@@ -7,6 +7,7 @@ import {
   feedbackSchema,
   requestObjectSchema,
 } from "../../contracts/requests.mjs";
+import { figureStage } from "../domain/figures.mjs";
 import { flowIssue } from "../domain/index.mjs";
 import { currentArtifact, pendingState as pending, recordEvent } from "../monitor.mjs";
 import {
@@ -170,7 +171,8 @@ export async function runAction(service, id, input, actor = "user") {
           type: state.status === "paused" ? "resume" : "retry",
         });
         run.pending = null;
-        resetBudget(service, run);
+        // 시각자료 생성을 이어가면 남은 (그림 × 층) 수만큼
+        resetBudget(service, run, figureStage(run.state) ? figureCalls(run.state) : undefined);
       } else if (!pending(state)) fail("이어갈 작업이 없습니다.", 409);
     }
     run.issue = null;

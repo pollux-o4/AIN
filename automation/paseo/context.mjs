@@ -20,7 +20,10 @@ function figureContext(state, action) {
       draft: { text: state.artifacts.draft.output.text },
     },
     ...(action.note ? { placementNote: action.note } : {}),
+    // 위치 제안이 빠짐없이 검토할 단위(글머리·모든 소제목)
+    ...(action.units ? { units: action.units } : {}),
     ...(action.candidates ? { candidates: action.candidates } : {}),
+    ...(action.progress ? { progress: action.progress } : {}),
     ...(action.pass ? { pass: action.pass } : {}),
     // 앞 층 결과: svgFile(작업 폴더 파일)·alt·caption·notes
     ...(action.previous ? { previous: action.previous } : {}),

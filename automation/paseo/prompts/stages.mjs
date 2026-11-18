@@ -7,7 +7,6 @@ import {
   summaryHeading,
 } from "../../contracts/article-structure.mjs";
 import {
-  AUTO,
   CARD_SPACE,
   MAX_CASES,
   READER_LEVELS,

@@ -2,10 +2,11 @@ import { z } from "zod";
 
 // 시각자료(figure): 확정된 초안의 앵커 문장 뒤에 배치만 하고 본문은 바꾸지 않음 · FIGURE-001
 export const FIGURE_LIMITS = Object.freeze({
-  // 개념 소개 문단마다 하나 · id 정규식 f[1-9] 안
-  candidates: 6,
-  // 생성(/anatomy Figure)은 도구로 만들고 검사해 일반 단계(5분)보다 길다 · ADR-0011
+  // 시각화할 수 있는 곳은 모두 제안 · 사람이 고른다 · 이 값은 한 글의 안전 상한(FIGURE_ID 범위 안) · ADR-0017
+  candidates: 30,
+  // 그림 한 장의 한 층 · 생성(/anatomy Figure)은 도구로 만들고 검사해 일반 단계(5분)보다 길다 · ADR-0011
   generateMs: 3600000,
+  skipReason: 200,
   anchor: 400,
   claim: 300,
   // 그림 담당이 글 맥락을 이어받는 인계 · 위치 제안이 판단한 이유·비유·장면
@@ -17,6 +18,8 @@ export const FIGURE_LIMITS = Object.freeze({
   caption: 200,
   notes: 600,
 });
+// 코드가 부여하는 시각자료 id · 화면 주소·작업 파일 이름·선택 검사가 같은 규칙을 쓴다
+export const FIGURE_ID = /^f[1-9]\d?$/;
 const SVG_NS = 'xmlns="http://www.w3.org/2000/svg"';
 const text = (/** @type {number} */ max) =>
   z
@@ -75,6 +78,10 @@ export const figureOutputSchemas = {
         }),
       )
       .min(1),
+    // 후보를 두지 않은 단위와 그 이유 · 코드가 단위 목록과 글자 그대로 대조해 빠진 단위를 센다
+    skipped: advisory(
+      z.array(z.looseObject({ unit: z.string().max(200), reason: text(FIGURE_LIMITS.skipReason) })),
+    ),
   }),
   figure: z.looseObject({
     figures: z
@@ -100,9 +107,10 @@ export const figureOutputExamples = {
         reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 기재한다.",
         analogy: "본문에서 사용한 비유 대상을 기재하며, 없으면 생략한다.",
         scene: "그 핵심을 보여 줄 원인 → 결과 장면을 기재한다.",
-        kind: "diagram|chart|table",
+        kind: "structure|flow|comparison|hierarchy|cycle|chart|table|scene",
       },
     ],
+    skipped: [{ unit: "units의 항목을 글자 그대로 기재한다.", reason: "string" }],
   },
   figure: {
     figures: [
@@ -116,9 +124,9 @@ export const figureOutputExamples = {
     ],
   },
 };
-// 사람이 고른 후보·남길 시각자료 id · 코드가 부여한 f1~f6
+// 사람이 고른 후보·남길 시각자료 id · 코드가 부여한 FIGURE_ID
 export const figureIdsSchema = z
-  .array(z.string().regex(/^f[1-9]$/))
+  .array(z.string().regex(FIGURE_ID))
   .min(1)
   .max(FIGURE_LIMITS.candidates)
   .refine((ids) => new Set(ids).size === ids.length, "Duplicate figure id");

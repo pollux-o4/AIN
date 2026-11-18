@@ -162,8 +162,8 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await openDock(page, "확인");
   await expect(approval).toContainText("발행 준비를 승인했습니다(본문과 시각자료 1개)");
   await expect(page.getByRole("button", { name: "시각자료 빼기" })).toBeHidden();
-  // 생성은 초안·내용·시각 3층 = AI 3회
-  expect((await loadRun(page)).callsUsed).toBe(3);
+  // 생성은 그림 한 장씩 초안·내용·시각 3층 = 2곳 × 3 = AI 6회 · ADR-0017
+  expect((await loadRun(page)).callsUsed).toBe(6);
 });
 
 test("FIGURE-001: 시각자료 없이 진행하면 확정 상태 그대로 발행 준비를 승인", async ({

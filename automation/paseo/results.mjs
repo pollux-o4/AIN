@@ -26,6 +26,7 @@ const RESULTS = {
       type: "figure_result",
       stage: action.stage,
       ...(action.pass ? { pass: action.pass } : {}),
+      ...(action.figureId ? { figureId: action.figureId } : {}),
       output,
     }),
   },

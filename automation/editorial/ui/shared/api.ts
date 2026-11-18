@@ -64,6 +64,16 @@ const runSchema = z.object({
         }),
       ),
       selected: z.array(z.string()),
+      coverage: z
+        .object({
+          units: z.number(),
+          withFigure: z.number(),
+          candidates: z.number(),
+          gap: z.string().nullable(),
+        })
+        .nullable()
+        .default(null),
+      current: z.object({ id: z.string(), pass: z.string() }).nullable().default(null),
       items: z.array(
         z.object({
           id: z.string(),

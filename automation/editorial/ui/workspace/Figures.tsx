@@ -50,6 +50,13 @@ export function FigureChoice({ figure, disabled, onAction }: Props) {
           </span>
         </legend>
         {figure.note && <p id="figure-note">요청한 위치: {figure.note}</p>}
+        {figure.coverage && (
+          <p id="figure-coverage" className="hint">
+            글 단위 {figure.coverage.units}곳 중 {figure.coverage.withFigure}곳에 후보{" "}
+            {figure.coverage.candidates}개
+            {figure.coverage.gap ? ` · 확인 필요: ${figure.coverage.gap}` : ""}
+          </p>
+        )}
         {figure.candidates.map((candidate) => (
           <label key={candidate.id} className="figure-option">
             <input

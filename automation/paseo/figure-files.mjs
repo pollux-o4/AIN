@@ -1,6 +1,6 @@
 import { readFile, realpath, stat, writeFile } from "node:fs/promises";
 import { isAbsolute, join, sep } from "node:path";
-import { FIGURE_LIMITS } from "../contracts/figure.mjs";
+import { FIGURE_ID, FIGURE_LIMITS } from "../contracts/figure.mjs";
 
 // 도구 작업 뒤 마지막 응답에서 결과 블록만: claude는 결과 앞에 확인용 첨부·메모를 붙인다 · 결과가 없으면 null
 export function finalResultBlock(message) {
@@ -35,7 +35,7 @@ export async function inlineFigureFiles(message, workRoot) {
 export async function writeFigureInputs(cwd, previous) {
   return Promise.all(
     previous.map(async ({ svg, ...rest }) => {
-      if (!/^f[1-9]$/.test(rest.id)) throw new Error("Invalid figure id");
+      if (!FIGURE_ID.test(rest.id)) throw new Error("Invalid figure id");
       const svgFile = join(cwd, `input-${rest.id}.svg`);
       await writeFile(svgFile, svg, { mode: 0o600 });
       return { ...rest, svgFile };

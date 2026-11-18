@@ -1,6 +1,6 @@
 import { FIGURE_PASSES } from "../contracts/figure.mjs";
 import { isPendingStatus } from "../contracts/status.mjs";
-import { passOf } from "./domain/figures.mjs";
+import { currentOf } from "./domain/figures.mjs";
 import { currentArtifact, flowIssue, STAGES, workStage } from "./domain/index.mjs";
 
 export { currentArtifact, workStage };
@@ -24,10 +24,10 @@ export const stageName = (stage) => stages[stage] ?? stage;
 // 생성 층 표시: 사람이 지금 어느 층(초안·내용·시각)을 기다리는지 · ADR-0011
 const PASS_NAMES = { draft: "초안", content: "내용 다듬기", visual: "시각 마감" };
 function workName(state, stage) {
-  const pass =
-    stage === "figure" && state.figure?.phase === "generate" ? passOf(state.figure) : null;
-  if (!pass) return stageName(stage);
-  return `${stageName(stage)} · ${PASS_NAMES[pass]} ${FIGURE_PASSES.indexOf(pass) + 1}/${FIGURE_PASSES.length}`;
+  if (stage !== "figure" || state.figure?.phase !== "generate") return stageName(stage);
+  const { selected } = state.figure;
+  const { id, pass } = currentOf(state.figure);
+  return `${stageName(stage)} ${selected.indexOf(id) + 1}/${selected.length} · ${PASS_NAMES[pass]} ${FIGURE_PASSES.indexOf(pass) + 1}/${FIGURE_PASSES.length}`;
 }
 const failureReasons = {
   timeout: "AI 실행 제한 시간을 넘겼습니다.",

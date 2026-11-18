@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import test from "node:test";
 import { figureOutputSchemas, svgIssue } from "../../contracts/figure.mjs";
 import { actionRequestSchema } from "../../contracts/requests.mjs";
+import { testScratch } from "../../runtime/scratch.mjs";
+import { coverageGap } from "../domain/figures.mjs";
 import { flowIssue, nextAction, placeFigures, STAGES, transition } from "../domain/index.mjs";
 import { editorialHttp } from "../http.mjs";
 import { runPipeline } from "../monitor.mjs";
@@ -83,6 +84,7 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
     type: "request_figure",
     stage: "figure_plan",
     revision: 1,
+    units: ["글머리", "결제"],
   });
   // 생성 결과를 위치 제안 자리에 넣을 수 없음 · 본문에 맞는 앵커가 하나도 없으면 거부
   assert.throws(() => result(state, "figure", made(["f1"])), /stale figure result/);
@@ -104,38 +106,62 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
   );
   for (const figures of [[], ["f9"], ["f1", "f1"]])
     assert.throws(() => send(state, "select_figures", { ...reviewed, figures }));
+  // 후보 집계(세기만): 단위 2곳(글머리·결제) 모두 후보 · 빠진 단위 없음
+  assert.deepEqual(state.figure.coverage, {
+    units: 2,
+    withFigure: 2,
+    skipped: 0,
+    missing: [],
+    candidates: 2,
+  });
   state = send(state, "select_figures", { ...reviewed, figures: ["f2", "f1"] });
   assert.equal(state.status, "waiting_figure");
+  // 그림 한 장이 작업 단위: f1의 초안 → 내용 → 시각, 그다음 f2 · 사람 확인은 모두 마친 뒤 한 번
+  const step = () => nextAction(state);
   assert.deepEqual(
-    nextAction(state).candidates.map((c) => c.id),
-    ["f1", "f2"],
+    [step().figureId, step().pass, step().candidates.map((c) => c.id), step().progress],
+    ["f1", "draft", ["f1"], { index: 1, total: 2 }],
   );
-  assert.equal(nextAction(state).pass, "draft");
-  assert.throws(() => result(state, "figure", made(["f1"]), "draft"), /Missing figure/);
-  // 층: 초안 → 내용 → 시각 · 앞 층 결과(svg·메모)를 다음 층이 이어받고 사람 확인은 마지막 뒤 한 번
+  assert.throws(() => result(state, "figure", made(["f2"]), "draft"), /Missing figure/);
   const noted = (ids, notes) => ({
     figures: made(ids).figures.map((f) => ({ ...f, notes })),
   });
-  state = result(state, "figure", noted(["f1", "f2"], "구도만 잡음"), "draft");
-  assert.equal(state.status, "waiting_figure");
-  assert.throws(() => result(state, "figure", made(["f1", "f2"]), "draft"), /stale/);
-  const content = nextAction(state);
-  assert.equal(content.pass, "content");
+  state = result(state, "figure", noted(["f1"], "구도만 잡음"), "draft");
+  assert.throws(() => result(state, "figure", made(["f1"]), "draft"), /stale/);
   assert.deepEqual(
-    content.previous.map((f) => [f.id, f.notes]),
-    [
-      ["f1", "구도만 잡음"],
-      ["f2", "구도만 잡음"],
-    ],
+    [step().figureId, step().pass, step().previous.map((f) => [f.id, f.notes])],
+    ["f1", "content", [["f1", "구도만 잡음"]]],
   );
-  state = result(state, "figure", made(["f1", "f2"]), "content");
-  assert.equal(nextAction(state).pass, "visual");
-  state = result(state, "figure", noted(["f1", "f2"], "마감"), "visual");
+  // 다른 그림의 결과는 받지 않음
+  assert.throws(
+    () =>
+      send(state, "figure_result", {
+        stage: "figure",
+        revision: 1,
+        pass: "content",
+        figureId: "f2",
+        output: made(["f2"]),
+      }),
+    /stale/,
+  );
+  state = result(state, "figure", made(["f1"]), "content");
+  state = result(state, "figure", noted(["f1"], "마감"), "visual");
+  assert.equal(state.status, "waiting_figure");
+  assert.deepEqual(
+    [step().figureId, step().pass, step().previous, step().progress],
+    ["f2", "draft", undefined, { index: 2, total: 2 }],
+  );
+  assert.deepEqual(
+    state.figure.items.map((item) => [item.id, item.notes]),
+    [["f1", undefined]],
+  );
+  for (const pass of ["draft", "content", "visual"])
+    state = result(state, "figure", made(["f2"]), pass);
   // 준비됨 ≠ 확인됨: 사람 확인 전에는 발행 준비 승인 불가
   assert.equal(state.status, "awaiting_figure_review");
   assert.deepEqual(
-    [state.figure.pass, state.figure.drafts, state.figure.items[0].notes],
-    [undefined, undefined, undefined],
+    [state.figure.current, state.figure.draft, state.figure.items.map((item) => item.id)],
+    [undefined, undefined, ["f1", "f2"]],
   );
   assert.throws(() => send(state, "authorize_publication", reviewed));
   state = send(state, "confirm_figures", { ...reviewed, figures: ["f2"] });
@@ -156,6 +182,23 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
   assert.equal(revised.figure, undefined);
   assert.equal(revised.history.at(-1).figure.phase, "confirmed");
   assert.equal(revised.satisfiedRevision, null);
+});
+
+test("ADR-0017 위치 제안 집계: 빠진 단위·후보 한 개는 개선 신호로 센다", () => {
+  let state = send(satisfied(), "request_figures", reviewed);
+  state = result(state, "figure_plan", { candidates: [plan.candidates[0]] });
+  assert.deepEqual(state.figure.coverage.missing, ["결제"]);
+  assert.equal(coverageGap(state.figure.coverage), "검토하지 않은 단위 1곳");
+  let skipped = send(satisfied(), "request_figures", reviewed);
+  skipped = result(skipped, "figure_plan", {
+    candidates: [plan.candidates[0]],
+    skipped: [{ unit: "결제", reason: "순서가 한 문장뿐이다" }],
+  });
+  assert.equal(coverageGap(skipped.figure.coverage), null);
+  assert.equal(
+    coverageGap({ units: 5, withFigure: 1, skipped: 4, missing: [], candidates: 1 }),
+    "단위 5곳 중 후보 1개",
+  );
 });
 
 test("FIGURE-001 시각자료 없이: 버리면 확정 상태로 돌아가고 승인은 본문만 대상", () => {
@@ -234,7 +277,7 @@ test("FIGURE-001 계약: 실행·외부 참조 SVG 거부, 네임스페이스 �
 });
 
 async function fixture(t) {
-  const dir = await mkdtemp(".local/editorial-test-");
+  const dir = await testScratch(t, "editorial-test");
   const store = new EditorialStore(join(dir, "state.sqlite"));
   t.after(() => store.close());
   const calls = [];
@@ -291,7 +334,7 @@ async function fixture(t) {
   return { service, jobs, calls, act, drain, id: run.id };
 }
 
-test("FIGURE-001 서비스: 제안 AI 1회·생성은 층 수만큼, 실제 준비·확인만 표시, 본문 다운로드 불변", async (t) => {
+test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실제 준비·확인만 표시, 본문 다운로드 불변", async (t) => {
   const f = await fixture(t);
   const { service: s, id } = f;
   const txt = s.download(id).text;
@@ -362,8 +405,8 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 층 수만큼, 실제 준�
   assert.equal(html.match(/<figure/g)?.length, 1);
   assert.match(s.export(id, { format: "zip" }).body.toString("latin1"), /figures\/f1\.svg/);
   assert.throws(() => s.export(id, { format: "pdf" }), { status: 400 });
-  // 실패한 초안 층 1회 + 재개 뒤 초안·내용·시각 3회
-  assert.deepEqual(f.calls, [...STAGES, "figure_plan", ...Array(4).fill("figure")]);
+  // 실패한 f1 초안 층 1회 + 재개 뒤 (f1·f2) × (초안·내용·시각) 6회
+  assert.deepEqual(f.calls, [...STAGES, "figure_plan", ...Array(7).fill("figure")]);
   assert.deepEqual(
     runPipeline(s.store.get(id))
       .slice(-2)
@@ -376,7 +419,7 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 층 수만큼, 실제 준�
   view = await f.act(id, "authorize_publication");
   assert.equal(view.status, "publication_ready");
   assert.equal(view.canDiscardFigures, false);
-  assert.equal(f.calls.length, STAGES.length + 5);
+  assert.equal(f.calls.length, STAGES.length + 8);
 });
 
 test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 격리된 파일로 제공", async (t) => {

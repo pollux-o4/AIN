@@ -9,14 +9,15 @@ export const DEFAULT_AI = Object.freeze({
   maxDurationMs: 300000,
 });
 
-// 시각자료 담당 모델: 위치 제안과 생성 층(초안→내용→시각)마다 강점이 다른 모델 · ADR-0011
+// 시각자료 담당 모델: 위치 제안과 생성 층(초안→내용→시각) · ADR-0011 · 2026-11-17 사용자 결정으로 Hydrogen High 일원화(ADR-0017)
 // AIN_FIGURE_AI_<PLAN|DRAFT|CONTENT|VISUAL>="provider/model:thinking@mode"로 층별 교체
 // mode를 안 주면 provider 기본 모드(Jobs가 Paseo defaultModeId로 채움)
+const HYDROGEN_HIGH = `${AI_MODELS.high.provider}/${AI_MODELS.high.model}`;
 const FIGURE_AI_DEFAULTS = {
-  plan: "codex/gpt-6-luna:high",
-  draft: `${AI_MODELS.standard.provider}/${AI_MODELS.standard.model}`,
-  content: "codex/gpt-6-luna:high",
-  visual: "claude/claude-sonnet-5-5:medium",
+  plan: HYDROGEN_HIGH,
+  draft: HYDROGEN_HIGH,
+  content: HYDROGEN_HIGH,
+  visual: HYDROGEN_HIGH,
 };
 function parseAi(spec) {
   const match = /^([\w-]+)\/([^:@\s]+)(?::([\w-]+))?(?:@([\w-]+))?$/.exec(spec.trim());
