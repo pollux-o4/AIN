@@ -1910,6 +1910,23 @@ article th {
   overflow: hidden;
   clip-path: inset(50%);
 }
+/* 글 단계를 접은 한 칸: 지나온 길을 요약하고 누르면 다시 펼친다 */
+#pipeline li.phase-fold {
+  flex-grow: 1.4;
+  transform-origin: center top;
+}
+#pipeline li.phase-fold small.phase-count {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+.journey .phase-unfold {
+  display: block;
+  margin: 0 var(--px) 0 auto;
+  font-size: 12px;
+}
 .node {
   position: relative;
   z-index: 1;

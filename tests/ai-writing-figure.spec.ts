@@ -56,7 +56,18 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   });
   expect(proposed.callsUsed).toBe(1);
   await expect(page.locator("#article figure")).toHaveCount(0);
-  await expect(page.locator('#pipeline > li[data-status="done"]')).toHaveCount(9);
+  // 시각 단계로 넘어가면 끝난 글 단계는 한 칸으로 접히고, 눌러서 다시 펼칠 수 있다
+  const fold = page.locator("#pipeline > li.phase-fold");
+  await expect(fold).toContainText("글 완성");
+  await expect(fold).toContainText("8단계");
+  await expect(page.locator('#pipeline > li[data-status="done"]')).toHaveCount(2);
+  // 모바일은 열린 작업 도크가 지도를 덮으므로 펼치기·접기는 PC에서 확인한다
+  if (testInfo.project.name === "desktop") {
+    await fold.getByRole("button").click();
+    await expect(page.locator('#pipeline > li[data-status="done"]')).toHaveCount(9);
+    await page.getByRole("button", { name: "글 단계 접기" }).click();
+    await expect(fold).toBeVisible();
+  }
   await checkAccessibility(page, testInfo, "figure-choice");
 
   // 아무것도 고르지 않으면 만들 수 없음 · 고른 곳만 생성

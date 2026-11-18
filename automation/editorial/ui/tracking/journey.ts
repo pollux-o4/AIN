@@ -51,3 +51,17 @@ export function nextStep(run: Run, online: boolean): Next {
       return { tone: "wait", say: run.monitor.label };
   }
 }
+
+// 지도의 층 나누기: 시각 단계가 시작됐고 글 단계가 모두 끝났으면 글 단계를 한 칸으로 접는다.
+// 시각 단계가 없어지거나(새 초안 회차) 글 단계가 다시 열리면 펼친다 · 단계 상태 자체는 바꾸지 않는다.
+const VISUAL_STAGES = ["figure_plan", "figure"];
+type Step = Run["monitor"]["pipeline"][number];
+export function trackPhases(pipeline: Step[]) {
+  const writing = pipeline.filter((step) => !VISUAL_STAGES.includes(step.stage));
+  const visual = pipeline.filter((step) => VISUAL_STAGES.includes(step.stage));
+  return {
+    writing,
+    visual,
+    foldable: visual.length > 0 && writing.length > 0 && writing.every((s) => s.status === "done"),
+  };
+}
