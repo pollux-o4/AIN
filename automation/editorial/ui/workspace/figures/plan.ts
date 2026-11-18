@@ -1,5 +1,5 @@
 import { FIGURE_KINDS } from "../../../../contracts/figure.mjs";
-import type { Run } from "../../shared/api";
+import type { FigureRoute, Run } from "../../shared/api";
 
 // 시각자료 후보 모델 · 본문 자리·도크 목록·계획이 같은 번호와 유형 이름을 쓴다
 type Figure = NonNullable<Run["figure"]>;
@@ -11,3 +11,5 @@ export const kindName = (kind: string | null) =>
 // 후보 번호 · 제안 순서 기준
 export const candidateNumber = (candidates: Candidate[], id: string) =>
   candidates.findIndex((item) => item.id === id) + 1;
+// 경로 표시 이름 · 경로 선택·도크 목록·검토가 같은 이름을 쓴다(ADR-0025)
+export const ROUTE_NAMES: Record<FigureRoute, string> = { svg: "도식(SVG)", image: "그림(이미지)" };

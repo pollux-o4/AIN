@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FIGURE_ROUTES } from "../../../contracts/figure.mjs";
 import { historySchema } from "../../../contracts/history.mjs";
 import { type Direction, designViewSchema } from "../../../contracts/writing-modes.mjs";
 
@@ -67,6 +68,12 @@ const runSchema = z.object({
           scene: z.string().nullable().default(null),
           kind: z.string().nullable().default(null),
           motifs: z.array(z.string()).default([]),
+          // 사람이 덧붙인 그림 방향 · ADR-0023
+          direction: z.string().nullable().default(null),
+          // 이 그림이 없으면 독자가 놓치는 것 · 실효 경로와 누가 정했는지 · ADR-0025
+          without: z.string().nullable().default(null),
+          route: z.enum(FIGURE_ROUTES).default("svg"),
+          routeBy: z.enum(["user", "default"]).default("default"),
           section: z.string().nullable(),
         }),
       ),
@@ -76,6 +83,8 @@ const runSchema = z.object({
         .default(null),
       motifs: z.array(z.object({ name: z.string(), look: z.string() })).default([]),
       selected: z.array(z.string()),
+      // 서버에 연결된 경로 · 없는 경로는 고를 수 없다(FIGURE-002)
+      routesAvailable: z.array(z.enum(FIGURE_ROUTES)).default(["svg"]),
       coverage: z
         .object({
           units: z.number(),
@@ -93,6 +102,18 @@ const runSchema = z.object({
           claim: z.string(),
           alt: z.string(),
           caption: z.string().nullable(),
+          route: z.enum(FIGURE_ROUTES).default("svg"),
+          mime: z.string().default("image/svg+xml"),
+          motion: z.boolean().default(false),
+          // 위치가 있는 글자는 화면이 그림 위에 얹는다(FIGURE-002 L1)
+          labels: z
+            .array(
+              z.object({
+                text: z.string(),
+                anchor: z.object({ x: z.number(), y: z.number() }).optional(),
+              }),
+            )
+            .default([]),
         }),
       ),
     })
@@ -161,6 +182,7 @@ export type Run = z.infer<typeof viewSchema>;
 export type { Direction };
 export type Design = Run["design"];
 export type Figure = NonNullable<Run["figure"]>;
+export type FigureRoute = (typeof FIGURE_ROUTES)[number];
 export const figureUrl = (run: Run, id: string) =>
   `/write/api/runs/${run.id}/figures/${id}?v=${run.version}`;
 export type RecentRun = z.infer<typeof recentSchema>["runs"][number];
@@ -173,7 +195,12 @@ export type BriefEdit = {
 export type ActionCommand =
   | { type: "feedback" | "revise_brief"; feedback: string }
   | { type: "approve_brief"; edit?: BriefEdit }
-  | { type: "select_figures"; figures: string[] }
+  | {
+      type: "select_figures";
+      figures: string[];
+      directions?: Record<string, string>;
+      routes?: Record<string, FigureRoute>;
+    }
   | { type: "confirm_figures"; figures?: string[] }
   | { type: "request_figures"; feedback?: string }
   | {

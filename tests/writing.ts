@@ -41,6 +41,7 @@ export function expectCommand(command: Action, type: Action["type"], expectedVer
       ...(["feedback", "revise_brief"].includes(type) ? ["feedback"] : []),
       ...(type === "approve_brief" && "edit" in command ? ["edit"] : []),
       ...("figures" in command ? ["figures"] : []),
+      ...(type === "select_figures" && "directions" in command ? ["directions"] : []),
     ].sort(),
   );
 }

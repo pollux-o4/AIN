@@ -3,7 +3,7 @@ import { Compose } from "../compose/Compose";
 import { Library } from "../library/Library";
 import { Settings } from "../shell/Settings";
 import { Workspace } from "../workspace/Workspace";
-import { makeRun, recent } from "./fixtures";
+import { figureHtml, makeFigure, makeRun, recent } from "./fixtures";
 
 const noop = async () => {};
 const meta: Meta = { title: "화면" };
@@ -98,5 +98,61 @@ export const 작업_해석확인도크: StoryObj = {
       onAction={noop}
       onNotice={noop}
     />
+  ),
+};
+const figureRun = (
+  figure: ReturnType<typeof makeFigure>,
+  can: Partial<Parameters<typeof makeRun>[0]> = {},
+) => makeRun({ status: "awaiting_user", html: figureHtml, figure, ...can });
+const workspace = (run: ReturnType<typeof makeRun>) => () => (
+  <Workspace run={run} online submitting={false} onAction={noop} onNotice={noop} />
+);
+export const 시각자료_고르기: StoryObj = {
+  render: workspace(figureRun(makeFigure(), { canSelectFigures: true, canDiscardFigures: true })),
+};
+export const 시각자료_생성중: StoryObj = {
+  render: workspace(
+    figureRun(
+      makeFigure({
+        phase: "generate",
+        selected: ["f2", "f3"],
+        current: { id: "f2", pass: "content" },
+      }),
+      {
+        status: "waiting_ai",
+      },
+    ),
+  ),
+};
+export const 시각자료_검토: StoryObj = {
+  render: workspace(
+    figureRun(
+      makeFigure({
+        phase: "review",
+        selected: ["f2"],
+        items: [
+          {
+            id: "f2",
+            anchor: "요약",
+            claim: "선택 기준",
+            alt: "두 축 갈림길 그림",
+            caption: "선택을 가르는 두 축",
+            route: "image",
+            mime: "image/png",
+            motion: false,
+            labels: [{ text: "팀 크기", anchor: { x: 0.25, y: 0.8 } }],
+          },
+        ],
+      }),
+      { canConfirmFigures: true, canDiscardFigures: true },
+    ),
+  ),
+};
+export const 시각자료_고르기_이미지연결: StoryObj = {
+  render: workspace(
+    figureRun(makeFigure({ routesAvailable: ["svg", "image"] }), {
+      canSelectFigures: true,
+      canDiscardFigures: true,
+    }),
   ),
 };

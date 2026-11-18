@@ -1,0 +1,96 @@
+/* 연구소 비교판 · Storybook 전용 */
+.lab {
+  padding: 1rem;
+  font:
+    14px / 1.5 system-ui,
+    sans-serif;
+  color: CanvasText;
+  background: Canvas;
+}
+.lab h1 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+.lab-filter {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.lab-grid {
+  display: grid;
+  gap: 0.5rem;
+  align-items: start;
+}
+.lab-variant {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: Canvas;
+  border-bottom: 2px solid GrayText;
+  padding: 0.25rem 0;
+}
+.lab-variant p,
+.lab-variant ul {
+  margin: 0.25rem 0;
+  font-size: 12px;
+  color: GrayText;
+}
+.lab-case {
+  font-weight: 600;
+  padding-top: 0.5rem;
+}
+.lab-cell {
+  border: 1px solid color-mix(in srgb, GrayText 40%, transparent);
+  border-radius: 6px;
+  padding: 0.5rem;
+  min-width: 0;
+}
+.lab-summary {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  color: GrayText;
+}
+.lab-record {
+  margin-bottom: 0.75rem;
+}
+.lab-record .lab-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 12px;
+}
+.lab-record img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.25rem 0;
+  border: 1px solid color-mix(in srgb, GrayText 30%, transparent);
+}
+.lab-record .lab-foot {
+  font-size: 12px;
+  color: GrayText;
+}
+.lab-pass {
+  color: #1a7f37;
+}
+.lab-fail {
+  color: #cf222e;
+}
+.lab-pending {
+  color: GrayText;
+}
+.lab-missing {
+  color: GrayText;
+  font-style: italic;
+  margin: 0;
+}
+.lab-candidates {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+  font-size: 12px;
+}
+.lab-candidates small {
+  display: block;
+  color: GrayText;
+}

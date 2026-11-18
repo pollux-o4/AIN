@@ -78,6 +78,16 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await expect(slots.nth(0)).toContainText("주문서 · 후보 2에도 나옴");
   await expect(choice.locator("#figure-style")).toContainText("주황 #f5a623");
   await choice.getByRole("button", { name: "본문에서 고르기" }).click();
+  // 고른 후보에 방향을 덧붙인다(ADR-0023) · 접혀 있다가 펼쳐 쓰고, 새로고침해도 남는다
+  const direction = page.locator("#article .figure-direction").nth(1);
+  await expect(direction).not.toHaveAttribute("open");
+  await direction.locator("summary").click();
+  await direction.locator("textarea").fill("두 상태를 좌우로 비교");
+  await expect(direction.locator("summary")).toContainText("방향 있음");
+  await page.reload();
+  await expect(direction.locator("summary")).toContainText("방향 있음");
+  await openDock(page, "확인");
+  await choice.getByRole("button", { name: "본문에서 고르기" }).click();
   await slots.nth(0).click();
   await expect(slots.nth(0)).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".dock-toggle")).toContainText("1곳 골랐어요");
@@ -91,8 +101,12 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await expect(page.locator("#select-figures")).toBeDisabled();
   await choice.getByRole("checkbox").nth(0).check();
   await choice.getByRole("checkbox").nth(1).check();
+  await expect(choice.locator(".figure-option").nth(1)).toContainText("방향 있음");
   const selected = await clickAction(page, "2곳에 만들기", "select_figures");
-  expect(selected.command).toMatchObject({ figures: ["f1", "f2"] });
+  expect(selected.command).toMatchObject({
+    figures: ["f1", "f2"],
+    directions: { f2: "두 상태를 좌우로 비교" },
+  });
 
   // 준비됨 ≠ 확인됨: 본문에 '확인 전'으로 놓이고 발행 준비 승인은 아직 불가
   const review = page.locator("#figure-review");
@@ -110,6 +124,9 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await plan.locator("summary").evaluate((el) => el.scrollIntoView({ block: "center" }));
   await plan.locator("summary").click();
   await expect(plan).toContainText("주문·결제·배송의 책임 흐름");
+  await expect(figures.nth(1).locator("details.figure-plan-notes")).toContainText(
+    "내 방향 두 상태를 좌우로 비교",
+  );
   await openDock(page, "확인");
   await expect(authorize).toBeHidden();
   expect(await articleText(page)).toBe(body);

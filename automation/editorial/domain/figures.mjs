@@ -142,10 +142,27 @@ function acceptCandidates(state, output) {
   const text = draftText(state);
   const seen = new Set();
   const candidates = [];
-  for (const { anchor, claim, reason, analogy, scene, kind, motifs } of output.candidates) {
+  for (const {
+    anchor,
+    claim,
+    reason,
+    analogy,
+    scene,
+    kind,
+    motifs,
+    without,
+    relation,
+    mapping,
+  } of output.candidates) {
     const sentence = anchor.trim();
     if (!text.includes(sentence) || seen.has(sentence)) continue;
     seen.add(sentence);
+    const normalizedMapping = mapping?.length
+      ? mapping.map(({ element, concept }) => ({
+          element: element.trim(),
+          concept: concept.trim(),
+        }))
+      : undefined;
     candidates.push({
       id: `f${candidates.length + 1}`,
       anchor: sentence,
@@ -155,6 +172,9 @@ function acceptCandidates(state, output) {
       scene: scene.trim(),
       ...(kind ? { kind } : {}),
       ...(motifs ? { motifs } : {}),
+      ...(without?.trim() ? { without: without.trim() } : {}),
+      ...(relation ? { relation } : {}),
+      ...(normalizedMapping ? { mapping: normalizedMapping } : {}),
     });
     if (candidates.length === FIGURE_LIMITS.candidates) break;
   }
@@ -199,6 +219,19 @@ function advanceFigure(state, output) {
   state.status = "awaiting_figure_review";
 }
 const ordered = (ids, pool) => pool.filter((id) => ids.includes(id));
+// 사람이 후보마다 덧붙인 그림 방향 · 고른 후보에만 남기고 빈 값은 방향 없음 · ADR-0023
+function withDirections(candidates, selected, directions = {}) {
+  return candidates.map(({ direction: _old, ...candidate }) => {
+    const direction = selected.includes(candidate.id) ? directions[candidate.id]?.trim() : "";
+    return direction ? { ...candidate, direction } : candidate;
+  });
+}
+function withRoutes(candidates, selected, routes = {}) {
+  return candidates.map(({ route: _old, ...candidate }) => {
+    const route = selected.includes(candidate.id) ? routes[candidate.id] : undefined;
+    return route ? { ...candidate, route } : candidate;
+  });
+}
 
 // 시각자료 이벤트 처리 · 다루지 않는 이벤트면 false
 export function figureTransition(state, event) {
@@ -254,6 +287,11 @@ export function figureTransition(state, event) {
       state.figure = {
         ...figure,
         phase: "generate",
+        candidates: withRoutes(
+          withDirections(figure.candidates, selected, event.directions),
+          selected,
+          event.routes,
+        ),
         selected,
         current: { id: selected[0], pass: FIGURE_PASSES[0] },
       };
@@ -289,9 +327,11 @@ export function figureTransition(state, event) {
   }
 }
 
-// 확인 대상(review)·확인된(confirmed) 시각자료 · 그 밖에는 배치할 것이 없음
+// 만드는 중(generate)엔 다 만든 것만, 확인 대상(review)·확인된(confirmed) 시각자료 · 그 밖에는 배치할 것이 없음
 export function placedFigures(state) {
-  return ["review", "confirmed"].includes(state.figure?.phase) ? state.figure.items : [];
+  return ["generate", "review", "confirmed"].includes(state.figure?.phase)
+    ? state.figure.items
+    : [];
 }
 // 본문을 바꾸지 않고 앵커 문장이 든 문단 뒤에 끼울 자리를 계산 → [{text} | {figure}] 순서열
 // 문단 경계는 빈 줄 · 코드 블록(```) 안에서는 끊지 않음

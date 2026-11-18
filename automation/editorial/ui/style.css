@@ -2975,3 +2975,71 @@ fieldset.figure-list {
 .change-list ins::before {
   content: "+ ";
 }
+/* 고른 후보의 방향 덧붙이기: 기본 접힘 · 펼치면 한두 줄 입력 · ADR-0023 */
+.figure-slot-card {
+  display: grid;
+}
+#article .figure-direction {
+  padding: 6px 12px 10px;
+  border: var(--px, 1px) solid var(--accent);
+  border-top: 0;
+  background: var(--surface);
+  font-size: 13.5px;
+}
+#article .figure-direction summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+#article .figure-direction-mark {
+  color: var(--ink);
+  font-weight: 650;
+}
+#article .figure-direction textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  font: inherit;
+  resize: vertical;
+}
+
+/* 경로 선택 · 방향 입력과 같은 카드 아래 칸(ADR-0025) */
+#article .figure-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 6px 12px;
+  border: var(--px, 1px) solid var(--accent);
+  border-top: 0;
+  background: var(--surface);
+  font-size: 13.5px;
+}
+#article .figure-route legend {
+  float: left;
+  margin-right: 6px;
+  color: var(--muted);
+}
+#article .figure-route .is-off {
+  color: var(--muted);
+}
+/* 그림 위에 얹는 글자 · 비율 좌표 기준(FIGURE-002) */
+.figure-image {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.figure-image img {
+  display: block;
+  max-width: 100%;
+}
+.figure-image-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}

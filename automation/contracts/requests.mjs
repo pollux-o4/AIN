@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { figureIdsSchema } from "./figure.mjs";
+import { figureDirectionsSchema, figureIdsSchema, figureRoutesSchema } from "./figure.mjs";
 import { directionSchema } from "./writing-modes.mjs";
 
 export const INPUT_LIMITS = Object.freeze({
@@ -43,6 +43,7 @@ const actionFieldsSchema = z.looseObject({
   feedback: z.unknown().optional(),
   edit: z.unknown().optional(),
   figures: z.unknown().optional(),
+  directions: z.unknown().optional(),
 });
 // These checks run separately to preserve duplicate-operation and error precedence.
 export const actionIdentitySchema = actionFieldsSchema.pick({ operationId: true, type: true });
@@ -64,7 +65,12 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
     edit: briefEditSchema.optional(),
   }),
   // 시각자료: 만들 후보 선택은 필수, 확인 때 남길 것은 생략하면 전부 · FIGURE-001
-  actionFieldsSchema.extend({ type: z.literal("select_figures"), figures: figureIdsSchema }),
+  actionFieldsSchema.extend({
+    type: z.literal("select_figures"),
+    figures: figureIdsSchema,
+    directions: figureDirectionsSchema.optional(),
+    routes: figureRoutesSchema.optional(),
+  }),
   actionFieldsSchema.extend({
     type: z.literal("confirm_figures"),
     figures: figureIdsSchema.optional(),

@@ -1,5 +1,5 @@
-import { figureUrl } from "../../shared/api";
 import { Icon } from "../../shared/Icon";
+import { FigureImage } from "./FigureImage";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import { usePicked } from "./usePicked";
 
@@ -42,7 +42,7 @@ export function FigureReview({
             />
             <span>
               <label htmlFor={`keep-${item.id}`}>
-                <img src={figureUrl(run, item.id)} alt={item.alt} />
+                <FigureImage run={run} item={item} />
                 <strong id={`keep-${item.id}-name`}>{item.caption ?? item.claim}</strong>
               </label>
               <q>{quote(item.anchor)}</q>

@@ -2,6 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "automation/paseo/{setup,providers,pilot,article-e2e,contract-e2e,eval}.mjs",
+    "automation/paseo/lab/{cli,import-jobs}.mjs",
     "automation/n8n/build-{workflow,editorial-workflow}.mjs",
     "automation/{editorial,n8n,paseo}/tests/**/*.mjs",
     "tests/**/*.{mjs,ts}",

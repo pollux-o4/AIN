@@ -17,6 +17,13 @@ export const FIGURE_LIMITS = Object.freeze({
   motifs: 12,
   motifName: 40,
   motifLook: 300,
+  // 사람이 후보마다 덧붙이는 그림 방향 · 한두 줄 · ADR-0023
+  direction: 300,
+  // 이 그림이 없으면 독자가 놓치는 것 · 사람이 고를 근거 · ADR-0025
+  without: 200,
+  // 그림 요소 → 본문 개념 대응표 · 대응 없는 요소를 두지 않는다 · RES-010 원칙 3
+  mapping: 12,
+  mappingText: 80,
   // anatomy Figure(부품 40~80개)는 100~200KB · 모델은 파일로 내고 어댑터가 읽는다(svgFile)
   svg: 400000,
   alt: 300,
@@ -65,6 +72,17 @@ const svg = z
       : trimmed.replace(/^<svg/, `<svg ${SVG_NS}`);
   });
 
+// 핵심 관계 종류 · 위치 제안이 고르고 형태를 정한다 · RES-010 원칙 2
+export const FIGURE_RELATIONS = /** @type {const} */ ([
+  "sequence",
+  "containment",
+  "convergence",
+  "all-required",
+  "contrast",
+  "cause",
+  "cycle",
+  "quantity",
+]);
 // 시각화 유형: 이름과 그 유형이 드러내는 관계 · 위치 제안 지시문과 화면 표시가 같은 목록을 쓴다
 export const FIGURE_KINDS = Object.freeze({
   structure: { name: "구성", shows: "구성 요소와 그 배치" },
@@ -98,6 +116,19 @@ export const figureOutputSchemas = {
           reason: text(FIGURE_LIMITS.reason),
           analogy: advisory(z.string().max(100)),
           scene: text(FIGURE_LIMITS.scene),
+          without: advisory(text(FIGURE_LIMITS.without)),
+          // 핵심 관계 종류 · 형태 선택의 근거 · RES-010 원칙 2
+          relation: advisory(z.enum(FIGURE_RELATIONS)),
+          mapping: advisory(
+            z
+              .array(
+                z.looseObject({
+                  element: text(FIGURE_LIMITS.mappingText),
+                  concept: text(FIGURE_LIMITS.mappingText),
+                }),
+              )
+              .max(FIGURE_LIMITS.mapping),
+          ),
           kind: advisory(z.string().max(40)),
           // 이 그림에 나오는 반복 대상 이름 · motifs의 name과 글자 그대로 같아야 이어진다
           motifs: advisory(z.array(z.string().max(FIGURE_LIMITS.motifName))),
@@ -147,6 +178,9 @@ export const figureOutputExamples = {
         reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 적는다.",
         analogy: "본문에서 쓴 비유 대상을 적고, 없으면 생략한다.",
         scene: "그 핵심을 보여 줄 원인 → 결과 장면을 적는다.",
+        without: "이 그림을 지우면 독자가 앵커 문장만으로 알아내기 어려운 관계를 1문장으로 적는다.",
+        relation: FIGURE_RELATIONS.join("|"),
+        mapping: [{ element: "그림에 그릴 대상 하나", concept: "그 대상이 뜻하는 본문 개념 하나" }],
         kind: Object.keys(FIGURE_KINDS).join("|"),
         motifs: ["이 그림에 나오는 반복 대상의 name을 적고, 없으면 생략한다."],
       },
@@ -187,3 +221,13 @@ export const figureIdsSchema = z
   .min(1)
   .max(FIGURE_LIMITS.candidates)
   .refine((ids) => new Set(ids).size === ids.length, "Duplicate figure id");
+// 후보별 사람 방향 · 고른 후보에만 저장한다 · 빈 값은 방향 없음 · ADR-0023
+export const figureDirectionsSchema = z
+  .record(z.string().regex(FIGURE_ID), z.string().max(FIGURE_LIMITS.direction))
+  .refine((map) => Object.keys(map).length <= FIGURE_LIMITS.candidates, "Too many directions");
+// 그림 경로 · 산출 형식 단위 · ADR-0025
+export const FIGURE_ROUTES = /** @type {const} */ (["image", "svg"]);
+// 후보별 사람 지정 경로 · 고른 후보에만 저장한다 · 비우면 유형 기본 경로 · ADR-0025
+export const figureRoutesSchema = z
+  .record(z.string().regex(FIGURE_ID), z.enum(FIGURE_ROUTES))
+  .refine((map) => Object.keys(map).length <= FIGURE_LIMITS.candidates, "Too many routes");

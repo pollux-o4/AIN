@@ -11,7 +11,8 @@ function attemptsOf(events, jobs, now) {
     if (event.kind !== "ai_requested") return;
     const later = events.slice(i + 1);
     const done = later.find((e) => e.kind === "ai_completed" && e.jobId === event.jobId);
-    const stopped = done ? null : later.find((e) => e.kind === "failed");
+    // 실패나 사람의 중단으로 멈춘 요청은 진행 중이 아님
+    const stopped = done ? null : later.find((e) => ["failed", "pause"].includes(e.kind));
     const end = done ?? stopped;
     // 결과를 받은 그 처리에서 실패로 멈췄으면 결과는 거부된 것(재시도 상한 소진)
     const refused = done && events[events.indexOf(done) + 1];
@@ -22,13 +23,14 @@ function attemptsOf(events, jobs, now) {
       revision: event.revision,
       stage: event.stage,
       section: job?.section ?? null,
+      figure: job?.figure ?? null,
       ms: (end?.at ?? now) - event.at,
       tokens: tokensOf(job?.usage),
       chars: job?.chars ?? null,
       outcome: rejectedAtEnd ? "rejected" : done ? "accepted" : stopped ? "failed" : "running",
     });
   });
-  // 같은 회차·단계·구간을 다시 요청했으면 앞 시도는 거부된 것
+  // 같은 회차·단계·구간(시각자료는 그림·층)을 다시 요청했으면 앞 시도는 거부된 것
   attempts.forEach((a, i) => {
     const again = attempts
       .slice(i + 1)
@@ -36,7 +38,9 @@ function attemptsOf(events, jobs, now) {
         (b) =>
           b.revision === a.revision &&
           b.stage === a.stage &&
-          (b.section?.index ?? null) === (a.section?.index ?? null),
+          (b.section?.index ?? null) === (a.section?.index ?? null) &&
+          (b.figure?.id ?? null) === (a.figure?.id ?? null) &&
+          (b.figure?.pass ?? null) === (a.figure?.pass ?? null),
       );
     if (again && a.outcome === "accepted") a.outcome = "rejected";
   });
@@ -62,7 +66,7 @@ function groupBy(items, key) {
 }
 
 const label = (a) =>
-  `회차 ${a.revision} · ${stageName(a.stage)}${a.section ? ` ${a.section.index + 1}/${a.section.total}` : ""}`;
+  `회차 ${a.revision} · ${stageName(a.stage)}${a.section ? ` ${a.section.index + 1}/${a.section.total}` : ""}${a.figure ? ` ${a.figure.id} ${a.figure.pass}` : ""}`;
 
 export function usageReport(events, jobs, now) {
   const attempts = attemptsOf(events, jobs, now);

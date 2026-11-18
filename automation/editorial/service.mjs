@@ -32,8 +32,16 @@ import {
 import { completionNotice, displayedDraft, presented, runView, titleOf } from "./service/view.mjs";
 
 export class EditorialService {
-  constructor({ store, jobs, dispatch, ai = DEFAULT_AI, now = Date.now }) {
-    Object.assign(this, { store, jobs, dispatch, ai, now });
+  constructor({ store, jobs, dispatch, ai = DEFAULT_AI, now = Date.now, figureRoutes = ["svg"] }) {
+    // 연결된 그림 경로 · 실행 설정이라 상태에 저장하지 않는다(ADR-0025)
+    Object.assign(this, {
+      store,
+      jobs,
+      dispatch,
+      ai,
+      now,
+      figureRoutes: Object.freeze([...figureRoutes]),
+    });
     // shortcut: 로컬 단일 서비스의 작업별 잠금, 다중 프로세스 운영 전 DB 기반 실행 lease 도입
     this.locks = new Map();
   }
@@ -52,7 +60,7 @@ export class EditorialService {
     return this.store.save(run);
   }
   view(run) {
-    return runView(run, this.now());
+    return runView(run, this.now(), this.figureRoutes);
   }
   list() {
     return this.store

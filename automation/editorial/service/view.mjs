@@ -46,7 +46,7 @@ function designOf(state) {
     })),
   };
 }
-export function runView(run, now) {
+export function runView(run, now, figureRoutesAvailable = ["svg"]) {
   const state = run.state;
   const completionReason = completionNotice(state);
   const needsCompletion = completionReason !== null;
@@ -124,7 +124,7 @@ export function runView(run, now) {
     // 수정 해석 승인 게이트 · 승인 전에는 수정 루프를 시작하지 않음 · ADR-0010
     canApproveBrief: state.status === "awaiting_brief" && !needsCompletion,
     // 시각자료(선택 단계) · 본문·확정은 그대로 · 준비(후보·생성물)와 사람 확인을 구분 · FIGURE-001
-    figure: figureView(state),
+    figure: figureView(state, figureRoutesAvailable),
     canRequestFigures: state.status === "satisfied" && !state.figure && !needsCompletion,
     canSelectFigures: state.status === "awaiting_figure_choice" && !needsCompletion,
     canConfirmFigures: state.status === "awaiting_figure_review" && !needsCompletion,

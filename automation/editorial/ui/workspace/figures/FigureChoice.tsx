@@ -1,4 +1,5 @@
 import { Icon } from "../../shared/Icon";
+import { ROUTE_NAMES } from "./plan";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import type { FigureChoiceState } from "./usePicked";
 
@@ -18,7 +19,14 @@ export function FigureChoice({
       id="figure-choice"
       onSubmit={(event) => {
         event.preventDefault();
-        void onAction({ type: "select_figures", figures: picked });
+        const directions = choice.directions();
+        const routes = choice.routes();
+        void onAction({
+          type: "select_figures",
+          figures: picked,
+          ...(Object.keys(directions).length ? { directions } : {}),
+          ...(Object.keys(routes).length ? { routes } : {}),
+        });
       }}
     >
       {first && (
@@ -64,7 +72,15 @@ export function FigureChoice({
                 <small>후보 {choice.numberOf(candidate.id)}</small>
                 <strong>{candidate.claim}</strong>
               </label>
-              <small>{candidate.section ? `‘${candidate.section}’ 구간` : "도입부"}</small>
+              <small>
+                {candidate.section ? `‘${candidate.section}’ 구간` : "도입부"}
+                {picked.includes(candidate.id)
+                  ? ` · ${ROUTE_NAMES[choice.routeOf(candidate.id)]}`
+                  : ""}
+                {picked.includes(candidate.id) && choice.directionOf(candidate.id).trim()
+                  ? " · 방향 있음"
+                  : ""}
+              </small>
               <button type="button" className="quiet" onClick={() => onLocate(candidate.id)}>
                 본문에서 보기
               </button>

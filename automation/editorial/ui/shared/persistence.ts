@@ -8,6 +8,7 @@ export const keys = {
   create: "ain-editorial-create",
   operation: "ain-editorial-operation",
   feedback: "ain-editorial-feedback",
+  figureDirections: "ain-editorial-figure-directions",
 };
 export const inputSchema = z.object({
   idea: z.string().default(""),
@@ -48,6 +49,17 @@ export function remove(key: string) {
 export const storageWarning =
   "브라우저의 임시 저장을 사용할 수 없습니다. 제출 전에는 이 화면을 닫지 마세요.";
 export const savedFeedback = () => read(keys.feedback, feedbackSchema);
+// 시각자료 후보별 방향 초안 · 같은 위치 제안(key)에서만 되살린다 · ADR-0023
+const figureDirectionsSchema = z.object({
+  key: z.string(),
+  directions: z.record(z.string(), z.string()),
+});
+export const savedFigureDirections = (key: string) => {
+  const saved = read(keys.figureDirections, figureDirectionsSchema);
+  return saved?.key === key ? saved.directions : {};
+};
+export const storeFigureDirections = (key: string, directions: Record<string, string>) =>
+  store(keys.figureDirections, { key, directions });
 export function createRequest(idea: string, source: string, direction: Direction) {
   const signature = JSON.stringify({ idea, source, direction });
   const old = read(keys.create, createSchema);

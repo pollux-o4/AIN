@@ -7,7 +7,14 @@ import { actionRequestSchema } from "../../contracts/requests.mjs";
 import { testScratch } from "../../runtime/scratch.mjs";
 import { articleHtml } from "../article-html.mjs";
 import { coverageGap } from "../domain/figures.mjs";
-import { flowIssue, nextAction, placeFigures, STAGES, transition } from "../domain/index.mjs";
+import {
+  flowIssue,
+  nextAction,
+  placedFigures,
+  placeFigures,
+  STAGES,
+  transition,
+} from "../domain/index.mjs";
 import { editorialHttp } from "../http.mjs";
 import { runPipeline } from "../monitor.mjs";
 import { EditorialService } from "../service.mjs";
@@ -43,10 +50,18 @@ const plan = {
       kind: "diagram",
       reason: "이유",
       scene: "장면",
+      without: "주문과 결제의 책임 경계를 놓친다.",
     },
     { anchor: "본문에 없는 문장입니다.", claim: "버려질 후보", reason: "이유", scene: "장면" },
     { anchor: ANCHOR, claim: "같은 문장 중복", reason: "이유", scene: "장면" },
-    { anchor: ANCHOR2, claim: "결제 요청과 확인 순서", reason: "이유", scene: "장면" },
+    {
+      anchor: ANCHOR2,
+      claim: "결제 요청과 확인 순서",
+      reason: "이유",
+      scene: "장면",
+      kind: "scene",
+      without: "요청과 확인의 진행 순서를 놓친다.",
+    },
   ],
 };
 const made = (ids) => ({
@@ -133,6 +148,12 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
     [step().figureId, step().pass, step().previous.map((f) => [f.id, f.notes])],
     ["f1", "content", [["f1", "구도만 잡음"]]],
   );
+  // 중단·재개해도 끝낸 층은 남고 다음 층부터 이어 감
+  state = send(send(state, "pause"), "resume");
+  assert.deepEqual(
+    [step().figureId, step().pass, step().previous.map((f) => [f.id, f.notes])],
+    ["f1", "content", [["f1", "구도만 잡음"]]],
+  );
   // 다른 그림의 결과는 받지 않음
   assert.throws(
     () =>
@@ -148,6 +169,8 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
   state = result(state, "figure", made(["f1"]), "content");
   state = result(state, "figure", noted(["f1"], "마감"), "visual");
   assert.equal(state.status, "waiting_figure");
+  // 끝낸 그림은 중단·재개 뒤에도 남고 다음 그림의 첫 층부터
+  state = send(send(state, "pause"), "resume");
   assert.deepEqual(
     [step().figureId, step().pass, step().previous, step().progress],
     ["f2", "draft", undefined, { index: 2, total: 2 }],
@@ -242,6 +265,41 @@ test("ADR-0022 일관성 계약: 공통 규칙과 두 후보 이상이 가리키
   const legacy = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
   const plain = nextAction(send(legacy, "select_figures", { ...reviewed, figures: ["f1"] }));
   assert.deepEqual([plain.style, plain.motifs, legacy.figure.motifs], [undefined, undefined, []]);
+});
+
+test("ADR-0023 후보별 방향: 고른 후보에만 저장하고 그 그림 작업에만 넘긴다", () => {
+  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  state = send(state, "select_figures", {
+    ...reviewed,
+    figures: ["f1", "f2"],
+    directions: { f1: "  좌우 비교 구도로  ", f2: "   " },
+  });
+  assert.deepEqual(
+    state.figure.candidates.map((c) => c.direction),
+    ["좌우 비교 구도로", undefined],
+  );
+  assert.equal(nextAction(state).candidates[0].direction, "좌우 비교 구도로");
+  // 고르지 않은 후보의 방향은 저장하지 않음
+  const other = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  const picked = send(other, "select_figures", {
+    ...reviewed,
+    figures: ["f2"],
+    directions: { f1: "버려질 방향" },
+  });
+  assert.equal(picked.figure.candidates[0].direction, undefined);
+  const base = { operationId: "op", expectedVersion: 1, type: "select_figures", figures: ["f1"] };
+  assert.equal(
+    actionRequestSchema.safeParse({ ...base, directions: { f1: "방향" } }).success,
+    true,
+  );
+  assert.equal(
+    actionRequestSchema.safeParse({ ...base, directions: { f1: "가".repeat(301) } }).success,
+    false,
+  );
+  assert.equal(
+    actionRequestSchema.safeParse({ ...base, directions: { x: "방향" } }).success,
+    false,
+  );
 });
 
 test("FIGURE-001 시각자료 없이: 버리면 확정 상태로 돌아가고 승인은 본문만 대상", () => {
@@ -343,7 +401,7 @@ test("FIGURE-001 계약: 실행·외부 참조 SVG 거부, 네임스페이스 �
   assert.equal(actionRequestSchema.safeParse({ ...base, type: "request_figures" }).success, true);
 });
 
-async function fixture(t) {
+async function fixture(t, options = {}) {
   const dir = await testScratch(t, "editorial-test");
   const store = new EditorialStore(join(dir, "state.sqlite"));
   t.after(() => store.close());
@@ -384,7 +442,12 @@ async function fixture(t) {
       return null;
     },
   };
-  const service = new EditorialService({ store, jobs, dispatch: async () => {} });
+  const service = new EditorialService({
+    store,
+    jobs,
+    dispatch: async () => {},
+    ...(options.figureRoutes ? { figureRoutes: options.figureRoutes } : {}),
+  });
   const act = (id, type, extra = {}, actor = "user") =>
     service.action(
       id,
@@ -428,6 +491,24 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   );
   view = await f.drain(id);
   assert.equal(view.monitor.label, "시각자료 위치 선택 대기");
+  assert.deepEqual(view.figure.routesAvailable, ["svg"]);
+  assert.deepEqual(
+    view.figure.candidates.map(({ id, without, route, routeBy }) => ({
+      id,
+      without,
+      route,
+      routeBy,
+    })),
+    [
+      { id: "f1", without: "주문과 결제의 책임 경계를 놓친다.", route: "svg", routeBy: "default" },
+      {
+        id: "f2",
+        without: "요청과 확인의 진행 순서를 놓친다.",
+        route: "image",
+        routeBy: "default",
+      },
+    ],
+  );
   assert.deepEqual(view.figure.candidates[1], {
     id: "f2",
     anchor: ANCHOR2,
@@ -436,8 +517,14 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     reason: "이유",
     scene: "장면",
     analogy: null,
-    kind: null,
+    kind: "scene",
     motifs: [],
+    without: "요청과 확인의 진행 순서를 놓친다.",
+    relation: null,
+    mapping: [],
+    route: "image",
+    routeBy: "default",
+    direction: null,
     section: "결제",
   });
   assert.deepEqual(
@@ -447,7 +534,38 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   assert.throws(() => s.figure(id, "f1"), { status: 404 });
   await assert.rejects(() => f.act(id, "select_figures", { figures: [] }), { status: 400 });
   await assert.rejects(() => f.act(id, "select_figures", { figures: ["f3"] }), { status: 409 });
-  await f.act(id, "select_figures", { figures: ["f1", "f2"] });
+  await assert.rejects(
+    () => f.act(id, "select_figures", { figures: ["f2"] }),
+    (error) => error.status === 409 && error.message === "이미지 경로가 아직 연결되지 않았습니다.",
+  );
+  await assert.rejects(
+    () => f.act(id, "select_figures", { figures: ["f1"], routes: { f1: "image" } }),
+    (error) => error.status === 409 && error.message === "이미지 경로가 아직 연결되지 않았습니다.",
+  );
+  await assert.rejects(
+    () => f.act(id, "select_figures", { figures: ["f1"], routes: { f1: "png" } }),
+    { status: 400 },
+  );
+  await assert.rejects(
+    () => f.act(id, "select_figures", { figures: ["f1"], directions: { f1: "가".repeat(301) } }),
+    { status: 400 },
+  );
+  view = await f.act(id, "select_figures", {
+    figures: ["f1", "f2"],
+    directions: { f2: "확대해서" },
+    routes: { f2: "svg" },
+  });
+  assert.deepEqual(
+    view.figure.candidates.map((c) => c.direction),
+    [null, "확대해서"],
+  );
+  assert.deepEqual(
+    view.figure.candidates.map(({ route, routeBy }) => [route, routeBy]),
+    [
+      ["svg", "default"],
+      ["svg", "user"],
+    ],
+  );
   // 생성 실패는 준비됨으로 표시하지 않음 · 명시적 재시도 뒤에만 다시 호출
   f.jobs.fail = true;
   view = await f.drain(id);
@@ -461,7 +579,11 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   assert.equal(view.monitor.label, "시각자료 확인 대기");
   assert.deepEqual([view.canConfirmFigures, view.canAuthorizePublication], [true, false]);
   assert.equal(JSON.stringify(view).includes("<svg"), false);
-  assert.match(s.figure(id, "f1").svg, /^<svg xmlns/);
+  const figureFile = s.figure(id, "f1");
+  assert.equal(figureFile.mime, "image/svg+xml");
+  assert.match(figureFile.filename, /\.svg$/);
+  assert.equal(figureFile.body, s.store.get(id).state.figure.items[0].svg);
+  assert.match(figureFile.body, /^<svg xmlns/);
   // 확인 전 그림은 내보내지 않음(준비됨 ≠ 확인됨)
   assert.doesNotMatch(s.export(id, { format: "html" }).body, /<figure/);
   view = await f.act(id, "confirm_figures", { figures: ["f1"] });
@@ -469,6 +591,10 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   assert.deepEqual(
     view.figure.items.map((item) => item.id),
     ["f1"],
+  );
+  assert.deepEqual(
+    (({ route, mime, motion, labels }) => ({ route, mime, motion, labels }))(view.figure.items[0]),
+    { route: "svg", mime: "image/svg+xml", motion: false, labels: [] },
   );
   assert.deepEqual([view.canAuthorizePublication, view.canDiscardFigures], [true, true]);
   assert.throws(() => s.figure(id, "f2"), { status: 404 });
@@ -530,7 +656,9 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   assert.equal(file.status, 200);
   assert.match(file.headers.get("content-type"), /image\/svg\+xml/);
   assert.match(file.headers.get("content-security-policy"), /default-src 'none'.*sandbox/);
-  assert.match(await file.text(), /^<svg xmlns/);
+  const servedSvg = await file.text();
+  assert.match(servedSvg, /^<svg xmlns/);
+  assert.equal(servedSvg, f.service.figure(f.id, "f1").body);
   assert.match(
     (await get("/figures/f1?download")).headers.get("content-disposition"),
     /figure-.*-r1-f1\.svg/,
@@ -541,4 +669,72 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   const confirmed = (await (await get("")).json()).html;
   assert.equal(confirmed.includes("확인 전"), false);
   assert.match(confirmed, /<figure class="figure" data-figure="f1">/);
+});
+
+// 만드는 중에도 본문에 놓인 다 만든 그림은 파일을 제공해야 깨진 그림으로 보이지 않음
+test("generate phase serves finished figures only", () => {
+  const items = [{ id: "f1", svg: "<svg/>" }];
+  assert.deepEqual(placedFigures({ figure: { phase: "generate", items } }), items);
+  assert.deepEqual(placedFigures({ figure: { phase: "choose", items } }), []);
+  assert.deepEqual(placedFigures({ figure: { phase: "discarded", items } }), []);
+});
+
+test("ADR-0025 서비스 설정: image 경로가 활성화되면 기본 image 후보를 선택할 수 있다", async (t) => {
+  const f = await fixture(t, { figureRoutes: ["svg", "image"] });
+  await f.act(f.id, "request_figures");
+  let view = await f.drain(f.id);
+  assert.deepEqual(view.figure.routesAvailable, ["svg", "image"]);
+  view = await f.act(f.id, "select_figures", { figures: ["f2"] });
+  assert.equal(view.figure.candidates.find((candidate) => candidate.id === "f2").route, "image");
+  assert.equal(
+    view.figure.candidates.find((candidate) => candidate.id === "f2").routeBy,
+    "default",
+  );
+});
+
+test("RES-010 도메인·보기: relation과 mapping은 후보에 저장·노출되고 없으면 생략한다", async (t) => {
+  let state = send(satisfied(), "request_figures", reviewed);
+  state = result(state, "figure_plan", {
+    candidates: [
+      {
+        anchor: ANCHOR,
+        claim: "조건 모두 충족",
+        reason: "이유",
+        scene: "장면",
+        relation: "all-required",
+        mapping: [{ element: " 직렬 밸브 ", concept: " 필수 조건 " }],
+      },
+      {
+        anchor: ANCHOR2,
+        claim: "잘못된 advisory 값은 버림",
+        reason: "이유",
+        scene: "장면",
+        relation: "not-a-relation",
+        mapping: [{ element: "", concept: "x" }],
+      },
+    ],
+  });
+  assert.equal(state.figure.candidates[0].relation, "all-required");
+  assert.deepEqual(state.figure.candidates[0].mapping, [
+    { element: "직렬 밸브", concept: "필수 조건" },
+  ]);
+  assert.equal(Object.hasOwn(state.figure.candidates[1], "relation"), false);
+  assert.equal(Object.hasOwn(state.figure.candidates[1], "mapping"), false);
+
+  const dir = await testScratch(t, "editorial-test");
+  const store = new EditorialStore(join(dir, "state.sqlite"));
+  t.after(() => store.close());
+  const service = new EditorialService({ store, jobs: {}, dispatch: async () => {} });
+  const view = service.view({
+    id: "res010-view",
+    requestId: "res010-req",
+    ai: { model: "fixture" },
+    state,
+  });
+  assert.equal(view.figure.candidates[0].relation, "all-required");
+  assert.deepEqual(view.figure.candidates[0].mapping, [
+    { element: "직렬 밸브", concept: "필수 조건" },
+  ]);
+  assert.equal(view.figure.candidates[1].relation, null);
+  assert.deepEqual(view.figure.candidates[1].mapping, []);
 });

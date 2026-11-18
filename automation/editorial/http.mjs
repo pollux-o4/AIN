@@ -144,14 +144,14 @@ export function editorialHttp({
         const file = service.figure(id, action.slice(9));
         const download = new URL(req.url, origin).searchParams.has("download");
         res.writeHead(200, {
-          "Content-Type": "image/svg+xml; charset=utf-8",
+          "Content-Type": file.mime === "image/svg+xml" ? `${file.mime}; charset=utf-8` : file.mime,
           "Cache-Control": "no-store",
           "X-Content-Type-Options": "nosniff",
           // AI가 만든 파일: 직접 열어도 스크립트·외부 요청 불가
           "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
           ...(download ? { "Content-Disposition": `attachment; filename="${file.filename}"` } : {}),
         });
-        res.end(file.svg);
+        res.end(file.body);
         return true;
       }
       if (req.method === "GET" && action === "/export") {

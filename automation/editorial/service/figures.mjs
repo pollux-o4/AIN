@@ -1,3 +1,8 @@
+import {
+  effectiveRoute,
+  FIGURE_MIMES,
+  legacyFigureResult,
+} from "../../contracts/figure-result.mjs";
 import { coverageGap, currentOf } from "../domain/figures.mjs";
 import { anchorSection, placedFigures } from "../domain/index.mjs";
 import { fail } from "./lifecycle.mjs";
@@ -5,16 +10,31 @@ import { fail } from "./lifecycle.mjs";
 const draftText = (state) => state.artifacts?.draft?.output?.text ?? "";
 
 // 화면·에이전트용 시각자료 상태 · SVG 원문은 파일 조회로만 제공
-export function figureView(state) {
+export function figureView(state, routesAvailable = ["svg"]) {
   const figure = state.figure;
   if (!figure) return null;
   const text = draftText(state);
   return {
     phase: figure.phase,
     note: figure.note ?? null,
+    routesAvailable,
     // 위치 제안이 세운 그림 계획(무엇을·왜·어떤 구도로) · 사람이 고르기 전에 만들 그림을 가늠하고 보완하게
     candidates: (figure.candidates ?? []).map(
-      ({ id, anchor, claim, reason, analogy, scene, kind, motifs }) => ({
+      ({
+        id,
+        anchor,
+        claim,
+        reason,
+        analogy,
+        scene,
+        kind,
+        motifs,
+        direction,
+        without,
+        relation,
+        mapping,
+        route,
+      }) => ({
         id,
         anchor,
         claim,
@@ -23,6 +43,13 @@ export function figureView(state) {
         scene: scene ?? null,
         kind: kind ?? null,
         motifs: motifs ?? [],
+        without: without ?? null,
+        relation: relation ?? null,
+        mapping: mapping ?? [],
+        route: effectiveRoute({ kind, route }),
+        routeBy: route ? "user" : "default",
+        // 사람이 덧붙인 그림 방향 · ADR-0023
+        direction: direction ?? null,
         section: anchorSection(text, anchor),
       }),
     ),
@@ -34,13 +61,20 @@ export function figureView(state) {
     coverage: figure.coverage ? { ...figure.coverage, gap: coverageGap(figure.coverage) } : null,
     // 생성 중인 그림 한 장과 층 · 마친 그림 수는 items
     current: figure.phase === "generate" ? currentOf(figure) : null,
-    items: (figure.items ?? []).map(({ id, anchor, claim, alt, caption }) => ({
-      id,
-      anchor,
-      claim,
-      alt,
-      caption: caption ?? null,
-    })),
+    items: (figure.items ?? []).map((item) => {
+      const result = legacyFigureResult(item);
+      return {
+        id: item.id,
+        anchor: item.anchor,
+        claim: item.claim,
+        alt: result.alt,
+        caption: result.caption,
+        route: result.route,
+        mime: result.files[0].mime,
+        motion: result.motion,
+        labels: result.labels,
+      };
+    }),
   };
 }
 // 준비됐거나 확인된 시각자료 파일 하나 · 버려진·이전 회차 것은 제공하지 않음
@@ -48,5 +82,11 @@ export function figureView(state) {
 export function figureFile(run, figureId) {
   const item = placedFigures(run.state).find((figure) => figure.id === figureId);
   if (!item) fail("시각자료를 찾을 수 없습니다.", 404);
-  return { svg: item.svg, filename: `figure-${run.id}-r${run.state.revision}-${item.id}.svg` };
+  const result = legacyFigureResult(item);
+  const extension = FIGURE_MIMES[result.files[0].mime].ext;
+  return {
+    body: item.svg,
+    mime: result.files[0].mime,
+    filename: `figure-${run.id}-r${run.state.revision}-${item.id}.${extension}`,
+  };
 }

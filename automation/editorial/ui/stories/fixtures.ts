@@ -51,6 +51,7 @@ export function makeRun(
         ]
       : [],
     unmetRequirements: [],
+    changes: [],
     brief: null,
     previous: [],
     canDownload: done,
@@ -127,3 +128,74 @@ export const recent: RecentRun[] = [
     updatedAt: Date.now() - 26 * 3600000,
   },
 ];
+
+// 시각자료 단계 합성 데이터 · 후보 자리(figure-slot)를 본문 문단 뒤에 둔다
+const slot = (id: string) => `<div class="figure-slot" data-candidate="${id}"></div>`;
+export const figureHtml = html
+  .replace("대표적입니다.</p>", `대표적입니다.</p>${slot("f1")}`)
+  .replace("가릅니다.</blockquote>", `가릅니다.</blockquote>${slot("f2")}`)
+  .replace("</table>", `</table>${slot("f3")}`);
+const candidates: Figure["candidates"] = [
+  {
+    id: "f1",
+    anchor: "메인프레임, 클라이언트-서버, SOA, 마이크로서비스, 모듈러 모놀리스가 대표적입니다.",
+    claim: "다섯 구조가 시간순으로 등장했다.",
+    reason: "종류를 처음 소개하는 지점이다.",
+    analogy: null,
+    scene: "연표 위 다섯 구조",
+    kind: "flow",
+    motifs: [],
+    direction: null,
+    // 목록으로 충분한 자리 · 고르지 않는 사례
+    without: "다섯 이름의 순서는 본문 목록으로도 읽힌다.",
+    route: "svg",
+    routeBy: "default",
+    section: "어떤 아키텍처가 있나",
+  },
+  {
+    id: "f2",
+    anchor: "요약: 규모가 아니라 팀 구조와 변경 빈도가 선택을 가릅니다.",
+    claim: "팀 구조와 변경 빈도가 선택 기준이다.",
+    reason: "글의 핵심 주장이다.",
+    analogy: "갈림길",
+    scene: "팀 크기·변경 빈도 두 축의 갈림길",
+    kind: "scene",
+    motifs: ["주문 상자"],
+    direction: null,
+    without: "두 기준이 동시에 선택을 가른다는 감각을 놓친다.",
+    route: "image",
+    routeBy: "default",
+    section: "어떤 아키텍처가 있나",
+  },
+  {
+    id: "f3",
+    anchor: "운영 비용",
+    claim: "배포 단위가 늘면 운영 비용이 오른다.",
+    reason: "표의 차이를 수량으로 보인다.",
+    analogy: null,
+    scene: "배포 단위 수와 운영 비용 막대",
+    kind: "chart",
+    motifs: ["주문 상자"],
+    direction: null,
+    without: "운영 비용이 배포 단위 수에 따라 얼마나 오르는지 크기를 놓친다.",
+    route: "svg",
+    routeBy: "default",
+    section: "무엇이 다른가",
+  },
+];
+type Figure = NonNullable<Run["figure"]>;
+export function makeFigure(over: Partial<Figure> = {}): Figure {
+  return {
+    phase: "choose",
+    note: null,
+    candidates,
+    style: { accent: "주황 #E8743B", base: "회색 선 1.5px", labels: "12px 굵게" },
+    motifs: [{ name: "주문 상자", look: "갈색 상자에 영수증 한 장" }],
+    selected: [],
+    routesAvailable: ["svg"],
+    coverage: { units: 3, withFigure: 2, candidates: 3, gap: null },
+    current: null,
+    items: [],
+    ...over,
+  };
+}

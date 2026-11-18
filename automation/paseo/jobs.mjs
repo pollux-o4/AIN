@@ -151,6 +151,8 @@ export class Jobs {
       section: job.action.section
         ? { index: job.action.section.index, total: job.action.section.total }
         : null,
+      // 시각자료는 그림·층마다 별도 작업 · 사용량 집계에서 재요청과 구분하는 키
+      figure: job.action.figureId ? { id: job.action.figureId, pass: job.action.pass } : null,
       chars: typeof output?.text === "string" ? readerLength(output.text) : null,
     };
   }

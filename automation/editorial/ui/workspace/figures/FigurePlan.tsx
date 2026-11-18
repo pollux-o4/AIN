@@ -8,7 +8,9 @@ function motifRows(candidate: Candidate, candidates: Candidate[], motifs: Motif[
     const peers = candidates
       .filter((item) => item.id !== candidate.id && item.motifs.includes(name))
       .map((item) => candidateNumber(candidates, item.id));
-    return [["같은 대상", `${name} · 후보 ${peers.join("·")}에도 나옴 · ${motif.look}`]];
+    // 계약은 두 후보 이상만 남기지만(ADR-0022) 이전 데이터에선 짝이 없을 수 있다
+    const shared = peers.length ? ` · 후보 ${peers.join("·")}에도 나옴` : "";
+    return [["같은 대상", `${name}${shared} · ${motif.look}`]];
   });
 }
 
@@ -23,6 +25,10 @@ export function FigurePlan({
   motifs: Motif[];
 }) {
   const plan: [string, string | null][] = [
+    // 사람이 덧붙인 방향 · 계획보다 먼저 따랐으므로 맨 위에서 결과와 비교(ADR-0023)
+    ["내 방향", candidate.direction],
+    // 고를 근거 · 답이 약하면 고르지 않는다(ADR-0025)
+    ["없으면 놓치는 것", candidate.without],
     ["구도", candidate.scene],
     ["비유", candidate.analogy],
     ["이 자리에서", candidate.reason],

@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { figureIdsSchema } from "../../contracts/figure.mjs";
+import {
+  FIGURE_LIMITS,
+  figureDirectionsSchema,
+  figureIdsSchema,
+  figureRoutesSchema,
+} from "../../contracts/figure.mjs";
+import { effectiveRoute } from "../../contracts/figure-result.mjs";
+
+const ROUTE_NAMES = { image: "이미지", svg: "SVG" };
+
 import {
   actionIdentitySchema,
   actionVersionSchema,
@@ -49,12 +58,20 @@ function agentFeedbackRounds(events = []) {
 
 export async function runAction(service, id, input, actor = "user") {
   if (!requestObjectSchema.safeParse(input).success) fail("요청 내용을 확인해 주세요.");
-  const { operationId, expectedVersion, type, feedback, edit, figures } = input;
+  const { operationId, expectedVersion, type, feedback, edit, figures, directions, routes } = input;
   if (!actionIdentitySchema.safeParse(input).success) fail("지원하지 않는 요청입니다.");
   const changed = await service.locked(id, async () => {
     const run = service.store.get(id);
     const beforeStatus = run.state.status;
-    const signature = JSON.stringify({ expectedVersion, type, feedback, edit, figures });
+    const signature = JSON.stringify({
+      expectedVersion,
+      type,
+      feedback,
+      edit,
+      figures,
+      directions,
+      routes,
+    });
     if (Object.hasOwn(run.operations ?? {}, operationId)) {
       if (run.operations[operationId] !== signature)
         fail("같은 요청 번호의 내용이 달라졌습니다.", 409);
@@ -71,6 +88,30 @@ export async function runAction(service, id, input, actor = "user") {
       !figureIdsSchema.safeParse(figures).success
     )
       fail("시각자료를 하나 이상 골라 주세요.");
+    if (
+      type === "select_figures" &&
+      directions !== undefined &&
+      !figureDirectionsSchema.safeParse(directions).success
+    )
+      fail(`시각자료 방향은 후보마다 ${FIGURE_LIMITS.direction}자 이내로 적어 주세요.`);
+    if (
+      type === "select_figures" &&
+      routes !== undefined &&
+      !figureRoutesSchema.safeParse(routes).success
+    )
+      fail("시각자료 경로를 확인해 주세요.");
+    if (type === "select_figures") {
+      for (const figureId of figures) {
+        const candidate = run.state.figure.candidates.find((item) => item.id === figureId);
+        const route = effectiveRoute({
+          kind: candidate?.kind,
+          route: routes?.[figureId] ?? candidate?.route,
+        });
+        // 연결되지 않은 경로는 다른 경로로 바꾸지 않고 거부한다(FIGURE-002)
+        if (!service.figureRoutes.includes(route))
+          fail(`${ROUTE_NAMES[route]} 경로가 아직 연결되지 않았습니다.`, 409);
+      }
+    }
     // 시각자료 위치 지시는 선택 입력 · 있으면 기본 배치 기준보다 우선
     if (
       type === "request_figures" &&
@@ -156,6 +197,8 @@ export async function runAction(service, id, input, actor = "user") {
         ...event,
         reviewedRevision: run.state.revision,
         ...(figures === undefined ? {} : { figures }),
+        ...(type === "select_figures" && directions !== undefined ? { directions } : {}),
+        ...(type === "select_figures" && routes !== undefined ? { routes } : {}),
         ...(type === "request_figures" && feedback !== undefined ? { note: feedback.trim() } : {}),
       });
       // AI를 부르는 요청(위치 제안·생성)만 새 실행 예산
