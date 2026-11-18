@@ -62,7 +62,7 @@ function sectionShape(part) {
   };
 }
 
-// 구성 카드의 칸이 초고에 글자 그대로 옮겨졌는지 · 칸이 있는 카드 구간만 · ADR-0013
+// 구성 카드의 항목이 초고에 글자 그대로 옮겨졌는지 · 항목이 있는 카드 구간만 · ADR-0013
 function cardTransfer(text, outline, value) {
   const cards = (outline?.sections ?? []).filter(
     (section) => usesStoryCard(sectionMode(section)) && STORY_SLOTS.some((name) => section[name]),
@@ -77,7 +77,7 @@ function cardTransfer(text, outline, value) {
     ...(outline?.title
       ? { titleMatches: plain(text.match(/^#\s+(.+)$/m)?.[1] ?? "") === plain(outline.title) }
       : {}),
-    // 약속 문장이 글머리(첫 소제목 앞)에 그대로 실렸는지 · 독자가 얻을 것을 먼저 알게 하는 줄(S1)
+    // 약속 문장이 도입부(첫 소제목 앞)에 그대로 실렸는지 · 독자가 얻을 것을 먼저 알게 하는 줄(S1)
     ...(typeof value?.promise === "string"
       ? { promiseInLead: plain(splitArticle(text).lead).includes(plain(value.promise)) }
       : {}),
@@ -91,7 +91,7 @@ function cardTransfer(text, outline, value) {
   };
 }
 
-// 구성 나무의 소제목 줄(구간 + 하위 마디, 단계 포함) · ADR-0014
+// 구성 나무의 소제목 줄(구간 + 하위 항목, 단계 포함) · ADR-0014
 function expectedHeadings(outline) {
   const lines = [];
   const walk = (nodes, depth) => {
@@ -121,7 +121,7 @@ function missingHeadings(text, outline) {
     .map(({ title }) => title);
 }
 
-// 소제목 나무 모양: 단계 건너뛰기 · 자식 하나뿐인 마디 · 한 단계 최대 형제 수(제목 바로 아래 포함)
+// 소제목 나무 모양: 단계 건너뛰기 · 자식 하나뿐인 하위 항목 · 한 단계 최대 형제 수(제목 바로 아래 포함)
 function headingTree(text) {
   const nodes = headingNodes(text);
   const children = new Map();

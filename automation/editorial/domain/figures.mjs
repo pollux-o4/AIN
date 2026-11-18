@@ -107,8 +107,8 @@ export function figureAction(state) {
     ...(figure.note ? { note: figure.note } : {}),
   };
 }
-// 시각화를 검토할 단위: 글머리와 모든 소제목 마디 · 위치 제안이 빠짐없이 훑었는지 세는 기준
-const LEAD_UNIT = "글머리";
+// 시각화를 검토할 단위: 도입부와 모든 소제목 하위 항목 · 위치 제안이 빠짐없이 훑었는지 세는 기준
+const LEAD_UNIT = "도입부";
 function figureUnits(text) {
   return [LEAD_UNIT, ...headingNodes(text).map((node) => node.title)];
 }

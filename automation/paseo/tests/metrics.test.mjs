@@ -59,10 +59,10 @@ const story = `# 장보기 목록 만드는 법
 test("S7: 질문·굵게·긴 문단을 구간별로 센다", () => {
   const m = draftMetrics(story);
   assert.deepEqual(m.sections, [{ questions: 1, bold: 1, longParagraphs: 0 }]);
-  assert.equal(m.cardTransfer, undefined, "구성 카드가 없으면 대조하지 않음");
+  assert.equal(m.cardTransfer, undefined, "구간 카드가 없으면 대조하지 않음");
 });
 
-test("ADR-0013: 구성 카드의 칸이 초고에 글자 그대로 옮겨졌는지 대조한다", () => {
+test("ADR-0013: 구간 카드의 항목이 초고에 글자 그대로 옮겨졌는지 대조한다", () => {
   const outline = { title: "장보기 목록 만드는 법", sections: [card] };
   assert.deepEqual(draftMetrics(story, { outline }).cardTransfer, {
     titleMatches: true,
@@ -79,7 +79,7 @@ test("ADR-0013: 구성 카드의 칸이 초고에 글자 그대로 옮겨졌는�
     missingPrincipleLines: [],
     notInSummary: [card.title],
   });
-  // 약속 문장은 글머리(첫 소제목 앞)에 그대로 실려야 한다
+  // 약속 문장은 도입부(첫 소제목 앞)에 그대로 실려야 한다
   const lead = { promise: "지난 주말 나는 마트에서 두부를 빼먹었습니다." };
   assert.equal(draftMetrics(story, { outline, value: lead }).cardTransfer.promiseInLead, true);
   const body = { promise: "기억이 아니라 종이가 장을 봅니다." };
@@ -90,13 +90,13 @@ test("ADR-0013: 구성 카드의 칸이 초고에 글자 그대로 옮겨졌는�
     [card.title],
     "구간이 구성의 소제목으로 시작하지 않으면 후보",
   );
-  // 따라 하기 구간과 칸 없는 이전 구성은 대조 대상이 아님
+  // 따라 하기 구간과 항목 없는 이전 구성은 대조 대상이 아님
   const procedure = { sections: [{ ...card, mode: "procedure" }, "옛 구간"] };
   assert.equal(draftMetrics(story, { outline: procedure }).cardTransfer, undefined);
 });
 
-// 검증: ADR-0014 소제목 나무 · 하위 마디 대조와 나무 모양 세기
-test("ADR-0014: 하위 마디 소제목을 같은 단계로 대조하고 나무 모양을 센다", () => {
+// 검증: ADR-0014 소제목 나무 · 하위 항목 대조와 나무 모양 세기
+test("ADR-0014: 하위 항목 소제목을 같은 단계로 대조하고 나무 모양을 센다", () => {
   const outline = {
     sections: [
       {

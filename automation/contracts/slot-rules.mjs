@@ -12,7 +12,7 @@ export const SLOT_RULES = Object.freeze({
     basis: "RES-007 S1 · Shulman 2024",
   },
   hook: {
-    role: "구간의 첫 문장이 될 질문 또는 통념을 뒤집는 주장이다.",
+    role: "구간의 첫 문장이 될 질문이나 통념을 뒤집는 주장이다.",
     max: 50,
     basis: "RES-007 S3",
   },
@@ -33,8 +33,8 @@ export const SECTION_LINES = /** @type {const} */ (["hook", "underline", "princi
 
 /** 쓰는 AI에게 주는 항목 안내 @param {keyof typeof SLOT_RULES} name */
 export const slotGuide = (name) =>
-  `${SLOT_RULES[name].role} ${SLOT_RULES[name].max}자 이내로 기재한다.`;
+  `${SLOT_RULES[name].role} ${SLOT_RULES[name].max}자 이내로 적는다.`;
 
 /** 검토 AI·자기 점검용 질문 @param {keyof typeof SLOT_RULES} name @param {string} label */
 export const slotCheck = (name, label) =>
-  `${label}이(가) 다음 역할을 하는가: ${SLOT_RULES[name].role} (${SLOT_RULES[name].max}자 이내는 시스템이 세어 초과 시 거부한다)`;
+  `${label}이(가) 다음 역할을 하는가: ${SLOT_RULES[name].role} (${SLOT_RULES[name].max}자 이내는 시스템이 세어 넘으면 거부한다)`;

@@ -156,7 +156,7 @@ test("ADR-0008 검토 합격 판정이 revise면 지정 단계부터 다시, 상
   assert.equal(s.status, "satisfied", "검토 판정(주관) 미충족은 사람이 판단해 승인 가능");
 });
 
-// 검증: ADR-0016 요구 장부 · 최신 사람 지시가 이기고, 해제(lift)는 의뢰 값까지 푼다
+// 검증: ADR-0016 요구사항 목록 · 최신 사람 지시가 이기고, 해제(lift)는 의뢰 값까지 푼다
 test("ADR-0016 의뢰 분량은 피드백 해석이 풀 수 있고, 승인 전 제안은 장부에 들지 않는다", () => {
   let s = step(null, "start", {
     articleId: "ledger",

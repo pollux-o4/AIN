@@ -65,14 +65,14 @@ export const sectionMode = (/** @type {unknown} */ section) => {
   return parsed.success ? parsed.data : null;
 };
 
-// 이야기 카드(RES-007 S3·S6·S7·S8): 따라 하기 구간은 한 단계 한 행동이 틀이라 제외 · ADR-0013
+// 구간 카드(RES-007 S3·S6·S7·S8): 따라 하기 구간은 한 단계 한 행동이 틀이라 제외 · ADR-0013
 export const STORY_SLOTS = /** @type {const} */ (["hook", "cases", "principleLine", "underline"]);
 export const MAX_CASES = 3;
 export const usesStoryCard = (/** @type {unknown} */ mode) =>
   writingModeSchema.safeParse(mode).success && mode !== "procedure";
-// 카드를 문장으로 옮길 최소 지면(공백 포함 글자 수) · 이보다 작으면 칸을 낱말로 줄여 글이 깨진다(실제 모델 실측: 250자 구간)
-// section: hook·사례 1개·원칙·밑줄·닫는 줄 / intro: 제목·약속·장면·순서 안내(첫 구간에 더함) / summaryLine: 끝 정리 목록 한 줄(마지막 구간에 구간 수만큼 더함)
-// shortcut: 어림값(칸별 한 문장 40~60자 가정), 실제 글 표본으로 구간 길이 분포를 재면 조정
+// 카드를 문장으로 옮길 최소 지면(공백 포함 글자 수) · 이보다 작으면 항목을 낱말로 줄여 글이 깨진다(실제 모델 실측: 250자 구간)
+// section: hook·사례 1개·원칙·강조 문장·마무리 문장 / intro: 제목·약속·장면·순서 안내(첫 구간에 더함) / summaryLine: 끝 정리 목록 한 줄(마지막 구간에 구간 수만큼 더함)
+// shortcut: 어림값(항목별 한 문장 40~60자 가정), 실제 글 표본으로 구간 길이 분포를 재면 조정
 export const CARD_SPACE = Object.freeze({ section: 260, intro: 160, summaryLine: 30 });
 // 사례 출처: 자료에 있는 것 | 지어낸 것(본문에서 '가상의 예'로 표시)
 export const CASE_ORIGINS = /** @type {const} */ (["source", "hypothetical"]);

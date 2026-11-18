@@ -90,7 +90,7 @@ test("ADR-0018 구조 편집은 기존대로 원고를 새로 쓴다", () => {
   assert.ok(STAGES.indexOf(state.stage) <= STAGES.indexOf("outline"));
 });
 
-test("ADR-0018 카드에서 온 문장을 표시로 바꾸면 구성 카드도 같은 값으로 바뀐다", () => {
+test("ADR-0018 카드에서 온 문장을 표시로 바꾸면 구간 카드도 같은 값으로 바뀐다", () => {
   const card = { title: "정렬", mode: "explain", keyPoint: "k", ...STORY };
   const outline = {
     title: "정렬 입문",
@@ -106,6 +106,6 @@ test("ADR-0018 카드에서 온 문장을 표시로 바꾸면 구성 카드도 �
   const synced = state.artifacts.outline.output;
   assert.equal(synced.title, "작은 수부터 줄 세우기", "표시가 카드 문장보다 넓어도 바뀐 값만 옮김");
   assert.equal(synced.sections[0].underline, "이 순서가 곧 정렬입니다.");
-  assert.equal(synced.sections[0].hook, card.hook, "바꾸지 않은 칸은 그대로");
+  assert.equal(synced.sections[0].hook, card.hook, "바꾸지 않은 항목은 그대로");
   assert.equal(state.history.at(-1).artifacts.outline.output.title, "정렬 입문", "이력은 보존");
 });

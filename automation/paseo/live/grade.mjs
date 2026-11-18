@@ -1,5 +1,5 @@
 // 실제 모델 결과의 채점 · 같은 글감을 여러 번 돌려 통과율로 멱등성을 본다
-// 코드 기준: 세거나 글자 그대로 대조한 것(분량·카드 칸·소제목·회차) · 글의 질(말투·과장·장면·풀이)은 검토(LLM)의 판정과 점검표를 그대로 집계
+// 코드 기준: 세거나 글자 그대로 대조한 것(분량·카드 항목·소제목·회차) · 글의 질(말투·과장·장면·풀이)은 검토(LLM)의 판정과 점검표를 그대로 집계
 // 입력은 contract-e2e가 남기는 report.quality(원문 없음) · 새 기준은 GRADERS에 항목 하나를 더한다
 // hard: 하나라도 어기면 그 실행은 불합격 · soft: 추세만 본다(점검표 한 항목의 미통과는 판정을 뒤집지 않음)
 const empty = (list) => Array.isArray(list) && list.length === 0;
@@ -31,14 +31,14 @@ export const GRADERS = [
     id: "cards",
     basis: "count",
     hard: true,
-    ask: "이야기 카드 구간마다 칸이 채워졌는가",
+    ask: "구간 카드 구간마다 항목이 채워졌는가",
     pass: (q) => q.storyCards === q.cardSections,
   },
   {
     id: "transfer",
     basis: "exact",
     hard: true,
-    ask: "제목과 카드 칸이 초고에 그대로 옮겨졌는가",
+    ask: "제목과 구간 카드 항목이 초고에 그대로 옮겨졌는가",
     pass: (q) => {
       const t = q.metrics.cardTransfer;
       return (

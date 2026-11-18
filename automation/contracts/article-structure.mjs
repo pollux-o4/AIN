@@ -1,5 +1,5 @@
 // 글 본문 구조의 단일 정의: "# 제목" + 도입(lead) + "## 소제목" 구간들 · 초고 프롬프트·코드 지표·분량 안내·기준본 찾기가 함께 쓴다
-// 구간 안 하위 마디는 "###" 이하로 내용의 나무를 따른다(깊이 상한 없음) · 끝 정리는 본문 나무 밖 "## 한눈에 정리" · ADR-0014
+// 구간 안 하위 항목은 "###" 이하로 내용의 나무를 따른다(깊이 상한 없음) · 끝 정리는 본문 나무 밖 "## 한눈에 정리" · ADR-0014
 
 const SECTION_START = /^(?=##\s)/m;
 const SUMMARY_TITLE = "한눈에 정리";
@@ -7,7 +7,7 @@ const SUMMARY_TITLE = "한눈에 정리";
 /** 구간 소제목 줄 · 초고가 쓰고 지표가 대조하는 같은 형식 */
 export const sectionHeading = (/** @type {string} */ title) => `## ${title}`;
 
-/** 하위 마디 소제목 줄 · depth 1 = 구간 바로 아래(###) */
+/** 하위 항목 소제목 줄 · depth 1 = 구간 바로 아래(###) */
 export const subsectionHeading = (/** @type {string} */ title, /** @type {number} */ depth) =>
   `${"#".repeat(depth + 2)} ${title}`;
 

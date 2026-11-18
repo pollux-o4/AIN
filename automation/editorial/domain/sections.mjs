@@ -58,7 +58,7 @@ function budgetIssue(state, output) {
   return spaceIssue(sections, budgets, max);
 }
 
-// 구간이 맡은 칸을 문장으로 옮길 지면 · 이야기 카드 구간·글머리·끝 정리 몫의 합
+// 구간이 맡은 항목을 문장으로 옮길 지면 · 구간 카드 구간·도입부·끝 정리 몫의 합
 function sectionFloor(sections, index) {
   const last = sections.length - 1;
   return (
@@ -68,8 +68,8 @@ function sectionFloor(sections, index) {
   );
 }
 
-// 지면 검사: 구간 수가 요구 분량에 비해 많으면 구간마다 칸을 담지 못한다 · 구간 수를 줄이게 한다
-// shortcut: 2구간으로도 지면이 안 나오는 짧은 글은 검사하지 않음(칸을 줄여 쓰는 짧은 글 카드가 없음), 짧은 글 요청이 실제로 생기면 카드 축약 규칙 추가
+// 지면 검사: 구간 수가 요구 분량에 비해 많으면 구간마다 항목을 담지 못한다 · 구간 수를 줄이게 한다
+// shortcut: 2구간으로도 지면이 안 나오는 짧은 글은 검사하지 않음(항목을 줄여 쓰는 짧은 글 카드가 없음), 짧은 글 요청이 실제로 생기면 카드 축약 규칙 추가
 function spaceIssue(sections, budgets, max) {
   const floors = sections.map((_section, index) => sectionFloor(sections, index));
   const tight = budgets.flatMap((budget, index) =>
@@ -79,7 +79,7 @@ function spaceIssue(sections, budgets, max) {
   const fewest = sections.slice(0, 2);
   const feasible = sectionFloor(fewest, 0) + sectionFloor(fewest, 1) <= max;
   return feasible
-    ? `구간 budget이 칸을 옮길 지면보다 작다 → ${tight.join(" / ")}. 구간 수를 줄여 구간마다 지면을 확보한다.`
+    ? `구간 budget이 항목을 옮길 지면보다 작다 → ${tight.join(" / ")}. 구간 수를 줄여 구간마다 지면을 확보한다.`
     : null;
 }
 
@@ -88,14 +88,14 @@ const filled = (value) =>
     ? value.length > 0 && value.every(filled)
     : typeof value === "string" && value.trim().length > 0;
 
-// 이야기 카드 검사: 초고가 옮겨 쓸 칸이 비면 글 수준이 모델에 따라 갈림 · 카드 형식 구간만(이전 문자열 구간 제외) · ADR-0013
+// 구간 카드 검사: 초고가 옮겨 쓸 항목이 비면 글 수준이 모델에 따라 갈림 · 카드 형식 구간만(이전 문자열 구간 제외) · ADR-0013
 function cardIssue(output) {
   const gaps = output.sections.flatMap((section, index) => {
     if (!usesStoryCard(sectionMode(section))) return [];
     const missing = STORY_SLOTS.filter((name) => !filled(section[name]));
     if (Array.isArray(section.cases) && section.cases.length > MAX_CASES)
       missing.push(`cases는 ${MAX_CASES}개 이하`);
-    // 한 줄 칸은 짧아야 밑줄·닫는 줄 구실을 한다 · 글자 수만 센다(뜻은 검토의 몫 · JUDGE-001)
+    // 한 줄 항목은 짧아야 강조 문장·마무리 문장 구실을 한다 · 글자 수만 센다(뜻은 검토의 몫 · JUDGE-001)
     for (const name of SECTION_LINES) {
       const over = overLimit(name, section[name]);
       if (over) missing.push(over);
@@ -103,7 +103,7 @@ function cardIssue(output) {
     return missing.length ? [`${index + 1}번 "${titleOf(section)}": ${missing.join("·")}`] : [];
   });
   return gaps.length
-    ? `구간 카드의 칸을 고친다(빈 칸은 채우고 긴 칸은 줄인다) → ${gaps.join(" / ")}.`
+    ? `구간 카드의 항목을 고친다(빈 항목은 채우고 긴 항목은 줄인다) → ${gaps.join(" / ")}.`
     : null;
 }
 
@@ -198,14 +198,14 @@ function sizeIssue(section, size) {
     };
   if (section.floor && size < section.floor)
     return {
-      note: `직전 작성 ${size}자 · 글 전체 분량을 채우려면 이 구간이 ${section.floor}자 이상이어야 한다. 약 ${section.floor - size}자를 카드의 사례 장면과 keyPoint 풀이로 채워 다시 쓴다.`,
+      note: `직전 작성 ${size}자 · 글 전체 분량을 채우려면 이 구간이 ${section.floor}자 이상이어야 한다. 약 ${section.floor - size}자를 구간 카드의 사례 장면과 keyPoint 풀이로 채워 다시 쓴다.`,
       error: `"${section.title}" 구간이 ${RETRY_LIMIT.draft}회 다시 써도 ${section.floor}자에 못 미침(${size}자).`,
     };
   return null;
 }
 
-// 원고는 글 제목 줄로 시작해야 한다(구간별 작성에서는 글머리가 실리는 첫 구간) · 형식 대조만
-// 빠지면 제목과 글머리를 잃은 원고가 다음 단계로 넘어간다(구성 재작성 뒤 실측)
+// 원고는 글 제목 줄로 시작해야 한다(구간별 작성에서는 도입부가 실리는 첫 구간) · 형식 대조만
+// 빠지면 제목과 도입부를 잃은 원고가 다음 단계로 넘어간다(구성 재작성 뒤 실측)
 function leadIssue(state, text) {
   const title = state.artifacts?.outline?.output?.title?.trim();
   const line = (value) => value.replace(/\s+/g, " ").trim();
@@ -213,7 +213,7 @@ function leadIssue(state, text) {
   const expected = title ? line(`# ${title}`) : null;
   if (expected ? first === expected : /^# \S/.test(first)) return null;
   return {
-    note: `원고는 '${expected ?? "# 제목"}' 줄로 시작하고, 이어서 글머리(도입 장면과 약속 문장)를 쓴 뒤 첫 소제목으로 들어간다.`,
+    note: `원고는 '${expected ?? "# 제목"}' 줄로 시작하고, 이어서 도입부(도입 장면과 약속 문장)를 쓴 뒤 첫 소제목으로 들어간다.`,
     error: `초고가 ${RETRY_LIMIT.draft}회 다시 써도 글 제목 줄로 시작하지 않음.`,
   };
 }

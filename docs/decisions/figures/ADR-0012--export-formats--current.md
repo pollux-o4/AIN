@@ -1,0 +1,26 @@
+# ADR-0012 · 내보내기는 소비처와 무관한 표준 형식 묶음으로 제공한다
+
+- 맥락: 시각자료(움직이는 SVG 포함)를 담은 글을 블로그·문서·메일 등 다양한 소비처에 전달할 수 있어야 한다. AIN은 소비 제품의 코드·경로·인증에 의존하지 않으나(AGENTS 경계), 기존 인계에서는 TXT 본문과 SVG 파일을 따로 제공할 뿐이어서 배치 위치 정보가 함께 전달되지 않았다.
+- 대안:
+  - 소비처별 출력(특정 블로그 HTML 및 업로드)은 경계를 어기고 소비처마다 별도로 고쳐야 한다.
+  - 단일 HTML만 제공하는 방식은 그림 파일을 따로 올리는 소비처에서 다시 손봐야 한다.
+  - 여러 표준 형식과 배치 매니페스트를 함께 제공하는 방안을 채택했다.
+- 선택(2026-11-13 사용자 결정): 무엇을 어떻게 만들어 내보낼지만 정하고, 어디서 사용할지는 받는 쪽이 고른다.
+  - 형식: `txt`, `html`, `zip` 세 가지를 제공한다.
+    - `txt`: 본문 그대로이며 기존 인계 계약과 같다.
+    - `html`: 완결 문서 한 파일로 내보내며 그림은 data URI `<img>`로 넣는다.
+    - `zip`: 아래 구성의 묶음 파일이다.
+  - 묶음 구성:
+    - `manifest.json`: `ain-article-bundle` v1 형식으로, 글 id·제목·회차와 그림별 anchor·alt·caption·animated·파일 정보를 담는다.
+    - `article.md`: 본문 글자를 그대로 유지하고 앵커 문단 뒤에 상대 경로 이미지를 배치한다.
+    - `article.html`: 완결된 HTML 문서이다.
+    - `article-body.html`: 파일을 참조하는 문서 조각이다.
+    - `figures/<id>.svg`: 움직이는 SVG 파일이다.
+    - `figures/<id>.static.svg`: 정지판 SVG 파일이다.
+  - 그림 삽입: 그림은 항상 `<img>`로 넣는다. 이렇게 하면 문서 CSS나 id가 충돌하지 않고 스크립트 실행도 막으면서 SVG 자체 움직임은 재생할 수 있다. 인라인 `<svg>`와 스크립트는 넣지 않으며, 받는 쪽에서 필요하면 묶음의 SVG 파일을 직접 처리한다.
+  - 움직임: `motion=animated`(기본값)와 `static`(SMIL 요소를 없애고 CSS 애니메이션을 멈춰 첫 프레임만 표시) 중 선택한다. `static`은 애니메이션을 제거하는 소비처(RSS·메일·인쇄)용이다.
+  - 범위: 지정 회차의 본문과 현재 회차에서 사람이 확인한 시각자료(`figure.phase=confirmed`)만 포함한다. 확인 전인 준비 상태의 그림이나 이전 회차의 그림은 넣지 않는다.
+  - 통로: `GET /write/api/runs/<id>/export?format&motion&revision`, CLI `ain export <id> --out <파일> [--format] [--motion]`, 화면의 '내보내기' 메뉴를 제공한다. 응답은 내려받기 전용(`Content-Disposition: attachment` 및 CSP sandbox)으로 반환한다.
+- 제약: ZIP은 무압축(STORE)만 지원하고 ZIP64는 지원하지 않는다(코드에 `shortcut`으로 표시). PDF와 PNG 래스터 형식은 제공하지 않으며, 필요해지면 렌더러 도입을 검토한다.
+- 책임: 형식 생성은 `automation/editorial/export/`가 맡으며, 본문 렌더러는 화면과 공용(`article-html.mjs` renderArticle)으로 쓴다.
+- 관련: ADR-0011, FIGURE-001, AGENT-001

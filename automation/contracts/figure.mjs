@@ -102,15 +102,15 @@ export const figureOutputExamples = {
   figure_plan: {
     candidates: [
       {
-        anchor: "초안의 해당 문장을 글자 그대로 기재한다.",
+        anchor: "초안의 해당 문장을 글자 그대로 적는다.",
         claim: "string",
-        reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 기재한다.",
-        analogy: "본문에서 사용한 비유 대상을 기재하며, 없으면 생략한다.",
-        scene: "그 핵심을 보여 줄 원인 → 결과 장면을 기재한다.",
+        reason: "글의 흐름에서 이 지점이 맡는 역할과 독자가 여기서 이해해야 할 핵심을 적는다.",
+        analogy: "본문에서 쓴 비유 대상을 적고, 없으면 생략한다.",
+        scene: "그 핵심을 보여 줄 원인 → 결과 장면을 적는다.",
         kind: "structure|flow|comparison|hierarchy|cycle|chart|table|scene",
       },
     ],
-    skipped: [{ unit: "units의 항목을 글자 그대로 기재한다.", reason: "string" }],
+    skipped: [{ unit: "units에 있는 항목을 글자 그대로 적는다.", reason: "string" }],
   },
   figure: {
     figures: [
@@ -119,7 +119,7 @@ export const figureOutputExamples = {
         svgFile: "/작업 폴더/f1.svg",
         alt: "string",
         caption: "string",
-        notes: "이번 층에서 변경한 사항과 다음 층에서 검토해야 할 남은 과제를 기재한다.",
+        notes: "이번 층에서 바꾼 사항과 다음 층에서 살필 남은 과제를 적는다.",
       },
     ],
   },

@@ -1,4 +1,4 @@
-// 요구 장부 계약: 요구 종류 등록 · 변경 한 건의 형식 · 표시 · ADR-0016
+// 요구사항 목록 계약: 요구 종류 등록 · 변경 한 건의 형식 · 표시 · ADR-0016
 // 새 종류 = REQUIREMENT_KINDS에 항목 하나(값 형식·표시) · 셀 수 있으면 domain/requirements CHECKS에 검사기 하나
 import { z } from "zod";
 import { readerLevelSchema, writingModeSchema } from "./writing-modes.mjs";
@@ -32,16 +32,16 @@ export const requirementChangeSchema = z.looseObject({
     .trim()
     .min(1)
     .describe(
-      `요구 종류로 ${Object.keys(REQUIREMENT_KINDS).join("|")} 또는 짧은 영문 명칭(tone·scope 등)을 기재한다.`,
+      `요구 종류를 적는다. ${Object.keys(REQUIREMENT_KINDS).join("|")} 또는 짧은 영문 이름(tone·scope 등) 가운데 하나를 쓴다.`,
     ),
-  op: z.enum(["set", "lift"]).describe("적용 동작으로 set(설정·변경) 또는 lift(해제)를 기재한다."),
+  op: z.enum(["set", "lift"]).describe("적용할 동작으로 set(설정·변경) 또는 lift(해제)를 적는다."),
   value: z
     .unknown()
     .optional()
     .describe(
-      "op가 set일 때 적용할 값을 기재한다. length는 공백 포함 글자 수인 {min, max|null} 형식으로, mode와 readerLevel은 정해진 값으로, 그 밖의 종류는 요구 문장으로 기재한다.",
+      "op가 set일 때 적용할 값을 적는다. length는 공백 포함 글자 수인 {min, max|null} 형식으로, mode와 readerLevel은 정해진 값으로, 그 밖의 종류는 요구 문장으로 적는다.",
     ),
-  quote: z.string().trim().min(1).describe("근거가 된 사용자의 발화 원문을 그대로 기재한다."),
+  quote: z.string().trim().min(1).describe("근거가 된 사용자 말의 원문을 그대로 적는다."),
 });
 
 /** @typedef {z.infer<typeof requirementChangeSchema>} RequirementChange */

@@ -1,4 +1,4 @@
-// 요구 장부: 사람 요구의 변경 기록을 항목별 최신 값으로 접는다 · 지금 유효한 요구의 유일한 원천 · ADR-0016
+// 요구사항 목록: 사람 요구의 변경 기록을 항목별 최신 값으로 접는다 · 지금 유효한 요구의 유일한 원천 · ADR-0016
 
 import { valueSchemaOf } from "../../contracts/requirements.mjs";
 import { AUTO } from "../../contracts/writing-modes.mjs";
@@ -51,7 +51,7 @@ function legacyRequirementLog(state) {
   return changes.length ? [{ revision: 1, source: "form", changes }] : [];
 }
 
-/** 장부가 없던 이전 글은 첫 전이에서 한 번 만든다 */
+/** 요구사항 목록이 없던 이전 글은 첫 전이에서 한 번 만든다 */
 export function ensureLog(state) {
   if (!Array.isArray(state.requirementLog)) state.requirementLog = legacyRequirementLog(state);
 }

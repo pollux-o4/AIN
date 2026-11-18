@@ -10,7 +10,7 @@ export { promptData, promptTask } from "./frame.mjs";
 
 // 연결 확인: 글 과업과 무관하게 왕복만 확인
 const pilotPrompt = (state) =>
-  "실행 연결 확인만 수행한다. 도구, 파일, 쉘 및 다른 에이전트는 사용하지 않는다. 부가 설명 없이 다음 JSON 객체 하나만 반환한다: " +
+  "실행 연결만 확인한다. 도구, 파일, 쉘, 다른 에이전트는 쓰지 않는다. 부가 설명 없이 다음 JSON 객체 하나만 반환한다: " +
   JSON.stringify({
     purpose: "연결 확인",
     audience: "운영자",
@@ -51,8 +51,8 @@ export function buildPrompt(state, action, ai = {}, { delta, omitted } = {}) {
 export function formatRetryPrompt(error) {
   const reason = String(error instanceof Error ? error.message : error).slice(0, 300);
   return [
-    `직전 응답을 지정된 결과 형식으로 해석하지 못하였다: ${reason}`,
-    "동일한 내용을 약속된 JSON 객체 하나로만 다시 반환한다. 앞뒤 설명, 코드 블록 표시 및 다른 JSON 객체는 포함하지 않는다.",
-    '문자열 내부의 큰따옴표는 \\", 줄바꿈은 \\n, 역슬래시는 \\\\로 이스케이프하여 표기한다.',
+    `직전 응답을 정해진 결과 형식으로 읽지 못하였다: ${reason}`,
+    "같은 내용을 약속된 JSON 객체 하나로만 다시 반환한다. 앞뒤 설명, 코드 블록 표시, 다른 JSON 객체는 넣지 않는다.",
+    '문자열 안의 큰따옴표는 \\", 줄바꿈은 \\n, 역슬래시는 \\\\로 이스케이프해 적는다.',
   ].join("\n");
 }

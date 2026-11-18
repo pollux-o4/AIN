@@ -84,7 +84,7 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
     type: "request_figure",
     stage: "figure_plan",
     revision: 1,
-    units: ["글머리", "결제"],
+    units: ["도입부", "결제"],
   });
   // 생성 결과를 위치 제안 자리에 넣을 수 없음 · 본문에 맞는 앵커가 하나도 없으면 거부
   assert.throws(() => result(state, "figure", made(["f1"])), /stale figure result/);
@@ -106,7 +106,7 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
   );
   for (const figures of [[], ["f9"], ["f1", "f1"]])
     assert.throws(() => send(state, "select_figures", { ...reviewed, figures }));
-  // 후보 집계(세기만): 단위 2곳(글머리·결제) 모두 후보 · 빠진 단위 없음
+  // 후보 집계(세기만): 단위 2곳(도입부·결제) 모두 후보 · 빠진 단위 없음
   assert.deepEqual(state.figure.coverage, {
     units: 2,
     withFigure: 2,

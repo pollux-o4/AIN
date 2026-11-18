@@ -44,7 +44,7 @@ const complete = (state, output) =>
     ...(nextAction(state).section ? { section: nextAction(state).section.index } : {}),
   });
 
-// 진단은 글감 문장의 분량 요구를 장부로 옮긴다(AI 대역)
+// 진단은 글감 문장의 분량 요구를 요구사항 목록으로 옮긴다(AI 대역)
 const fixture = (s) =>
   s.stage === "diagnose" ? diagnoseFor(s.idea, base.diagnose) : base[s.stage];
 
@@ -171,7 +171,7 @@ test("분량은 독자에게 보이는 글자로 센다: 마크다운 링크 주
   assert.equal(readerLength("주소 https://example.com"), "주소 https://example.com".length);
 });
 
-test("ADR-0013 이야기 카드: 빈 칸은 1회 다시, 따라 하기·이전 문자열 구간은 검사하지 않는다", () => {
+test("ADR-0013 구간 카드: 빈 항목은 1회 다시, 따라 하기·이전 문자열 구간은 검사하지 않는다", () => {
   let s = step(null, "start", { articleId: "card", idea: "설명" });
   while (s.stage !== "outline") s = complete(s, base[s.stage]);
   const card = (extra) => ({ title: "개념", mode: "explain", keyPoint: "k", ...extra });
@@ -190,7 +190,7 @@ test("ADR-0013 이야기 카드: 빈 칸은 1회 다시, 따라 하기·이전 �
   assert.equal(s.retry, undefined);
 });
 
-test("ADR-0013 지면: 카드 구간 예산이 칸을 담지 못하면 거부, 2구간도 불가능한 짧은 글은 검사하지 않는다", () => {
+test("ADR-0013 지면: 카드 구간 예산이 항목을 담지 못하면 거부, 2구간도 불가능한 짧은 글은 검사하지 않는다", () => {
   const card = (budget) => ({
     title: `${budget}`,
     mode: "narrate",
@@ -203,7 +203,7 @@ test("ADR-0013 지면: 카드 구간 예산이 칸을 담지 못하면 거부, 2
     while (s.stage !== "outline") s = complete(s, fixture(s));
     return complete(s, { sections: budgets.map(card), rationale: "r" });
   };
-  // 실제 모델 실측: 600~900자에 3구간(250·260·240) → 첫 구간이 글머리와 카드를 담지 못함
+  // 실제 모델 실측: 600~900자에 3구간(250·260·240) → 첫 구간이 도입부와 카드를 담지 못함
   const tight = outlined("수필 600~900자", [250, 260, 240]);
   assert.equal(tight.stage, "outline");
   assert.match(tight.retry.note, /1번 250자 < 420자.*구간 수를 줄여/);
@@ -240,7 +240,7 @@ test("기준본 찾기: 도입은 첫 구간에 붙고, 첫 구간에 소제목�
   assert.equal(previousPart(current, 0, 4), undefined, "구간 수가 다르면 기준본 없음");
 });
 
-test("ADR-0013 한 줄 칸은 글자 수 상한을 넘으면 거부한다(뜻은 보지 않고 세기만)", () => {
+test("ADR-0013 한 줄 항목은 글자 수 상한을 넘으면 거부한다(뜻은 보지 않고 세기만)", () => {
   let s = step(null, "start", { articleId: "slot", idea: "설명" });
   while (s.stage !== "outline") s = complete(s, base[s.stage]);
   const long =

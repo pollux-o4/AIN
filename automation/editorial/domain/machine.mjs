@@ -245,7 +245,7 @@ function routeTo(state, target, reason) {
   state.routeTarget = target;
   ai(state, target);
 }
-// 확정된 편집 메모로 수정 착수 · 해석한 요구 변경을 장부에 반영 · ADR-0010·0016
+// 확정된 편집 메모로 수정 착수 · 해석한 요구 변경을 요구사항 목록에 반영 · ADR-0010·0016
 function startBrief(state) {
   record(state, "feedback", state.brief.requirementChanges);
   routeTo(state, state.brief.target, state.brief.intent);
@@ -406,7 +406,7 @@ export function transition(current, event) {
       }
       if (event.stage === "outline" && !acceptOutline(state, output)) break; // 예산 검증 · ADR-0009
       state.artifacts[event.stage] = { revision: state.revision, output };
-      // 글감 문장의 요구는 한 번만 장부에 · 다시 진단해도 그 뒤의 피드백 변경을 덮지 않음 · ADR-0016
+      // 글감 문장의 요구는 한 번만 요구사항 목록에 · 다시 진단해도 그 뒤의 피드백 변경을 덮지 않음 · ADR-0016
       if (event.stage === "diagnose" && !state.requirementLog.some((e) => e.source === "idea"))
         record(state, "idea", output.requirementChanges);
       const next = (state.plan ?? STAGES).find(

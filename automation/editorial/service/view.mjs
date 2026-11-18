@@ -29,7 +29,7 @@ export function titleOf(run) {
   return title.length > 100 ? `${title.slice(0, 100)}…` : title;
 }
 function designOf(state) {
-  // 서술 방식·독자 수준: 요구 장부 값이면 사용자, 아니면 진단 판단 · ADR-0016
+  // 서술 방식·독자 수준: 요구사항 목록 값이면 사용자, 아니면 진단 판단 · ADR-0016
   const required = standing(state);
   const diagnose = currentArtifact(state, "diagnose")?.output;
   const outline = currentArtifact(state, "outline")?.output;
@@ -97,7 +97,7 @@ export function runView(run, now) {
           requirementChanges: (state.brief.requirementChanges ?? []).map(describeChange),
         }
       : null,
-    // 지금 유효한 요구(요구 장부) · 화면·CLI 표시용 한 줄씩
+    // 지금 유효한 요구(요구사항 목록) · 화면·CLI 표시용 한 줄씩
     requirements: Object.entries(standing(state)).map(([kind, { value }]) =>
       describeRequirement(kind, value),
     ),

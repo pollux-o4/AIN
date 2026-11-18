@@ -342,7 +342,7 @@ test("ADR-0008 route turns vague feedback into an edit memo that reaches later s
   }).state;
   const pending = { ...job(current), action: { type: "request_route" } };
   const prompt = buildPrompt(current, pending.action);
-  assert.match(prompt, /편집 메모로 변환/);
+  assert.match(prompt, /수정 해석.*정리/);
   assert.match(prompt, /developmental/);
   const memo = {
     target: "draft",
@@ -460,7 +460,7 @@ test("ADR-0009 budgeted draft is requested and returned one section at a time", 
   assert.match(prompt, /약 1200자/);
   assert.match(
     prompt,
-    /글머리:[^\n]+\n\d+\. "## 앞" 소제목 줄로 시작/,
+    /도입부:[^\n]+\n\d+\. "## 앞" 소제목 줄로 시작/,
     "첫 구간도 도입 뒤 소제목으로 시작",
   );
   const event = resultEvent(
@@ -508,9 +508,9 @@ test("ADR-0013 자료 값 안의 닫는 표지는 자료 구역을 끊지 못한
   assert.equal(promptData(prompt).source, hostile.source);
 });
 
-test("RES-007 이야기 카드: 구성은 칸을 채우게 하고, 초고·검토는 카드 구간이 있을 때만 S 규칙을 받는다", () => {
+test("RES-007 구간 카드: 구성은 항목을 채우게 하고, 초고·검토는 카드 구간이 있을 때만 S 규칙을 받는다", () => {
   const outline = buildPrompt(state, { type: "request_ai", stage: "outline" });
-  assert.match(outline, /procedure가 아닌 구간에는 이야기 카드 항목인 hook/);
+  assert.match(outline, /procedure가 아닌 구간에는 구간 카드의 항목인 hook/);
   assert.match(outline, /시스템이 검사하여 누락 시 거부한다/);
   const withModes = (...modes) => ({
     ...state,
@@ -543,7 +543,7 @@ test("RES-007 이야기 카드: 구성은 칸을 채우게 하고, 초고·검�
   assert.match(whole, /'## 한눈에 정리' 아래에 모든 구간의 principleLine/);
 });
 
-test("선택 칸의 빈 문자열·null은 없는 칸으로 읽고, 필수 칸의 빈 값은 거부한다", () => {
+test("선택 항목의 빈 문자열·null은 없는 항목으로 읽고, 필수 항목의 빈 값은 거부한다", () => {
   const card = { title: "앞", mode: "procedure", keyPoint: "k" };
   const parsed = stageOutputSchemas.outline.parse({
     sections: [{ ...card, prerequisite: "", hook: null, concrete: "  " }],
@@ -556,7 +556,7 @@ test("선택 칸의 빈 문자열·null은 없는 칸으로 읽고, 필수 칸�
   );
 });
 
-test("ADR-0014: 끝 정리는 구간이 아니라 마지막 구간에 붙고, 구성 예시는 하위 마디 칸을 보여 준다", async () => {
+test("ADR-0014: 끝 정리는 구간이 아니라 마지막 구간에 붙고, 구성 예시는 하위 항목 항목을 보여 준다", async () => {
   const { splitArticle } = await import("../../contracts/article-structure.mjs");
   const { stageOutputExamples } = await import("../../contracts/ai-output.mjs");
   const { lead, sections } = splitArticle(

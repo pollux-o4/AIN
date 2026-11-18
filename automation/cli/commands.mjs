@@ -20,7 +20,7 @@ function summary(run, { text = false } = {}) {
     needsCompletion: run.needsCompletion,
     completionReason: run.completionReason,
     brief: run.brief ?? null,
-    // 지금 유효한 요구(요구 장부) · ADR-0016
+    // 지금 유효한 요구(요구사항 목록) · ADR-0016
     requirements: run.requirements ?? [],
     unmetRequirements: run.unmetRequirements ?? [],
     // 시각자료 선택·확인은 사람만 · 화면에서 · FIGURE-001

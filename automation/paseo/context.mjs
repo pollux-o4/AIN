@@ -1,6 +1,6 @@
 import { previousPart, readerLength, STAGES, standing } from "../editorial/domain/index.mjs";
 
-// 프롬프트용 장부 보기: 값과 근거 문장 · 출처·회차는 판단에 쓰지 않아 뺀다
+// 프롬프트용 요구사항 목록 보기: 값과 근거 문장 · 출처·회차는 판단에 쓰지 않아 뺀다
 const standingRequirements = (state) =>
   Object.fromEntries(
     Object.entries(standing(state)).map(([kind, { value, quote }]) => [kind, { value, quote }]),
@@ -20,7 +20,7 @@ function figureContext(state, action) {
       draft: { text: state.artifacts.draft.output.text },
     },
     ...(action.note ? { placementNote: action.note } : {}),
-    // 위치 제안이 빠짐없이 검토할 단위(글머리·모든 소제목)
+    // 위치 제안이 빠짐없이 검토할 단위(도입부·모든 소제목)
     ...(action.units ? { units: action.units } : {}),
     ...(action.candidates ? { candidates: action.candidates } : {}),
     ...(action.progress ? { progress: action.progress } : {}),
@@ -74,7 +74,7 @@ export function promptContext(state, action) {
   return {
     source: state.source,
     idea: state.idea,
-    // 요구 장부: 지금 유효한 요구(최신 사람 지시가 반영됨) · 모든 단계의 유일한 요구 · ADR-0016
+    // 요구사항 목록: 지금 유효한 요구(최신 사람 지시가 반영됨) · 모든 단계의 유일한 요구 · ADR-0016
     ...(Object.keys(standingRequirements(state)).length
       ? { requirements: standingRequirements(state) }
       : {}),

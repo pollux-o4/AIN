@@ -1,22 +1,22 @@
 # FLOW-002 · 편집 도메인·사용자 판단
 
-- 현재 실행: EDIT-001의 편집 애플리케이션 · n8n은 작업 ID 전달·서버 continue 대기만 담당 · ADR-0004
-- 내부 순수 계약: editorial/domain/index의 `transition(state,event)` → `{state,action}` · 외부 부작용 없음
-- 단계: diagnose→topic→audience→value→research→outline→draft→review · 구조·필수 내용·현재 revision 선행 결과 검증 · FLOW-001
-- 사용자 이벤트: start·feedback·complete_requirements·pause·resume·retry·satisfy·authorize_publication·request_figures·select_figures·confirm_figures·discard_figures
-- 실행 결과 이벤트: complete·route·figure_result·fail · 사용자와 어댑터 역할 구분 · id·expectedVersion·revision 검증
-- 편집 메모: 사람 피드백 → route가 의도·수준·우선순위·살릴 것·합격 기준으로 번역 · 수준이 복귀 단계 결정 · review 합격 판정 revise면 자동 재작성 · ADR-0008
-- 해석 승인: 사람 피드백은 route 후 `awaiting_brief`에서 멈춤 · `approve_brief`(보정 가능)로 착수 · `revise_brief`로 재해석 · 편집장(에이전트) 지시는 사전 승인 · ADR-0010
-- 구간별 초고: 분량 예산이 있으면 outline 구간마다 작성·예산 검사 후 합침 · ADR-0009
-- 구간 카드: procedure 외 카드 구간은 hook·cases(1~3)·principleLine·underline 필수 · 빈 칸이면 outline 1회 다시, 반복이면 `failed` · 초고는 칸을 그대로 옮기고 검토는 S1~S10 점검표와 코드 지표로 판정 · ADR-0013
-- 요구사항 가드: review 완료 시 코드 판정 요구(분량) 미충족이면 자동 재작성 최대 2회 · ADR-0007
-- 수정: 현재 결과 이력 보존·revision 증가 → 라우팅 → 검증된 선행 결과만 재사용 출처와 함께 승계 → 이후 단계 재생성
-- 반복: 사용자 요청으로만 진행 · AI가 만족·승인·발행을 결정하지 않음 · 실패/권한/예산/중단 불명확 시 사용자 확인
-- 판단: awaiting_user → 사용자 satisfy → satisfied → 별도 authorize_publication → publication_ready · 실제 발행 없음
-- 시각자료(선택): satisfied → request_figures → 위치 후보 → select_figures → 생성(초안 → 내용 → 시각 3층) → confirm_figures → satisfied · 본문·확정 불변 · 언제든 discard_figures · ADR-0011
-- 보완: 기존 축약·누락 결과는 보존 · 자동 새 호출 없음 · 명시적 보완과 중단 확인 후 전체 단계 실행
-- 글 품질: 목적·독자·의미·목소리 유지 · 설명·서사·주장·절차에 맞는 구성 · 근거 없는 사실/출처·정확성 보증·독자 연구 주장 금지
-- 근거: 사용자 제공 자료 중심 · 직접 확인 불가 내용은 uncertainties · URL 자체를 읽는 웹 조사와 실제 발행은 별도
-- 상태·예산 정본: 편집 애플리케이션·SQLite · n8n의 원시 상태 봉투·상태 머신 포함·독립 예산 경로는 종료
-- 이전 내부 HTTP /jobs·/exports·/providers: 410 · 사용자 경로는 AIN-API-001 · 제공자 조회는 공통 SDK CLI
-- 검증: editorial-machine·service·prompts 단위 → 얇은 n8n 전달/대기 → HTTP fixture·PC/모바일 → 격리 실제 모델
+- 현재 실행: EDIT-001의 편집 애플리케이션이 실행을 맡고, n8n은 작업 ID 전달과 서버 `continue` 대기만 맡는다(ADR-0004).
+- 내부 순수 계약: `editorial/domain/index`의 `transition(state,event)`가 `{state,action}`을 반환하며, 외부 부작용이 없다.
+- 단계: diagnose→topic→audience→value→research→outline→draft→review 순으로 진행하며, 구조, 필수 내용, 현재 회차의 선행 결과를 검증한다(FLOW-001).
+- 사용자 이벤트: `start`, `feedback`, `complete_requirements`, `pause`, `resume`, `retry`, `satisfy`, `authorize_publication`, `request_figures`, `select_figures`, `confirm_figures`, `discard_figures`이다.
+- 실행 결과 이벤트: `complete`, `route`, `figure_result`, `fail`이다. 사용자와 어댑터 역할을 구분하며, `id`, `expectedVersion`, `revision`을 검증한다.
+- 수정 해석: `route`가 사람 피드백을 의도, 수준, 우선순위, 유지 항목, 합격 기준으로 정리하고, 수준에 따라 복귀 단계를 정한다. `review`의 합격 판정이 `revise`이면 자동으로 다시 쓴다(ADR-0008).
+- 해석 승인: 사람 피드백은 `route`를 거친 뒤 `awaiting_brief`에서 멈춘다. `approve_brief`(보정 가능)로 작업을 시작하고, `revise_brief`로 다시 해석한다. 다만 편집장(에이전트) 지시는 해석을 미리 승인한다(ADR-0010).
+- 구간별 초고: 분량 예산이 있으면 `outline` 구간마다 작성하고 예산 검사를 거친 뒤 합친다(ADR-0009).
+- 구간 카드: `procedure`가 아닌 구간 카드는 `hook`, `cases`(1~3), `principleLine`, `underline`이 필수이다. 빈 항목이 있으면 `outline`을 1회 다시 실행하고, 반복되면 `failed`로 바뀐다. 초고는 항목을 그대로 옮기고, 검토는 S1~S10 점검표와 코드 지표로 판정한다(ADR-0013).
+- 요구사항 검증: `review`를 마쳤을 때 코드로 판정하는 분량 요구를 채우지 못하면 최대 2회까지 자동으로 다시 쓴다(ADR-0007).
+- 수정: 현재 결과를 이력에 보존하고 회차를 올린 뒤 복귀 단계를 정한다. 검증된 선행 결과만 재사용 출처와 함께 이어받고 그 뒤 단계를 다시 생성한다.
+- 반복: 사용자 요청으로만 진행하며, AI가 만족·승인·발행을 결정하지 않는다. 실패했거나 권한, 예산, 중단 여부가 불명확할 때는 사용자에게 확인한다.
+- 판단: `awaiting_user` 상태에서 사용자가 `satisfy`를 실행하면 `satisfied`가 되고, 별도로 `authorize_publication`을 실행하면 `publication_ready`로 넘어간다. 실제 발행은 포함하지 않는다.
+- 시각자료(선택): `satisfied` 상태에서 `request_figures`로 위치 후보를 뽑고 `select_figures` 뒤 생성(초안→내용→시각 3층)을 거쳐 `confirm_figures`를 실행하면 `satisfied`로 돌아간다. 본문과 확정은 바뀌지 않으며, 언제든 `discard_figures`로 시각자료를 버릴 수 있다(ADR-0011).
+- 보완: 기존 축약·누락 결과는 보존하며 자동으로 새로 호출하지 않는다. 명시적으로 보완을 요청하고 중단을 확인한 뒤에 전체 단계를 실행한다.
+- 글 품질: 글의 목적, 독자, 의미, 목소리를 유지하고, 설명·서사·주장·절차에 맞는 구성을 따른다. 근거 없는 사실이나 출처, 정확성 보증, 독자 연구 주장은 금지한다.
+- 근거: 사용자 제공 자료를 중심으로 작성하며, 직접 확인할 수 없는 내용은 `uncertainties`로 남긴다. URL 자체를 읽는 웹 조사와 실제 발행은 별도이다.
+- 상태·예산 정본: 편집 애플리케이션과 SQLite가 정본이다. n8n의 원시 상태 구조, 상태 머신 포함, 독립 예산 경로는 종료하였다.
+- 이전 내부 HTTP 경로: `/jobs`, `/exports`, `/providers`는 410을 반환한다. 사용자 경로는 AIN-API-001을 따르며, 제공자 조회는 공통 SDK CLI를 사용한다.
+- 검증: editorial-machine, service, prompts 단위 검증, 최소 기능의 n8n 전달·대기 검증, HTTP fixture 및 PC·모바일 검증, 격리 환경의 실제 모델 검증 순으로 진행한다.

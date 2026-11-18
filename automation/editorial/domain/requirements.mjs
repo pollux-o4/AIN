@@ -1,5 +1,5 @@
 // 코드로 판정하는 요구 · 상태 머신 review 완료 가드 · ADR-0007
-// 요구 값은 장부(ledger)가 원천 · 여기는 셀 수 있는 종류의 검사기만 등록(전략) · ADR-0016
+// 요구 값은 요구사항 목록(ledger)이 원천 · 여기는 셀 수 있는 종류의 검사기만 등록(전략) · ADR-0016
 // 확장: CHECKS에 kind별 { target(state→단계), evaluate(state, value) } 추가
 
 import { splitArticle } from "../../contracts/article-structure.mjs";
@@ -46,7 +46,7 @@ const lengthCheck = {
 /** @type {Record<string, { target: (state: any) => string, evaluate: (state: any, value: any) => any }>} */
 const CHECKS = { length: lengthCheck };
 
-// 지금 유효한 요구 값 · 프롬프트·예산 배정·검사가 같은 장부를 읽는다
+// 지금 유효한 요구 값 · 프롬프트·예산 배정·검사가 같은 요구사항 목록을 읽는다
 export function requirements(state) {
   return Object.fromEntries(
     Object.entries(standing(state)).map(([kind, entry]) => [kind, entry.value]),
