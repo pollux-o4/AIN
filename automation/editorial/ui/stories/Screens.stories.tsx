@@ -167,6 +167,40 @@ export const 시각자료_검토: StoryObj = {
     ),
   ),
 };
+// 한 장이 실패해도 그린 그림은 남고, 실패한 자리만 사유와 함께 다시 그린다 · ADR-0026
+export const 시각자료_부분실패: StoryObj = {
+  render: actionWorkspace(
+    figureRun(
+      makeFigure({
+        phase: "review",
+        selected: ["f2", "f3"],
+        failed: { f3: "AI provider failed; inspect Paseo session" },
+        items: [
+          {
+            id: "f2",
+            anchor: "요약",
+            claim: "선택 기준",
+            alt: "두 축 갈림길 그림",
+            caption: "선택을 가르는 두 축",
+            route: "image",
+            mime: "image/png",
+            motion: false,
+            labels: [],
+          },
+        ],
+      }),
+      { canConfirmFigures: true, canReviseFigures: true },
+    ),
+  ),
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    doc.querySelector<HTMLButtonElement>("#retry-figures")?.click();
+    await Promise.resolve();
+    const sent = doc.querySelector<HTMLOutputElement>("#figure-action-result")?.value;
+    if (!sent?.includes('"type":"retry_figures"') || !sent.includes('"figures":["f3"]'))
+      throw new Error("실패한 그림만 다시 그리는 요청이 맞지 않아요.");
+  },
+};
 export const 시각자료_구성검수: StoryObj = {
   render: actionWorkspace(
     figureRun(

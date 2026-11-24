@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FIGURE_LIMITS, FIGURE_REVISE_TARGETS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { FigureImage } from "./FigureImage";
+import { FigureRetry } from "./FigureRetry";
 import { AnchorQuote } from "./Locate";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import { usePicked } from "./usePicked";
@@ -102,6 +103,7 @@ export function FigureReview({
           </div>
         ))}
       </fieldset>
+      <FigureRetry figure={figure} disabled={disabled} onAction={onAction} onLocate={onLocate} />
       <div className="submit-row">
         <SkipFigures disabled={disabled} onAction={onAction} />
         <button id="confirm-figures" type="submit" disabled={disabled || !picked.length}>

@@ -3149,7 +3149,7 @@ fieldset.figure-list {
   font-size: 14px;
   line-height: 1.5;
 }
-.figure-slot-status[data-spot="stopped"] {
+.figure-slot-status:is([data-spot="stopped"], [data-spot="failed"]) {
   border-color: var(--coin);
   border-style: dashed;
 }
@@ -3161,4 +3161,7 @@ fieldset.figure-list {
   .figure-slot-status[data-spot="drawing"] small::before {
     animation: pulse 1.2s var(--ease) infinite;
   }
+}
+.figure-slot-error {
+  color: var(--coin);
 }

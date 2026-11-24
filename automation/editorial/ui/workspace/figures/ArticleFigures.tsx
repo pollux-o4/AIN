@@ -44,6 +44,7 @@ export function ArticleFigures({
             <StatusSlot
               candidate={candidate}
               spot={spot}
+              error={figure?.failed[id]}
               number={number}
               candidates={candidates}
               motifs={motifs}

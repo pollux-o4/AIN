@@ -200,6 +200,7 @@ export function makeFigure(over: Partial<Figure> = {}): Figure {
     style: { accent: "주황 #E8743B", base: "회색 선 1.5px", labels: "12px 굵게" },
     motifs: [{ name: "주문 상자", look: "갈색 상자에 영수증 한 장" }],
     selected: [],
+    failed: {},
     routesAvailable: ["svg"],
     coverage: { units: 3, withFigure: 2, candidates: 3, gap: null },
     current: null,

@@ -51,9 +51,11 @@ export function StatusSlot({
   number,
   candidates,
   motifs,
+  error,
 }: {
   candidate: Candidate;
   spot: string;
+  error?: string;
   number: number;
   candidates: Candidate[];
   motifs: Motif[];
@@ -62,7 +64,8 @@ export function StatusSlot({
   return (
     <div className="figure-slot-card figure-slot-status" data-spot={spot}>
       <span className="figure-slot-text">
-        <small role="status">{slotLabel(number, candidate, state)}</small>
+        <small>{slotLabel(number, candidate, state)}</small>
+        {error && <small className="figure-slot-error">사유: {error}</small>}
         <FigurePlan candidate={candidate} candidates={candidates} motifs={motifs} />
       </span>
     </div>
