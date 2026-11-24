@@ -43,6 +43,7 @@ AIN 내부에서는 수정 해석, 합격 판정, 분량 제한 검사를 기준
 | --- | --- | --- |
 | 수정 요청 | `feedback <id> <구체적 수정 내용>` | AI 비용이 발생하며 수정 내용을 확인한 뒤 실행한다(편집장 위임 범위 안은 생략한다). |
 | 일시 중지 요청 | `pause <id>` | 즉시 실행한다. |
+| 시각자료 만들기 | `request-figures` → `select-figures <id> --input '{"figures":[...],"look":"manual"}'` → `approve-design` | AI 비용이 발생한다. 확정·제외는 사람이 화면에서 한다. |
 | 작업 재개 요청 | `resume <id>` | AI 비용이 발생한다. |
 | 보완 필요 표시 | `complete-requirements <id>` | AI 비용이 발생한다. |
 | 결과 확정 | 사용자가 화면에서 확정 | 에이전트 요청은 서버가 403을 반환한다. |

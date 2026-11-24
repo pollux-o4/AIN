@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { FIGURE_LOOKS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { ROUTE_NAMES } from "./plan";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
@@ -14,6 +16,8 @@ export function FigureChoice({
 }: Omit<DecisionProps, "run"> & { choice: FigureChoiceState; onLocate: (id: string) => void }) {
   const { picked, toggle } = choice;
   const first = choice.candidates[0]?.id;
+  // 그림 스타일은 글 하나에 하나 · 비우면 구성이 글에 맞춰 고른다 · ADR-0027
+  const [look, setLook] = useState<keyof typeof FIGURE_LOOKS | "">("");
   return (
     <form
       id="figure-choice"
@@ -26,6 +30,7 @@ export function FigureChoice({
           figures: picked,
           ...(Object.keys(directions).length ? { directions } : {}),
           ...(Object.keys(routes).length ? { routes } : {}),
+          ...(look ? { look } : {}),
         });
       }}
     >
@@ -53,7 +58,10 @@ export function FigureChoice({
         )}
         {figure.style && (
           <p id="figure-style" className="hint">
-            모든 그림이 함께 지킬 규칙 · {figure.style.look ? `스타일 ${figure.style.look} · ` : ""}
+            모든 그림이 함께 지킬 규칙 ·{" "}
+            {figure.style.look
+              ? `스타일 ${FIGURE_LOOKS[figure.style.look as keyof typeof FIGURE_LOOKS]?.label ?? figure.style.look} · `
+              : ""}
             강조 {figure.style.accent} · 기본 {figure.style.base} · 라벨 {figure.style.labels}
           </p>
         )}
@@ -88,6 +96,21 @@ export function FigureChoice({
           </div>
         ))}
       </fieldset>
+      <label className="figure-look">
+        그림 스타일
+        <select
+          id="figure-look"
+          value={look}
+          onChange={(event) => setLook(event.target.value as typeof look)}
+        >
+          <option value="">자동 · 글에 맞춰 고름</option>
+          {Object.entries(FIGURE_LOOKS).map(([id, spec]) => (
+            <option key={id} value={id}>
+              {spec.label} · {spec.fits}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className="submit-row">
         <SkipFigures disabled={disabled} onAction={onAction} />
         <button id="select-figures" type="submit" disabled={disabled || !picked.length}>

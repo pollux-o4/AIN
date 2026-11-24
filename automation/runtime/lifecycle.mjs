@@ -14,10 +14,12 @@ export function ownedRole({ cwd, cmdline }, root) {
 }
 
 export function activeRuns(runs) {
-  return runs
-    // 문제(issue)로 멈춰 사람 확인을 기다리는 글은 진행 중이 아님
-    .filter((run) => isPendingStatus(run.state?.status) && !run.issue)
-    .map((run) => ({ id: run.id, idea: String(run.state?.idea ?? "").slice(0, 40) }));
+  return (
+    runs
+      // 문제(issue)로 멈춰 사람 확인을 기다리는 글은 진행 중이 아님
+      .filter((run) => isPendingStatus(run.state?.status) && !run.issue)
+      .map((run) => ({ id: run.id, idea: String(run.state?.idea ?? "").slice(0, 40) }))
+  );
 }
 
 // AI 세션은 브리지가 쥐고 종료 때 정리한다 · 브리지가 없으면 지킬 진행 작업이 없음

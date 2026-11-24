@@ -509,8 +509,8 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     [view.canRequestFigures, view.canAuthorizePublication, view.figure],
     [true, true, null],
   );
-  // 시각자료 선택·확인은 사람만
-  await assert.rejects(() => f.act(id, "request_figures", {}, "agent"), { status: 403 });
+  // 시각자료 확정은 사람만 · 위치 제안 요청 같은 지시는 에이전트도
+  await assert.rejects(() => f.act(id, "confirm_figures", {}, "agent"), { status: 403 });
   view = await f.act(id, "request_figures");
   assert.equal(view.status, "waiting_figure");
   assert.deepEqual(
@@ -607,7 +607,8 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     [view.monitor.label, view.canApproveDesign, view.figure.candidates[1].scene],
     ["시각자료 구성 확인 대기", true, "f2 장면"],
   );
-  await assert.rejects(() => f.act(id, "approve_design", {}, "agent"), { status: 403 });
+  // 구성 승인은 지시라 에이전트도 · 결과물을 버리는 것은 수락과 같이 사람만
+  await assert.rejects(() => f.act(id, "discard_figures", {}, "agent"), { status: 403 });
   await assert.rejects(() => f.act(id, "revise_design", { feedback: " " }), { status: 400 });
   view = await f.act(id, "revise_design", { feedback: "같은 창고 안 장면으로", figures: ["f2"] });
   assert.deepEqual([view.status, view.figure.recompose], ["waiting_figure", ["f2"]]);

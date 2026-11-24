@@ -7,7 +7,8 @@ module.exports = {
       name: "independent-runtime",
       severity: "error",
       from: { path: "^automation/" },
-      to: { path: "^[.][.]/", pathNot: "^[.][.]/paseo/sdk[.]mjs$" },
+      // 공용 Paseo는 연결(sdk)과 데몬 주소(endpoint)만 쓴다
+      to: { path: "^[.][.]/", pathNot: "^[.][.]/paseo/(sdk|endpoint)[.]mjs$" },
     },
     {
       name: "browser-no-runtime",

@@ -3,7 +3,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { openSync, readdirSync, readFileSync, readlinkSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { pendingRuns } from "../editorial/store.mjs";
+import { pendingRuns } from "../editorial/index.mjs";
 import { activeRuns, isStale, ownedRole, stopBlockers } from "./lifecycle.mjs";
 
 const root = resolve(".");

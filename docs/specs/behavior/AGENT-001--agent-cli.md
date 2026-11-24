@@ -11,7 +11,7 @@
   - 오류가 발생하면 stderr에 JSON을 출력하고 종료 코드 1을 반환한다. 다만 잘못된 명령이면 종료 코드 2를 반환한다.
 - 편집장 권한(ADR-0006)
   - 에이전트 요청은 `by: agent`로 기록한다.
-  - `satisfy`, `authorize-publication`이나 시각자료 요청·선택·확인(ADR-0011)을 호출하면 403을 반환한다. `show`의 `figure`로는 상태만 조회할 수 있다.
+  - 동작 명령은 화면과 같은 동작 카탈로그(`contracts/actions.mjs`)에서 만들며, 구조 입력은 `--input <JSON>`으로 넘긴다. 사람만 하는 동작(`satisfy`, `authorize-publication`, `confirm-figures`, `discard-figures`)은 서버가 403을 반환한다(ADR-0011).
   - 사람이 요청한 수정 해석은 검토한 뒤 `approve-brief`나 `revise-brief`로 처리하며, 에이전트가 지시한 수정은 해석을 미리 승인한다(ADR-0010).
   - 사람 행동 없이 연속 수정이나 재해석이 2회를 초과하면 409를 반환한다.
 - 삭제: `POST /write/api/runs/:id/archive`를 호출해 목록에서 숨긴다. 다만 진행 중이면 409를 반환하며, 원고와 이력은 보존한다(EDIT-001).

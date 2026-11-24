@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { type FIGURE_REVISE_TARGETS, FIGURE_ROUTES } from "../../../contracts/figure.mjs";
 import { historySchema } from "../../../contracts/history.mjs";
+import type { actionRequestSchema } from "../../../contracts/requests.mjs";
 import { type Direction, designViewSchema } from "../../../contracts/writing-modes.mjs";
 
 const timestamp = z.number();
@@ -206,38 +207,12 @@ export type BriefEdit = {
   priorities?: string[];
   preserve?: string[];
 };
-export type ActionCommand =
-  | { type: "feedback" | "revise_brief"; feedback: string }
-  | { type: "approve_brief"; edit?: BriefEdit }
-  | {
-      type: "select_figures";
-      figures: string[];
-      directions?: Record<string, string>;
-      routes?: Record<string, FigureRoute>;
-    }
-  | { type: "confirm_figures"; figures?: string[] }
-  | { type: "approve_design"; directions?: Record<string, string> }
-  | { type: "revise_design"; feedback: string; figures?: string[] }
-  | {
-      type: "revise_figures";
-      feedback: string;
-      figures: string[];
-      target: (typeof FIGURE_REVISE_TARGETS)[number];
-    }
-  | { type: "request_figures"; feedback?: string }
-  | {
-      type:
-        | "pause"
-        | "resume"
-        | "complete_requirements"
-        | "satisfy"
-        | "authorize_publication"
-        | "discard_figures";
-    };
-export type Action = ActionCommand & {
-  operationId: string;
-  expectedVersion: number;
-};
+// 동작 형식은 계약 스키마에서 끌어온다 · 화면·CLI·서버가 같은 정의(손으로 따로 적으면 필드가 빠짐) · contracts/actions.mjs
+export type Action = z.infer<typeof actionRequestSchema>;
+// 느슨한 객체의 색인 서명은 빼고 선언된 필드만 · 자리마다 정확한 필드 형식이 남는다
+type Declared<T> = { [K in keyof T as string extends K ? never : K]: T[K] };
+type Command<T> = T extends unknown ? Omit<Declared<T>, "operationId" | "expectedVersion"> : never;
+export type ActionCommand = Command<Action>;
 export class ApiError extends Error {
   constructor(
     message: string,

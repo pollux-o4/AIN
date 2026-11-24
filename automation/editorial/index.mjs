@@ -1,3 +1,3 @@
 export { editorialHttp } from "./http.mjs";
 export { EditorialService } from "./service.mjs";
-export { EditorialStore } from "./store.mjs";
+export { EditorialStore, pendingRuns } from "./store.mjs";

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { actionAllowed, actionSpec, countsAsRound } from "../../contracts/actions.mjs";
 import {
   FIGURE_LIMITS,
   figureDirectionsSchema,
@@ -31,9 +32,7 @@ import {
   userTransition,
 } from "./lifecycle.mjs";
 
-// 최종 검수(만족·발행 준비)는 사람만 · 에이전트는 편집장으로 위임 한도 안에서 수정 지시 · ADR-0006
-// 수정 해석 승인·재해석은 사람 대리로 편집장도 가능(재해석은 수정 지시 한도에 포함) · ADR-0010
-// 시각자료 선택·확인도 넘길 결과물의 검수라 사람만 · FIGURE-001
+// 누가 할 수 있는지·수정 한도에 세는지는 contracts/actions.mjs 카탈로그 · ADR-0006·FIGURE-001
 const FIGURE_ACTIONS = [
   "request_figures",
   "select_figures",
@@ -44,7 +43,6 @@ const FIGURE_ACTIONS = [
   "discard_figures",
 ];
 const FIGURE_REVISIONS = ["revise_design", "revise_figures"];
-const HUMAN_ONLY = ["satisfy", "authorize_publication", ...FIGURE_ACTIONS];
 function agentFeedbackRounds(events = []) {
   let rounds = 0;
   for (const event of events.toReversed()) {
@@ -62,7 +60,7 @@ function agentFeedbackRounds(events = []) {
         break;
       continue;
     }
-    if (["feedback", "revise_brief"].includes(event.kind)) rounds++;
+    if (countsAsRound(event.kind)) rounds++;
   }
   return rounds;
 }
@@ -159,11 +157,11 @@ export async function runAction(service, id, input, actor = "user") {
       !feedbackSchema.safeParse(feedback).success
     )
       fail("시각자료 위치 지시를 확인해 주세요.");
-    if (actor === "agent" && HUMAN_ONLY.includes(type))
-      fail("최종 검수는 사람만 할 수 있습니다. 화면에서 확인해 주세요.", 403);
+    if (!actionAllowed(type, actor))
+      fail(`${actionSpec(type)?.summary}은 사람만 할 수 있습니다. 화면에서 확인해 주세요.`, 403);
     if (
       actor === "agent" &&
-      ["feedback", "revise_brief"].includes(type) &&
+      countsAsRound(type) &&
       agentFeedbackRounds(run.events) >= EDITORIAL_LIMITS.agentFeedbackRounds
     )
       fail(
@@ -293,9 +291,7 @@ export async function runAction(service, id, input, actor = "user") {
     };
     recordEvent(run, service.now(), type, labels[type], {
       by: actor,
-      ...(["feedback", "revise_brief", ...FIGURE_REVISIONS].includes(type)
-        ? { reason: feedback.trim() }
-        : {}),
+      ...(actionSpec(type)?.text ? { reason: feedback.trim() } : {}),
       ...(figures === undefined ? {} : { figures }),
     });
     run.operations = { ...run.operations, [operationId]: signature };

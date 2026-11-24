@@ -104,11 +104,11 @@ export const FIGURE_MARKS = Object.freeze({
 export const FIGURE_STYLE_KEYS = /** @type {const} */ (["accent", "base", "labels"]);
 // 그림 스타일 · 글 하나에 하나를 구성이 고른다 · 그리기 규칙은 paseo/prompts/looks.mjs · ADR-0027
 export const FIGURE_LOOKS = Object.freeze({
-  anatomy: { fits: "실물 비유의 입체 아이소메트릭 그림" },
-  sketchnote: { fits: "개념 정리·단계·요약, 점 격자 종이의 펜과 마커 노트" },
-  tablet: { fits: "대상과 그 상태 변화, 연필 선 아래 어긋난 색 덩어리" },
-  stick: { fits: "사람 사이의 연결·전파·관계, 막대 인물과 강조색 하나" },
-  manual: { fits: "절차·조립·사용법·해도 됨과 안 됨, 아이소메트릭 설명서" },
+  anatomy: { label: "입체 해부도", fits: "실물 비유의 입체 아이소메트릭 그림" },
+  sketchnote: { label: "손그림 노트", fits: "개념 정리·단계·요약, 점 격자 종이의 펜과 마커 노트" },
+  tablet: { label: "연필 스케치", fits: "대상과 그 상태 변화, 연필 선 아래 어긋난 색 덩어리" },
+  stick: { label: "막대 인물", fits: "사람 사이의 연결·전파·관계, 막대 인물과 강조색 하나" },
+  manual: { label: "조립 설명서", fits: "절차·조립·사용법·해도 됨과 안 됨, 아이소메트릭 설명서" },
 });
 export const figureLookSchema = z.enum(Object.keys(FIGURE_LOOKS));
 // 위치 선정 → (사람 선택) → 구성 → (사람 승인) → 생성 · ADR-0026

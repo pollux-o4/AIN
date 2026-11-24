@@ -1,11 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { isPendingStatus } from "../contracts/status.mjs";
 import { directionSchema, lengthRange } from "../contracts/writing-modes.mjs";
+import { actionCommands } from "./actions.mjs";
 import { CliError } from "./client.mjs";
 import { renderUsage } from "./usage-view.mjs";
-
-// 최종 검수(satisfy·authorize_publication)는 사람만 · 화면에서 · ADR-0006
-const ACTIONS = ["pause", "resume", "complete_requirements"];
 
 // 에이전트가 판단에 쓰는 요약 · 본문은 --text일 때만
 function summary(run, { text = false } = {}) {
@@ -23,7 +21,7 @@ function summary(run, { text = false } = {}) {
     // 지금 유효한 요구(요구사항 목록) · ADR-0016
     requirements: run.requirements ?? [],
     unmetRequirements: run.unmetRequirements ?? [],
-    // 시각자료 선택·확인은 사람만 · 화면에서 · FIGURE-001
+    // 시각자료 확정은 사람만 · 위치·스타일 선택과 구성 승인은 에이전트도 · FIGURE-001
     figure: run.figure ?? null,
     findings: run.findings,
     // 이번 회차 변경 표시(문장 편집·교열 수정) · ADR-0018
@@ -41,17 +39,6 @@ function summary(run, { text = false } = {}) {
     },
     ...(text ? { text: run.text } : {}),
   };
-}
-
-async function act(client, id, type, extra = {}) {
-  const run = await client.get(id);
-  const result = await client.action(id, {
-    operationId: randomUUID(),
-    expectedVersion: run.version,
-    type,
-    ...extra,
-  });
-  return summary(result);
 }
 
 async function wait(client, id, { timeout = 1800, interval = 3, sleep }) {
@@ -99,14 +86,7 @@ export const commands = {
     });
     return summary(run);
   },
-  feedback: (c, [id, ...words], _o) =>
-    act(c, need(id), "feedback", { feedback: need(words.join(" "), "수정 내용") }),
-  "approve-brief": (c, [id]) => act(c, need(id), "approve_brief"),
-  "revise-brief": (c, [id, ...words]) =>
-    act(c, need(id), "revise_brief", { feedback: need(words.join(" "), "보정 의견") }),
-  ...Object.fromEntries(
-    ACTIONS.map((type) => [type.replaceAll("_", "-"), (c, [id]) => act(c, need(id), type)]),
-  ),
+  ...actionCommands(summary),
   wait: (c, [id], o, io) => wait(c, need(id), { ...o, sleep: io.sleep }),
   download: (c, [id], o) => c.download(need(id), o.revision),
   // 묶음·문서는 파일로 저장(바이너리 zip을 표준 출력에 섞지 않음) · 결과는 저장 경로 JSON

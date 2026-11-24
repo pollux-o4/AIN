@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ACTION_TYPES } from "./actions.mjs";
 import {
   FIGURE_REVISE_TARGETS,
   figureDirectionsSchema,
@@ -32,23 +33,7 @@ export const createRequestSchema = z.looseObject({
 });
 const actionFieldsSchema = z.looseObject({
   operationId: text(INPUT_LIMITS.id),
-  type: z.enum([
-    "feedback",
-    "pause",
-    "resume",
-    "complete_requirements",
-    "satisfy",
-    "authorize_publication",
-    "approve_brief",
-    "revise_brief",
-    "request_figures",
-    "select_figures",
-    "approve_design",
-    "revise_design",
-    "revise_figures",
-    "confirm_figures",
-    "discard_figures",
-  ]),
+  type: z.enum(ACTION_TYPES),
   expectedVersion: z.number().int(),
   feedback: z.unknown().optional(),
   edit: z.unknown().optional(),

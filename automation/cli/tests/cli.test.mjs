@@ -93,7 +93,15 @@ test("agent_001 CLI drives the write API with a separate token", async (t) => {
   assert.equal(f.calls.at(-1)[2].feedback, "사례를 추가");
   assert.equal(f.calls.at(-1)[3], "agent");
   assert.equal(f.calls.at(-1)[2].expectedVersion, 7);
-  assert.equal((await run(["satisfy", ID])).code, 2);
+  // 구조 입력은 --input · 화면의 위치·스타일 선택과 같은 동작
+  await run(["select-figures", ID, "--input", '{"figures":["f1"],"look":"manual"}']);
+  assert.deepEqual(
+    [f.calls.at(-1)[2].type, f.calls.at(-1)[2].figures, f.calls.at(-1)[2].look],
+    ["select_figures", ["f1"], "manual"],
+  );
+  // 사람만 하는 동작도 같은 이름으로 서버에 보낸다 · 거절(403)은 서버가 판정
+  await run(["satisfy", ID]);
+  assert.deepEqual([f.calls.at(-1)[2].type, f.calls.at(-1)[3]], ["satisfy", "agent"]);
   assert.equal((await run(["download", ID])).out, "본문\n");
   // 바이너리 묶음은 표준 출력이 아니라 파일로 · 바이트 그대로
   await assert.rejects(() => run(["export", ID, "--format", "zip"]), /--out/);

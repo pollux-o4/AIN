@@ -228,7 +228,8 @@ textarea:focus-visible {
 #brief-approval textarea {
   min-height: 0;
 }
-#brief-approval select {
+#brief-approval select,
+.figure-look select {
   font: inherit;
   min-height: 44px;
   padding: 8px 12px;
@@ -2790,6 +2791,16 @@ fieldset.dock-presets {
   align-items: center;
   gap: 8px 14px;
   margin: -20px 0 32px;
+}
+.figure-look {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-weight: 650;
+}
+.figure-look select {
+  width: 100%;
+  font-weight: 400;
 }
 fieldset.figure-list {
   display: grid;

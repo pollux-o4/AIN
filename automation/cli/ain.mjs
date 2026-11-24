@@ -6,6 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { AGENT_TOKEN_FILE, DEFAULT_RUNTIME_URL } from "../contracts/runtime.mjs";
+import { actionUsage } from "./actions.mjs";
 import { AinClient, CliError } from "./client.mjs";
 import { commands } from "./commands.mjs";
 
@@ -16,10 +17,8 @@ export const USAGE = `ain <명령> [인자] · 출력 JSON(download는 TXT)
   usage <id> [--json]                    시간·토큰 사용량(회차→단계→시도, 큰 것부터)
   new --idea <글감> [--mode m] [--level l] [--length 4500|4000-5000] [--source t | --source-file f]   초안 요청(AI 비용)
   wait <id> [--timeout 초]               진행 종료까지 대기 후 본문 포함 요약
-  feedback <id> <수정 내용>              수정 요청(AI 비용)
-  approve-brief <id>                     수정 해석 승인 → 수정 착수(AI 비용)
-  revise-brief <id> <보정 의견>          수정 해석 다시 요청(AI 비용)
-  pause|resume|complete-requirements <id>   (만족·발행 승인은 사람이 화면에서)
+${actionUsage()}
+                                         구조 입력은 --input '{"figures":["f1"],"look":"manual"}'
   download <id> [--revision n]           TXT 출력
   export <id> --out <파일> [--format txt|html|zip] [--motion animated|static] [--revision n]
                                          내보내기(zip: 원고 md·html·그림 SVG·manifest.json)
@@ -43,6 +42,7 @@ export async function main(argv, io) {
         "format",
         "motion",
         "out",
+        "input",
       ]
         .map((name) => [name, { type: "string" }])
         .concat([
