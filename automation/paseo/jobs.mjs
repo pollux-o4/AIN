@@ -28,6 +28,8 @@ import { Workers } from "./workers.mjs";
 // 요청당 상한 · 구간 초고 실측 96~116초(사고 토큰 포함) · 품질 위해 사고 단계 유지하고 시간 수용
 // 가장 긴 단계(시각자료 생성)가 상한
 const MAX_JOB_MS = FIGURE_LIMITS.generateMs;
+// 결과가 편집 계약을 어긴 실패의 공통 사유 · 세부 원인은 diagnostic에만 남긴다
+const CONTRACT_ERROR = "AI output did not satisfy the editorial contract; inspect Paseo session";
 const PROVIDER_CACHE_MS = 60000;
 
 const TERMINAL = ["completed", "failed"];
@@ -421,22 +423,44 @@ export class Jobs {
     return true;
   }
 
-  // 그림 묶음: 한 장씩 확인하고 모두 끝나면 결과를 합쳐 한 번에 검사 · 한 장이라도 실패하면 묶음 실패
-  // shortcut: 실패 뒤 재개는 상태가 바뀌어 끝난 장도 다시 그림, 실패가 잦으면 끝난 장 결과 재사용 검토
+  // 그림 묶음: 한 장씩 확인하고 모두 끝나면(성공·실패) 결과를 합쳐 한 번에 검사 · ADR-0026
+  // 한 장이라도 그렸으면 그린 것은 결과로 넘기고 실패한 장은 사유와 함께 알린다(끝난 장을 다시 그리지 않게)
+  // 모두 실패하면 묶음 실패, 사람 조치가 필요한 장이 있으면 묶음 전체가 기다린다
   async #pollBatch(head) {
     const children = [];
     for (const child of head.parts) children.push(await this.poll(child));
     return this.locked(head.id, async () => {
       const job = await this.read(head.id);
       if (["completed", "failed"].includes(job.status)) return job;
-      const broken = children.find((child) => ["failed", "needs_attention"].includes(child.status));
-      if (broken) {
-        job.status = broken.status;
-        job.error = broken.error;
-        if (broken.failureKind) job.failureKind = broken.failureKind;
+      const settle = (child) => {
+        job.status = child.status;
+        job.error = child.error;
+        if (child.failureKind) job.failureKind = child.failureKind;
+        return this.save(job);
+      };
+      const waiting = children.find((child) => child.status === "needs_attention");
+      if (waiting) return settle(waiting);
+      if (!children.every((child) => ["completed", "failed"].includes(child.status))) return job;
+      // 장마다 자기 자리 그림만 받는다 · 자기 그림이 없으면 그 장만 실패(다른 장 결과를 막지 않게)
+      const own = (child) =>
+        child.status === "completed"
+          ? child.event.output.figures.filter((figure) => figure.id === child.action.figureId)
+          : [];
+      const done = children.filter((child) => own(child).length);
+      if (!done.length) {
+        const failure = children.find((child) => child.status === "failed");
+        if (failure) return settle(failure);
+        job.status = "failed";
+        job.failureKind = "invalid_output";
+        job.error = CONTRACT_ERROR;
         return this.save(job);
       }
-      if (!children.every((child) => child.status === "completed")) return job;
+      const failed = children
+        .filter((child) => !own(child).length)
+        .map((child) => ({
+          id: child.action.figureId,
+          error: child.status === "failed" ? child.error : "그림 결과가 이 자리와 맞지 않습니다",
+        }));
       job.event = {
         id: `${job.id}-result`,
         actor: "adapter",
@@ -446,7 +470,8 @@ export class Jobs {
         stage: job.action.stage,
         pass: job.action.pass,
         figureIds: job.action.figureIds,
-        output: { figures: children.flatMap((child) => child.event.output.figures) },
+        output: { figures: done.flatMap(own) },
+        ...(failed.length ? { failed } : {}),
       };
       try {
         transition(job.state, job.event);
@@ -456,7 +481,7 @@ export class Jobs {
         job.status = "failed";
         job.failureKind = "invalid_output";
         job.diagnostic = String(error?.message ?? error).slice(0, 600);
-        job.error = "AI output did not satisfy the editorial contract; inspect Paseo session";
+        job.error = CONTRACT_ERROR;
       }
       return this.save(job);
     });
@@ -608,7 +633,7 @@ export class Jobs {
           job.diagnostic = String(error?.message ?? error)
             .replace(/\/[^\s"']+/g, "[PATH]")
             .slice(0, 600);
-          job.error = "AI output did not satisfy the editorial contract; inspect Paseo session";
+          job.error = CONTRACT_ERROR;
         }
       } else {
         job.status = "needs_attention";

@@ -182,7 +182,16 @@ test("FIGURE-001 작업: 시각자료 요청은 담당 세션 하나 · 본문�
 });
 
 // ADR-0026: 같은 층의 그림들은 장마다 세션을 따로 두고 동시에 시작하며, 모두 끝나면 결과를 합쳐 한 번에 넘긴다
-test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과를 합친다", async () => {
+// 형식 오류는 같은 세션에 한 번 다시 묻는다 · 실제 대기 없이 결과가 정해질 때까지 확인을 되풀이
+async function settled(jobs, id) {
+  for (let turn = 0; turn < 5; turn += 1) {
+    const job = await jobs.poll(id);
+    if (job.status !== "running") return job;
+  }
+  throw new Error("batch did not settle");
+}
+// broken: 잘못된 결과를 내는 그림 id
+async function figureBatch(broken = new Set()) {
   const root = await mkdtemp(join(scratch.path, "batch-"));
   const second = "그래서 나눕니다.";
   let state = proposing();
@@ -238,7 +247,10 @@ test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과�
           finished.add(Number(id.slice(1)) - 1);
           return {
             status: "idle",
-            lastMessage: JSON.stringify({ figures: [{ id, svg: SVG, alt: `${id} 설명` }] }),
+            // 계약 위반(다른 그림 id)은 다시 묻지 않고 그 장만 실패
+            lastMessage: JSON.stringify({
+              figures: [{ id: broken.has(id) ? "f9" : id, svg: SVG, alt: `${id} 설명` }],
+            }),
           };
         },
         archive: async () => ({}),
@@ -249,6 +261,11 @@ test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과�
   const jobs = new Jobs({ client, root: join(root, "jobs"), workRoot: join(root, "work") });
   const ai = { provider: "fixture", model: "fixture-model" };
   const batch = await jobs.create({ state, ai });
+  return { state, jobs, batch, created, finished, ai };
+}
+
+test("ADR-0026 묶음 생성 시작: 어느 장도 끝나기 전에 모든 장의 세션이 시작된다", async () => {
+  const { state, jobs, batch, created, finished, ai } = await figureBatch();
   // 어느 장도 끝나기 전에 두 장의 세션이 모두 시작된다
   assert.deepEqual([created.length, finished.size], [2, 0]);
   assert.deepEqual(
@@ -257,6 +274,10 @@ test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과�
   );
   assert.equal((await jobs.create({ state, ai })).id, batch.id);
   assert.equal(created.length, 2);
+});
+
+test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과를 합친다", async () => {
+  const { state, jobs, batch } = await figureBatch();
   const done = await jobs.poll(batch.id);
   assert.deepEqual(
     [done.status, done.event.figureIds, done.event.output.figures.map((f) => f.id)],
@@ -265,6 +286,40 @@ test("ADR-0026 묶음 생성: 그림마다 동시에 작업을 만들고 결과�
   const next = transition(state, done.event).state;
   assert.equal(next.status, "awaiting_figure_review");
   assert.equal((await jobs.describe(batch.id)).figure.id, "f1,f2");
+});
+
+// 한 장이 실패해도 그린 장은 결과로 넘기고, 실패한 장만 사유와 함께 다시 그릴 수 있다
+test("ADR-0026 그림 단위 실패: 그린 장은 보존하고 실패한 장만 다시 그린다", async () => {
+  const { state, jobs, batch } = await figureBatch(new Set(["f2"]));
+  const done = await settled(jobs, batch.id);
+  assert.equal(done.status, "completed", `${done.error} ${done.diagnostic}`);
+  assert.deepEqual(
+    done.event.output.figures.map((f) => f.id),
+    ["f1"],
+  );
+  assert.deepEqual(
+    done.event.failed.map((f) => f.id),
+    ["f2"],
+  );
+  let next = transition(state, done.event).state;
+  assert.equal(next.status, "awaiting_figure_review");
+  assert.deepEqual(
+    next.figure.items.map((item) => item.id),
+    ["f1"],
+  );
+  assert.deepEqual(Object.keys(next.figure.failed), ["f2"]);
+  next = send(next, "retry_figures", { reviewedRevision: 1, figures: ["f2"] });
+  assert.deepEqual(nextAction(next).figureIds, ["f2"]);
+  assert.deepEqual(
+    next.figure.items.map((item) => item.id),
+    ["f1"],
+  );
+  assert.equal(next.figure.failed, undefined);
+});
+
+test("ADR-0026 그림 단위 실패: 모두 실패하면 묶음 실패", async () => {
+  const { jobs, batch } = await figureBatch(new Set(["f1", "f2"]));
+  assert.equal((await settled(jobs, batch.id)).status, "failed");
 });
 
 test("FIGURE-001 위치 지시: 사용자 지시가 위치 제안·생성 프롬프트에 우선 기준으로 전달", () => {
