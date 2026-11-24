@@ -122,11 +122,11 @@ export class EditorialService {
   }
   async resumePending() {
     const resumed = [];
+    // 연결이 끊긴 글도 다시 잇는다 · 보완이 필요한 글은 거른다
     for (const { id } of this.store.pending()) {
-      const run = this.store.get(id);
-      if (flowIssue(run.state) || !pending(run.state)) continue;
-      await this.connect(run.id);
-      resumed.push(run.id);
+      if (flowIssue(this.store.get(id).state)) continue;
+      await this.connect(id);
+      resumed.push(id);
     }
     return resumed;
   }

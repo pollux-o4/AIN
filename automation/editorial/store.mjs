@@ -2,18 +2,26 @@ import { chmodSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { PENDING_STATUSES } from "../contracts/status.mjs";
+import { flowIssue } from "./domain/machine.mjs";
 
 // 글 기록은 한 건이 수 MB라 목록 판단은 SQL이 필요한 칸만 뽑는다 · 전체 파싱은 메모리 고갈
-const PENDING_SQL = `SELECT id, json_extract(value, '$.state.status') AS status,
-  json_extract(value, '$.state.idea') AS idea, json_extract(value, '$.issue') AS issue
-  FROM editorial_runs WHERE json_extract(value, '$.state.status') IN (${PENDING_STATUSES.map(() => "?").join(",")})`;
+const PENDING_SQL = `SELECT value FROM editorial_runs
+  WHERE json_extract(value, '$.state.status') IN (${PENDING_STATUSES.map(() => "?").join(",")})`;
 
-/** 대기 상태 글 요약 · 서비스와 기동 제어가 같은 질의를 쓴다 @param {DatabaseSync} db */
+/** 대기 상태 글 요약 · 서비스와 기동 제어가 같은 질의·멈춤 판정을 쓴다 @param {DatabaseSync} db */
 export const pendingRuns = (db) =>
   db
     .prepare(PENDING_SQL)
     .all(...PENDING_STATUSES)
-    .map(({ id, status, idea, issue }) => ({ id, issue, state: { status, idea } }));
+    .map(({ value }) => {
+      const { id, issue, state } = JSON.parse(value);
+      // 사람 확인을 기다리는 멈춤: 저장된 문제 또는 상태 계약 위반(요구사항 보완 필요)
+      return {
+        id,
+        issue: issue || flowIssue(state),
+        state: { status: state.status, idea: state.idea },
+      };
+    });
 
 export class EditorialStore {
   // shortcut: 상태·revision 이력을 한 JSON에 저장(한 건 수 MB), 기록이 더 커지면 이력 분리 검토

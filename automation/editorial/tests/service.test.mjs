@@ -98,6 +98,25 @@ async function finish(service, id) {
     if (!(await service.advance(id)).continue && !(await approveBrief(service, id))) return;
   throw new Error("Did not finish");
 }
+// 보완이 필요한 글은 저장된 issue가 없어도 멈춤 · 재시작 차단에서 빠져야 함
+test("pending 요약은 상태 계약 위반 글을 멈춤(issue)으로 본다", async (t) => {
+  const f = await fixture(t);
+  const run = await f.service.create({ requestId: "halt-flow", idea: "보완 글" });
+  const stored = f.store.get(run.id);
+  stored.state.plan = ["broken"];
+  f.store.save(stored);
+  const [summary] = f.store.pending().filter((r) => r.id === run.id);
+  assert.equal(stored.issue ?? null, null);
+  assert.ok(summary.issue);
+  assert.deepEqual(
+    await new EditorialService({
+      store: f.store,
+      jobs: f.jobs,
+      dispatch: f.service.dispatch,
+    }).resumePending(),
+    [],
+  );
+});
 test("resumePending은 완료 글을 건너뛰고 대기 글만 연결한다", async (t) => {
   const f = await fixture(t),
     s = f.service;
