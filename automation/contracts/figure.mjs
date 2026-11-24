@@ -110,6 +110,7 @@ export const FIGURE_SPOTS = Object.freeze({
   drawing: "그리는 중",
   queued: "그리기 대기",
   stopped: "멈춤 · 확인 필요",
+  failed: "실패 · 다시 요청 가능",
 });
 // 화면의 그림 주소 · 서버 본문 HTML과 화면이 같은 규칙 · 버전(v)이 바뀌면 새 파일
 /** @param {string} runId @param {string} figureId @param {number} version */

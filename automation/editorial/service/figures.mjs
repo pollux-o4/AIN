@@ -59,6 +59,8 @@ export function figureView(state, routesAvailable = ["svg"]) {
     style: figure.style ?? null,
     motifs: figure.motifs ?? [],
     selected: figure.selected ?? [],
+    // 실패한 그림과 사유 · 그 그림만 다시 요청할 수 있다 · ADR-0026
+    failed: figure.failed ?? {},
     // 위치 제안이 글의 단위를 얼마나 훑었는지(세기) · 부족하면 gap 문장
     coverage: figure.coverage ? { ...figure.coverage, gap: coverageGap(figure.coverage) } : null,
     // 생성 중인 그림 한 장과 층 · 마친 그림 수는 items

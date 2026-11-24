@@ -39,6 +39,7 @@ const FIGURE_ACTIONS = [
   "approve_design",
   "revise_design",
   "revise_figures",
+  "retry_figures",
   "confirm_figures",
   "discard_figures",
 ];
@@ -280,6 +281,7 @@ export async function runAction(service, id, input, actor = "user") {
       approve_design: "시각자료 구성 승인",
       revise_design: "시각자료 구성 다시 요청",
       revise_figures: target === "compose" ? "시각자료 다시 구성 요청" : "시각자료 부분 수정 요청",
+      retry_figures: "실패한 시각자료 다시 그리기",
       confirm_figures: "시각자료 확인",
       discard_figures: "시각자료 없이 진행",
       resume:

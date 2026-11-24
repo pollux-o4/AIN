@@ -95,6 +95,7 @@ const runSchema = z.object({
         .default(null),
       motifs: z.array(z.object({ name: z.string(), look: z.string() })).default([]),
       selected: z.array(z.string()),
+      failed: z.record(z.string(), z.string()).default({}),
       // 서버에 연결된 경로 · 없는 경로는 고를 수 없다(FIGURE-002)
       routesAvailable: z.array(z.enum(FIGURE_ROUTES)).default(["svg"]),
       coverage: z

@@ -90,6 +90,11 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
     figures: figureIdsSchema,
     target: z.enum(FIGURE_REVISE_TARGETS),
   }),
+  // 실패한 그림만 다시 · 끝난 그림은 그대로 · ADR-0026
+  actionFieldsSchema.extend({
+    type: z.literal("retry_figures"),
+    figures: figureIdsSchema,
+  }),
   actionFieldsSchema.extend({
     type: actionFieldsSchema.shape.type.exclude([
       "feedback",
@@ -99,6 +104,7 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
       "approve_design",
       "revise_design",
       "revise_figures",
+      "retry_figures",
       "confirm_figures",
     ]),
   }),

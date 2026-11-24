@@ -32,6 +32,7 @@ export const FIGURE_USER_EVENTS = Object.freeze([
   "approve_design",
   "revise_design",
   "revise_figures",
+  "retry_figures",
   "confirm_figures",
   "discard_figures",
 ]);
@@ -104,6 +105,13 @@ export function figureIssue(state, status) {
       ? null
       : "Every selected figure needs a design";
   }
+  const failedIds = Object.keys(figure.failed ?? {});
+  const madeIds = new Set((figure.items ?? []).map((item) => item.id));
+  if (
+    failedIds.length &&
+    (!subset(failedIds, figure.selected) || failedIds.some((id) => madeIds.has(id)))
+  )
+    return "Failed figures must be selected and not prepared";
   if (figure.phase === "generate") {
     const { ids, pass } = currentOf(figure);
     const at = pass === FIGURE_FIX_PASS ? FIGURE_PASSES.length : FIGURE_PASSES.indexOf(pass);
@@ -308,11 +316,29 @@ function acceptFigure(figure, id, output, { keepNotes }) {
     ...(keepNotes && made.notes?.trim() ? { notes: made.notes.trim() } : {}),
   };
 }
-// 한 층을 마친 뒤: 같은 그림의 다음 층 → 다음 그림의 첫 층 → 사람 확인
+// 그림 단위 실패 · 묶음 결과가 실패한 그림 id와 사유를 함께 보낸다 · 한 장도 못 그리면 묶음 실패(fail 사건)로 처리 · ADR-0026
+// 사유는 화면에 보일 짧은 문장만 남긴다(원문·세션 내용을 담지 않음)
+function failuresOf(event, ids) {
+  const failures = new Map(
+    (event.failed ?? []).map(({ id, error }) => [id, String(error ?? "").slice(0, 200) || "실패"]),
+  );
+  requireThat(
+    [...failures.keys()].every((id) => ids.includes(id)) && failures.size < ids.length,
+    "Figure failures must be part of the batch and leave at least one figure",
+  );
+  return failures;
+}
+// 한 층을 마친 뒤: 같은 그림의 다음 층 → 다음 그림의 첫 층 → 사람 확인 · 실패한 그림은 빼고 사유를 남긴다
 // shortcut: 그리기가 한 층(FIGURE_PASSES)이 된 뒤에도 층 사이 인계(passDrafts·previous)를 남겨 둠, 층을 다시 나누지 않기로 확정되면 제거 검토
-function advanceFigure(state, output) {
+function advanceFigure(state, output, failures = new Map()) {
   const figure = state.figure;
-  const { ids, pass } = currentOf(figure);
+  const { ids: batch, pass } = currentOf(figure);
+  const ids = batch.filter((id) => !failures.has(id));
+  const failed = Object.fromEntries([
+    ...Object.entries(figure.failed ?? {}).filter(([id]) => !ids.includes(id)),
+    ...failures,
+  ]);
+  const withFailed = Object.keys(failed).length ? { failed } : {};
   const nextPass =
     pass === FIGURE_FIX_PASS ? undefined : FIGURE_PASSES[FIGURE_PASSES.indexOf(pass) + 1];
   const {
@@ -321,11 +347,13 @@ function advanceFigure(state, output) {
     pass: _pass,
     drafts: _drafts,
     passDrafts: _passDrafts,
+    failed: _failed,
     ...rest
   } = figure;
   if (nextPass) {
     state.figure = {
       ...rest,
+      ...withFailed,
       current: { ids, pass: nextPass },
       passDrafts: Object.fromEntries(
         ids.map((id) => [id, acceptFigure(figure, id, output, { keepNotes: true })]),
@@ -333,17 +361,24 @@ function advanceFigure(state, output) {
     };
     return;
   }
-  const made = [
-    ...(figure.items ?? []),
-    ...ids.map((id) => acceptFigure(figure, id, output, { keepNotes: false })),
-  ];
-  const items = figure.selected.flatMap((sid) => made.filter((item) => item.id === sid));
-  const next = pendingIds(figure, items);
+  const made = new Map(
+    [
+      ...(figure.items ?? []),
+      ...ids.map((id) => acceptFigure(figure, id, output, { keepNotes: false })),
+    ].map((item) => [item.id, item]),
+  );
+  const items = figure.selected.flatMap((id) => (made.has(id) ? [made.get(id)] : []));
+  const next = pendingIds(figure, items).filter((id) => !failed[id]);
   if (next.length) {
-    state.figure = { ...rest, items, current: { ids: next, pass: FIGURE_PASSES[0] } };
+    state.figure = {
+      ...rest,
+      ...withFailed,
+      items,
+      current: { ids: next, pass: FIGURE_PASSES[0] },
+    };
     return;
   }
-  state.figure = { ...rest, phase: "review", items };
+  state.figure = { ...rest, ...withFailed, phase: "review", items };
   state.status = "awaiting_figure_review";
 }
 const ordered = (ids, pool) => pool.filter((id) => ids.includes(id));
@@ -415,7 +450,7 @@ export function figureTransition(state, event) {
           coverage: coverageOf(draftText(state), candidates, output.skipped ?? []),
         };
         state.status = "awaiting_figure_choice";
-      } else advanceFigure(state, output);
+      } else advanceFigure(state, output, failuresOf(event, currentOf(figure).ids));
       return true;
     }
     case "select_figures": {
@@ -511,6 +546,30 @@ export function figureTransition(state, event) {
       state.status = FIGURE_WAITING;
       return true;
     }
+    // 실패한 그림만 다시 그린다 · 끝난 그림은 그대로 둔다 · ADR-0026
+    case "retry_figures": {
+      const failed = Object.keys(figure?.failed ?? {});
+      requireThat(
+        state.status === "awaiting_figure_review" &&
+          reviewed &&
+          event.figures?.length > 0 &&
+          subset(event.figures, failed),
+        "Figure retry requires failed figures",
+      );
+      const ids = ordered(event.figures, figure.selected);
+      const rest = Object.fromEntries(
+        failed.filter((id) => !ids.includes(id)).map((id) => [id, figure.failed[id]]),
+      );
+      const { failed: _failed, passDrafts: _drafts, ...kept } = figure;
+      state.figure = {
+        ...kept,
+        ...(Object.keys(rest).length ? { failed: rest } : {}),
+        phase: "generate",
+        current: { ids, pass: FIGURE_PASSES[0] },
+      };
+      state.status = FIGURE_WAITING;
+      return true;
+    }
     case "confirm_figures": {
       const ids = figure?.items?.map((item) => item.id) ?? [];
       const keep = event.figures ?? ids;
@@ -518,8 +577,9 @@ export function figureTransition(state, event) {
         state.status === "awaiting_figure_review" && reviewed && subset(keep, ids),
         "Figure confirmation requires current prepared figures",
       );
+      const { failed: _failed, ...confirmed } = figure;
       state.figure = {
-        ...figure,
+        ...confirmed,
         phase: "confirmed",
         items: figure.items.filter((item) => keep.includes(item.id)),
         confirmedEventId: event.id,
@@ -598,6 +658,7 @@ export function figureSpots(figure, busy = false) {
   const candidates = new Map(figure.candidates.map((candidate) => [candidate.id, candidate]));
   const working = new Set(figure.phase === "generate" ? currentOf(figure).ids : []);
   const spotOf = (id) => {
+    if (figure.failed?.[id]) return "failed";
     if (figure.phase === "compose") return busy ? "composing" : "stopped";
     if (figure.phase === "design") return "design";
     if (!working.has(id)) return "queued";
@@ -607,6 +668,8 @@ export function figureSpots(figure, busy = false) {
     const item = drawn.get(id);
     if (item) return [{ ...item, item }];
     const candidate = candidates.get(id);
-    return candidate ? [{ ...candidate, spot: spotOf(id) }] : [];
+    if (!candidate) return [];
+    const spot = spotOf(id);
+    return [{ ...candidate, spot, ...(spot === "failed" ? { error: figure.failed[id] } : {}) }];
   });
 }

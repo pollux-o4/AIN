@@ -31,6 +31,7 @@ export const ACTIONS = Object.freeze({
     text: "수정 의견",
     summary: "그림 수정 요청",
   },
+  retry_figures: { actor: "agent", cost: true, summary: "실패한 그림만 다시 그리기" },
   confirm_figures: { actor: "human", summary: "시각자료 확정" },
   discard_figures: { actor: "human", summary: "시각자료 버리기" },
   satisfy: { actor: "human", summary: "만족(최종 검수)" },
