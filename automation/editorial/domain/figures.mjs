@@ -10,6 +10,8 @@ import {
   figureOutputSchemas,
 } from "../../contracts/figure.mjs";
 import { bindConsistency, consistencyFor } from "./figure-consistency.mjs";
+import { anchorSection } from "./figure-placement.mjs";
+import { currentOf, passOf, pendingIds } from "./figure-progress.mjs";
 
 const PHASE_STATUS = {
   propose: ["waiting_figure"],
@@ -39,18 +41,22 @@ export const FIGURE_USER_EVENTS = Object.freeze([
 function requireThat(condition, message) {
   if (!condition) throw new Error(message);
 }
-// 아직 그림이 없는 고른 자리 · 되돌린 그림은 items에서 빠져 다시 만든다
-const pendingIds = (figure, items = figure.items ?? []) => {
-  const done = new Set(items.map((item) => item.id));
-  return (figure.selected ?? []).filter((id) => !done.has(id));
+// 고른 id를 기준 목록 순서로 · 한 번 색인해 O(n+m)
+const ordered = (ids, pool) => {
+  const wanted = new Set(ids);
+  return pool.filter((id) => wanted.has(id));
 };
-// 지금 생성 중인 묶음: 같은 층을 밟는 그림들 · 그림마다 따로 그리되 동시에 돌린다 · ADR-0026
-// 묶음 도입 전 상태(current.id·draft 한 장)도 같은 모양으로 읽는다
-export function currentOf(figure) {
-  const current = figure.current;
-  if (current) return { ids: current.ids ?? [current.id], pass: current.pass };
-  return { ids: pendingIds(figure), pass: FIGURE_PASSES[0] };
-}
+const omit = (object, keys) =>
+  Object.fromEntries(Object.entries(object).filter(([key]) => !keys.includes(key)));
+// 생성 진행 중에만 뜻이 있는 상태(지금 묶음·층 사이 인계, 묶음 도입 전 모양 포함) · 단계를 옮길 때 함께 지운다
+const PROGRESS_KEYS = ["current", "draft", "pass", "drafts", "passDrafts"];
+// 구성이 정한 글 전체 일관성 계약 · 새로 고르면 다시 정한다 · ADR-0022·ADR-0027
+const CONSISTENCY_KEYS = ["world", "style", "motifs", "look"];
+// 실패 기록(그림 id → 사유) · 비면 키를 남기지 않는다 · ADR-0026
+const withFailures = (figure, failed) => {
+  const rest = omit(figure, ["failed"]);
+  return Object.keys(failed).length ? { ...rest, failed } : rest;
+};
 // 결과가 가리키는 묶음이 지금 묶음과 같은가 · 묶음 표시가 없는 결과는 내용(그림 id) 검사에 맡긴다
 const sameBatch = (event, ids) => {
   const got = event.figureIds ?? (event.figureId ? [event.figureId] : null);
@@ -58,7 +64,6 @@ const sameBatch = (event, ids) => {
 };
 const draftsOf = (figure) =>
   figure.passDrafts ?? (figure.draft ? { [figure.draft.id]: figure.draft } : {});
-export const passOf = (figure) => currentOf(figure).pass;
 const draftText = (state) => state.artifacts?.draft?.output?.text ?? "";
 const effectiveStatus = (state) =>
   ["paused", "failed"].includes(state.status) ? state.resumeStatus : state.status;
@@ -334,26 +339,17 @@ function advanceFigure(state, output, failures = new Map()) {
   const figure = state.figure;
   const { ids: batch, pass } = currentOf(figure);
   const ids = batch.filter((id) => !failures.has(id));
+  const drawn = new Set(ids);
   const failed = Object.fromEntries([
-    ...Object.entries(figure.failed ?? {}).filter(([id]) => !ids.includes(id)),
+    ...Object.entries(figure.failed ?? {}).filter(([id]) => !drawn.has(id)),
     ...failures,
   ]);
-  const withFailed = Object.keys(failed).length ? { failed } : {};
   const nextPass =
     pass === FIGURE_FIX_PASS ? undefined : FIGURE_PASSES[FIGURE_PASSES.indexOf(pass) + 1];
-  const {
-    draft: _draft,
-    current: _current,
-    pass: _pass,
-    drafts: _drafts,
-    passDrafts: _passDrafts,
-    failed: _failed,
-    ...rest
-  } = figure;
+  const rest = withFailures(omit(figure, PROGRESS_KEYS), failed);
   if (nextPass) {
     state.figure = {
       ...rest,
-      ...withFailed,
       current: { ids, pass: nextPass },
       passDrafts: Object.fromEntries(
         ids.map((id) => [id, acceptFigure(figure, id, output, { keepNotes: true })]),
@@ -372,27 +368,19 @@ function advanceFigure(state, output, failures = new Map()) {
   if (next.length) {
     state.figure = {
       ...rest,
-      ...withFailed,
       items,
       current: { ids: next, pass: FIGURE_PASSES[0] },
     };
     return;
   }
-  state.figure = { ...rest, ...withFailed, phase: "review", items };
+  state.figure = { ...rest, phase: "review", items };
   state.status = "awaiting_figure_review";
 }
-const ordered = (ids, pool) => pool.filter((id) => ids.includes(id));
 const feedbackText = (value) =>
   typeof value === "string" && value.trim().length > 0 && value.length <= FIGURE_LIMITS.feedback;
 // 다시 구성: 고른 자리 전부면 세계·계약도 새로, 일부면 나머지 구성과 세계·계약을 유지 · ADR-0026
 function recompose(figure, targets, feedback) {
-  const {
-    current: _current,
-    draft: _draft,
-    passDrafts: _passDrafts,
-    recompose: _old,
-    ...rest
-  } = figure;
+  const rest = omit(figure, [...PROGRESS_KEYS, "recompose"]);
   const all = targets.length === figure.selected.length;
   return { ...rest, phase: "compose", feedback, ...(all ? {} : { recompose: targets }) };
 }
@@ -460,9 +448,8 @@ export function figureTransition(state, event) {
         "Figure selection requires current candidates",
       );
       const selected = ordered(event.figures, ids);
-      const { world: _world, style: _style, motifs: _motifs, look: _look, ...fresh } = figure;
       state.figure = {
-        ...fresh,
+        ...omit(figure, CONSISTENCY_KEYS),
         ...(event.look ? { look: event.look } : {}),
         phase: "compose",
         candidates: withRoutes(
@@ -557,13 +544,8 @@ export function figureTransition(state, event) {
         "Figure retry requires failed figures",
       );
       const ids = ordered(event.figures, figure.selected);
-      const rest = Object.fromEntries(
-        failed.filter((id) => !ids.includes(id)).map((id) => [id, figure.failed[id]]),
-      );
-      const { failed: _failed, passDrafts: _drafts, ...kept } = figure;
       state.figure = {
-        ...kept,
-        ...(Object.keys(rest).length ? { failed: rest } : {}),
+        ...withFailures(omit(figure, PROGRESS_KEYS), omit(figure.failed, ids)),
         phase: "generate",
         current: { ids, pass: FIGURE_PASSES[0] },
       };
@@ -577,9 +559,8 @@ export function figureTransition(state, event) {
         state.status === "awaiting_figure_review" && reviewed && subset(keep, ids),
         "Figure confirmation requires current prepared figures",
       );
-      const { failed: _failed, ...confirmed } = figure;
       state.figure = {
-        ...confirmed,
+        ...omit(figure, ["failed"]),
         phase: "confirmed",
         items: figure.items.filter((item) => keep.includes(item.id)),
         confirmedEventId: event.id,
@@ -598,78 +579,4 @@ export function figureTransition(state, event) {
     default:
       return false;
   }
-}
-
-// 본문에 놓인 그림 · 그림 파일 제공과 본문 표시가 같은 자리 규칙(figureSpots)을 쓴다
-export const placedFigures = (state) =>
-  figureSpots(state.figure).flatMap((spot) => (spot.item ? [spot.item] : []));
-// 본문을 바꾸지 않고 앵커 문장이 든 문단 뒤에 끼울 자리를 계산 → [{text} | {figure}] 순서열
-// 문단 경계는 빈 줄 · 코드 블록(```) 안에서는 끊지 않음
-export function placeFigures(text, items) {
-  const cuts = items
-    .map((figure) => {
-      const at = text.indexOf(figure.anchor);
-      if (at < 0) return null;
-      let end = at + figure.anchor.length;
-      for (;;) {
-        const next = text.indexOf("\n\n", end);
-        if (next < 0) return { end: text.length, figure };
-        end = next;
-        if ((text.slice(0, end).match(/^```/gm)?.length ?? 0) % 2 === 0) return { end, figure };
-        end += 2;
-      }
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.end - b.end);
-  const segments = [];
-  let from = 0;
-  for (const { end, figure } of cuts) {
-    if (end > from) segments.push({ text: text.slice(from, end) });
-    segments.push({ figure });
-    from = end;
-  }
-  if (from < text.length) segments.push({ text: text.slice(from) });
-  return segments;
-}
-// 후보가 놓일 구간 제목(가장 가까운 앞 소제목) · 사람이 위치를 가늠하는 용도
-export function anchorSection(text, anchor) {
-  const at = text.indexOf(anchor);
-  if (at < 0) return null;
-  return (
-    text
-      .slice(0, at)
-      .match(/^#{2,}\s+(.+)$/gm)
-      ?.at(-1)
-      ?.replace(/^#+\s+/, "") ?? null
-  );
-}
-// 고른 자리가 있고 아직 확정되지 않은 단계 · 이 밖(제안 중·버림)에는 놓을 자리가 없다
-const SELECTED_PHASES = new Set(["compose", "design", "generate", "review"]);
-// 본문에 놓을 그림 자리 · 그림이 있으면 그림, 없으면 고른 자리와 그 상태(FIGURE_SPOTS) · FIGURE-001
-// 위치 고르기는 모든 후보, 확정 전 단계는 고른 자리 전부, 확정 뒤는 남긴 그림만 · busy: 실제 AI 작업 진행 여부
-/** @returns {Array<{ id: string, anchor: string, item?: object, spot?: string }>} */
-export function figureSpots(figure, busy = false) {
-  if (figure?.phase === "choose")
-    return (figure.candidates ?? []).map((candidate) => ({ ...candidate, spot: "candidate" }));
-  const items = figure?.items ?? [];
-  if (figure?.phase === "confirmed") return items.map((item) => ({ ...item, item }));
-  if (!SELECTED_PHASES.has(figure?.phase)) return [];
-  const drawn = new Map(items.map((item) => [item.id, item]));
-  const candidates = new Map(figure.candidates.map((candidate) => [candidate.id, candidate]));
-  const working = new Set(figure.phase === "generate" ? currentOf(figure).ids : []);
-  const spotOf = (id) => {
-    if (figure.failed?.[id]) return "failed";
-    if (figure.phase === "compose") return busy ? "composing" : "stopped";
-    if (figure.phase === "design") return "design";
-    if (!working.has(id)) return "queued";
-    return busy ? "drawing" : "stopped";
-  };
-  return figure.selected.flatMap((id) => {
-    const item = drawn.get(id);
-    if (item) return [{ ...item, item }];
-    const candidate = candidates.get(id);
-    if (!candidate) return [];
-    const spot = spotOf(id);
-    return [{ ...candidate, spot, ...(spot === "failed" ? { error: figure.failed[id] } : {}) }];
-  });
 }

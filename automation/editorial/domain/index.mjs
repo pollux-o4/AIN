@@ -1,10 +1,5 @@
-export {
-  anchorSection,
-  figureSpots,
-  partActions,
-  placedFigures,
-  placeFigures,
-} from "./figures.mjs";
+export { anchorSection, figureSpots, placedFigures, placeFigures } from "./figure-placement.mjs";
+export { partActions } from "./figures.mjs";
 export { requirementValue, standing } from "./ledger.mjs";
 export { readerLength } from "./length.mjs";
 export {

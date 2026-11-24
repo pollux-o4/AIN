@@ -418,7 +418,12 @@ test("user satisfaction and separate publication authorization never dispatch; f
   const text = s.download(run.id).text;
   // 발행용 넘기기는 승인 전 거부 · 작업용 내려받기와 분리(ADR-0012)
   const sent = new Map();
-  s.outbox = { write: async (name, body) => (sent.set(name, body), `/outbox/${name}`) };
+  s.outbox = {
+    write: async (name, body) => {
+      sent.set(name, body);
+      return `/outbox/${name}`;
+    },
+  };
   await assert.rejects(() => s.handoff(run.id), { status: 409 });
   const approve = {
     operationId: "authorize",

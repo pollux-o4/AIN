@@ -1,5 +1,6 @@
 import { AI_MODELS, escalated } from "../../contracts/ai-models.mjs";
-import { figureStage, passOf } from "../domain/figures.mjs";
+import { passOf } from "../domain/figure-progress.mjs";
+import { figureStage } from "../domain/figures.mjs";
 
 // 작업별 AI 선택 정책 · 규칙(Strategy)을 우선순위대로 적용하고 처음 맞는 규칙의 모델을 쓴다
 export const DEFAULT_AI = Object.freeze({

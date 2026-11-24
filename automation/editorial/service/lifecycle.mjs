@@ -1,5 +1,6 @@
 import { FIGURE_FIX_PASS, FIGURE_LIMITS, FIGURE_PASSES } from "../../contracts/figure.mjs";
-import { currentOf, figureStage } from "../domain/figures.mjs";
+import { currentOf } from "../domain/figure-progress.mjs";
+import { figureStage } from "../domain/figures.mjs";
 import { STAGES, transition } from "../domain/index.mjs";
 import { recordEvent } from "../monitor.mjs";
 

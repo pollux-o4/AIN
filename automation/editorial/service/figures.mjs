@@ -3,7 +3,8 @@ import {
   FIGURE_MIMES,
   legacyFigureResult,
 } from "../../contracts/figure-result.mjs";
-import { coverageGap, currentOf } from "../domain/figures.mjs";
+import { currentOf } from "../domain/figure-progress.mjs";
+import { coverageGap } from "../domain/figures.mjs";
 import { anchorSection, placedFigures } from "../domain/index.mjs";
 import { fail } from "./lifecycle.mjs";
 

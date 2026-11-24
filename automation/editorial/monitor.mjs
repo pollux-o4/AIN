@@ -1,6 +1,6 @@
 import { FIGURE_PASSES } from "../contracts/figure.mjs";
 import { isPendingStatus } from "../contracts/status.mjs";
-import { currentOf } from "./domain/figures.mjs";
+import { currentOf } from "./domain/figure-progress.mjs";
 import { currentArtifact, flowIssue, STAGES, workStage } from "./domain/index.mjs";
 
 export { currentArtifact, workStage };
