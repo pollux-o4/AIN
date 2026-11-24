@@ -19,7 +19,6 @@ function shared() {
 
 /** root 아래 움직이는 그림을 관찰 · deps가 바뀌면(본문 다시 그림) 다시 찾는다 */
 export function useFigureMotion(root: RefObject<Element | null>, deps: unknown[]) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 호출자가 내용 변경 표식을 넘긴다
   useEffect(() => {
     if (!root.current || typeof IntersectionObserver === "undefined") return;
     const images = [...root.current.querySelectorAll(`img[${FIGURE_MOTION_ATTR}]`)];

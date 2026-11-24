@@ -141,27 +141,30 @@ export function Library({ runs, error, onRetry, onOpen, onCompose, onArchive }: 
                   </code>
                 </small>
               </a>
-              {isReady(run) && (
+              {/* 카드 안 오른쪽 아래 한 줄 · 제목 폭을 뺏지 않는다 */}
+              <div className="run-actions">
+                {isReady(run) && (
+                  <button
+                    type="button"
+                    className="quiet handoff"
+                    aria-label={`${run.title} 가져오기 요청 복사`}
+                    onClick={() => copyHandoff(run)}
+                  >
+                    <Icon name={copied === run.id ? "check" : "copy"} />
+                    {copied === run.id ? "복사됨" : "가져오기 요청 복사"}
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="quiet handoff"
-                  aria-label={`${run.title} 가져오기 요청 복사`}
-                  onClick={() => copyHandoff(run)}
+                  className="quiet archive"
+                  hidden={isPending(run.status)}
+                  aria-label={`${run.title} 삭제`}
+                  onClick={() => onArchive(run)}
                 >
-                  <Icon name={copied === run.id ? "check" : "copy"} />
-                  {copied === run.id ? "복사됨" : "가져오기 요청 복사"}
+                  <Icon name="trash" />
+                  삭제
                 </button>
-              )}
-              <button
-                type="button"
-                className="quiet archive"
-                hidden={isPending(run.status)}
-                aria-label={`${run.title} 삭제`}
-                onClick={() => onArchive(run)}
-              >
-                <Icon name="trash" />
-                삭제
-              </button>
+              </div>
             </li>
           ))}
         </ul>

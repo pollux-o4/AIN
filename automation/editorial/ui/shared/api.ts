@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  type FIGURE_REVISE_TARGETS,
-  FIGURE_ROUTES,
-  figureSrc,
-} from "../../../contracts/figure.mjs";
+import { FIGURE_ROUTES, figureSrc } from "../../../contracts/figure.mjs";
 import { historySchema } from "../../../contracts/history.mjs";
 import type { actionRequestSchema } from "../../../contracts/requests.mjs";
 import { type Direction, designViewSchema } from "../../../contracts/writing-modes.mjs";

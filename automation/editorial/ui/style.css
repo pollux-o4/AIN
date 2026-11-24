@@ -624,10 +624,6 @@ article blockquote {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
   box-shadow: var(--shadow);
 }
-.run-list .archive {
-  align-self: center;
-  flex: none;
-}
 .run-list small {
   display: flex;
   flex-wrap: wrap;
@@ -1785,10 +1781,14 @@ article th {
 .run-list .open {
   padding-bottom: 18px;
 }
-.run-list .archive {
+.run-actions {
   position: absolute;
   right: 14px;
   bottom: 12px;
+  display: flex;
+  gap: 4px;
+}
+.run-list .run-actions button {
   min-height: 32px;
   padding: 4px 10px;
   margin: 0;
@@ -1797,6 +1797,15 @@ article th {
   color: var(--muted);
   box-shadow: none;
 }
+.run-list .handoff {
+  color: var(--accent);
+}
+.run-list .handoff:not(:disabled):hover {
+  color: var(--accent);
+  background: transparent;
+  transform: none;
+  box-shadow: inset 0 0 0 2px currentColor;
+}
 .run-list .archive:not(:disabled):hover {
   color: var(--warn);
   background: transparent;
@@ -1804,7 +1813,20 @@ article th {
   box-shadow: inset 0 0 0 2px currentColor;
 }
 .run-list .open small {
-  padding-right: 56px;
+  padding-right: 72px;
+}
+.run-list li:has(.handoff) .open small {
+  padding-right: 230px;
+}
+/* 좁은 폭: 동작을 카드 아래 줄로 내려 메타와 겹치지 않게 */
+@media (max-width: 560px) {
+  .run-list .open {
+    padding-bottom: 56px;
+  }
+  .run-list .open small,
+  .run-list li:has(.handoff) .open small {
+    padding-right: 0;
+  }
 }
 .run-title {
   font-weight: 650;
@@ -2140,7 +2162,7 @@ li[data-status="failed"] small {
   padding: 10px;
 }
 .page-bar a,
-.run-list .archive,
+.run-list .run-actions button,
 .banner button {
   display: inline-flex;
   align-items: center;
