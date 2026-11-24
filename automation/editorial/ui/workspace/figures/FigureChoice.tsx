@@ -53,8 +53,8 @@ export function FigureChoice({
         )}
         {figure.style && (
           <p id="figure-style" className="hint">
-            모든 그림이 함께 지킬 규칙 · 강조 {figure.style.accent} · 기본 {figure.style.base} ·
-            라벨 {figure.style.labels}
+            모든 그림이 함께 지킬 규칙 · {figure.style.look ? `스타일 ${figure.style.look} · ` : ""}
+            강조 {figure.style.accent} · 기본 {figure.style.base} · 라벨 {figure.style.labels}
           </p>
         )}
         {choice.candidates.map((candidate) => (

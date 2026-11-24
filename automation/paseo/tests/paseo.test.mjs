@@ -216,6 +216,27 @@ test("deadline watchdog stops an owned job once even if n8n stops polling", asyn
   assert.equal((await t.jobs.read(job.id)).failureKind, "timeout");
   assert.equal(t.calls.length, 1);
 });
+test("감시 주기는 처음 한 번만 기록을 훑고 이후에는 다시 읽지 않는다", async () => {
+  const t = await setup();
+  await t.jobs.create({ state: start(), ai: { provider: "antigravity", model: "fixture-model" } });
+  const reopened = new Jobs({
+    client: t.client,
+    root: join(t.root, "jobs"),
+    workRoot: join(t.root, "work"),
+  });
+  let reads = 0;
+  const read = reopened.read.bind(reopened);
+  reopened.read = (id) => {
+    reads += 1;
+    return read(id);
+  };
+  await reopened.expire();
+  const first = reads;
+  await reopened.expire();
+  await reopened.expire();
+  assert.equal(first, 1);
+  assert.equal(reads, first);
+});
 test("a completed response is recovered at the deadline instead of discarded", async () => {
   const t = await setup();
   let stopped = false;

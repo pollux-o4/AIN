@@ -35,6 +35,11 @@ export function nextStep(run: Run, online: boolean): Next {
       return { tone: "act", say: "초안이 준비됐어요. 읽어 보고 확정하거나 고쳐 달라고 해 주세요." };
     case "awaiting_figure_choice":
       return { tone: "act", say: "시각자료를 놓을 위치를 제안했어요. 만들 곳을 골라 주세요." };
+    case "awaiting_figure_design":
+      return {
+        tone: "act",
+        say: "장면 구성을 정했어요. 그릴 내용을 확인하고 승인하거나 고쳐 달라고 해 주세요.",
+      };
     case "awaiting_figure_review":
       return { tone: "act", say: "시각자료가 준비됐어요. 본문에 놓인 모습을 확인해 주세요." };
     case "satisfied":
@@ -54,7 +59,7 @@ export function nextStep(run: Run, online: boolean): Next {
 
 // 지도의 층 나누기: 시각 단계가 시작됐고 글 단계가 모두 끝났으면 글 단계를 한 칸으로 접는다.
 // 시각 단계가 없어지거나(새 초안 회차) 글 단계가 다시 열리면 펼친다 · 단계 상태 자체는 바꾸지 않는다.
-const VISUAL_STAGES = ["figure_plan", "figure"];
+const VISUAL_STAGES = ["figure_plan", "figure_compose", "figure"];
 type Step = Run["monitor"]["pipeline"][number];
 export function trackPhases(pipeline: Step[]) {
   const writing = pipeline.filter((step) => !VISUAL_STAGES.includes(step.stage));

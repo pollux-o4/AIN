@@ -77,7 +77,7 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
         </div>
         <a
           id="ai-console"
-          href="http://localhost:6767/"
+          href={__PASEO_URL__}
           target="_blank"
           rel="noopener noreferrer"
           hidden={!run.monitor.needsAiAttention}

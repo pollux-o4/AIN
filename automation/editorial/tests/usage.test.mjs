@@ -41,7 +41,7 @@ test("시각자료는 그림·층마다 별도 작업이라 거부로 세지 않
   const fig = (id, pass) => ({ usage: null, section: null, figure: { id, pass }, chars: null });
   const jobs = new Map([
     ["a", fig("f1", "draft")],
-    ["b", fig("f1", "content")],
+    ["b", fig("f1", "fix")],
     ["c", fig("f2", "draft")],
     ["d", fig("f2", "draft")],
     ["e", fig("f3", "draft")],
@@ -58,7 +58,7 @@ test("시각자료는 그림·층마다 별도 작업이라 거부로 세지 않
     attempts.map((a) => [a.label, a.outcome]),
     [
       ["회차 1 · 시각자료 생성 f1 draft", "accepted"],
-      ["회차 1 · 시각자료 생성 f1 content", "accepted"],
+      ["회차 1 · 시각자료 생성 f1 fix", "accepted"],
       ["회차 1 · 시각자료 생성 f2 draft", "rejected"],
       ["회차 1 · 시각자료 생성 f2 draft", "accepted"],
       ["회차 1 · 시각자료 생성 f3 draft", "failed"],

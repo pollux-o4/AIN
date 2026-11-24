@@ -91,7 +91,10 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   });
   const server = makeServer({ token, agentToken, editorial, n8nUrl });
   const port = Number(process.env.AI_BRIDGE_PORT ?? 3230);
-  server.listen(port, "127.0.0.1", () => console.log(`AIN listening on 127.0.0.1:${port}`));
+  server.listen(port, "127.0.0.1", () => {
+    console.log(`AIN listening on 127.0.0.1:${port}`);
+    editorial.resumePending().catch(() => console.error("대기 글 이어 가기에 실패했습니다."));
+  });
   for (const signal of ["SIGTERM", "SIGINT"])
     process.on(signal, () => {
       clearInterval(watchdog);

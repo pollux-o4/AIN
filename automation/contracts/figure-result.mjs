@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FIGURE_ID, FIGURE_LIMITS, FIGURE_ROUTES } from "./figure.mjs";
+import { isAnimated } from "./svg-motion.mjs";
 
 export { FIGURE_ROUTES };
 
@@ -74,7 +75,6 @@ export const figureCapabilitiesSchema = z.object({
 });
 
 // SVG에 선언형 움직임이 있는지 · 저장·생성이 같은 규칙을 쓴다
-export const svgHasMotion = (/** @type {string} */ svg) => /<animate|@keyframes/.test(svg);
 
 // 이전 저장 결과(svg 본문 하나) → svg 경로 결과로 읽기만 한다 · 다시 쓰지 않는다(FIGURE-002 호환)
 /** @param {{ id: string, svg: string, alt: string, caption?: string | null }} item */
@@ -91,7 +91,7 @@ export function legacyFigureResult(item) {
     ],
     alt: item.alt,
     caption: item.caption ?? null,
-    motion: svgHasMotion(item.svg),
+    motion: isAnimated(item.svg),
     labels: [],
     provenance: null,
   };

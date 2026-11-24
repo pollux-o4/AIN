@@ -1,17 +1,15 @@
-import { FIGURE_LIMITS, FIGURE_PASSES } from "../../contracts/figure.mjs";
+import { FIGURE_FIX_PASS, FIGURE_LIMITS, FIGURE_PASSES } from "../../contracts/figure.mjs";
 import { currentOf, figureStage } from "../domain/figures.mjs";
 import { STAGES, transition } from "../domain/index.mjs";
 import { recordEvent } from "../monitor.mjs";
 
 export const COMPLETION_REASON =
   "전체 글쓰기 단계와 결과를 보완해야 합니다. 요구사항 보완을 눌러 주세요.";
-// 사람 요청 1회의 AI 호출 수: 위치 제안 1회 · 생성은 남은 (그림 × 층) 수 · FIGURE-001 · ADR-0017
+// 사람 요청 1회의 AI 호출 수: 위치 제안·구성 1회 · 생성은 남은 층 수 · 한 층은 남은 그림 전부를 동시에 돌리는 한 번의 호출 · FIGURE-001 · ADR-0026
 export function figureCalls(state) {
   if (figureStage(state) !== "figure") return 1;
-  const { selected } = state.figure;
-  const { id, pass } = currentOf(state.figure);
-  const left = selected.length - selected.indexOf(id);
-  return left * FIGURE_PASSES.length - FIGURE_PASSES.indexOf(pass);
+  const { pass } = currentOf(state.figure);
+  return pass === FIGURE_FIX_PASS ? 1 : FIGURE_PASSES.length - FIGURE_PASSES.indexOf(pass);
 }
 // 실행 시간 한도: 생성은 한 층이 긴 도구 작업이라 남은 호출 수 × 생성 한도
 export const runLimitMs = (state) =>

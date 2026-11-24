@@ -50,19 +50,21 @@ function figureOutputs(data) {
           anchor,
           claim,
           reason: "이유",
-          scene: "장면",
           kind: "flow",
-          motifs: ["주문서"],
         })),
         // 본문에 없는 문장: 화면에 후보로 나오면 안 됨
-        {
-          anchor: "초안에 없는 문장입니다.",
-          claim: "버려져야 하는 후보",
-          reason: "이유",
-          scene: "장면",
-        },
+        { anchor: "초안에 없는 문장입니다.", claim: "버려져야 하는 후보", reason: "이유" },
       ],
-      // 그림 사이 일관성 계약 · ADR-0022
+    },
+    // 구성: 고른 자리(다시 구성이면 그 자리)마다 장면 · 그림 사이 일관성 계약 · ADR-0022·0026
+    figure_compose: {
+      world: "한 쇼핑몰 창고",
+      designs: (data.recompose ?? (data.candidates ?? []).map(({ id }) => id)).map((id) => ({
+        id,
+        analogy: "주문서",
+        scene: "장면",
+        motifs: ["주문서"],
+      })),
       style: { accent: "주황 #f5a623", base: "남색 선 2px", labels: "12px 굵게" },
       motifs: [{ name: "주문서", look: "왼쪽 위가 접힌 흰 종이" }],
     },

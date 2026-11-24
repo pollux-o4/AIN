@@ -15,8 +15,6 @@ const ROLE_BRIEFS = {
   reviewer:
     "검토 담당이다. 초고 작성자와 독립된 시각에서 기준표에 따라 판정한다. 초고를 직접 고치지 않는다.",
   illustrator: "시각자료 담당이다. 사람이 확정한 본문은 고치지 않는다.",
-  figure_editor:
-    "시각자료 내용 편집 담당이다. 이전 층의 그림을 작성자와 독립된 시각에서 판정하고 바로잡는다. 사람이 확정한 본문은 고치지 않는다.",
 };
 
 // 입력 신뢰 경계·날조 금지·출력 형식: 모든 과업 공통 문구의 단일 정의
@@ -37,7 +35,7 @@ const bullets = (lines) => lines.map((line) => `- ${line}`);
 
 /**
  * @param {object} spec
- * @param {string} spec.id 과업 ID(단계 이름·route·figure_plan·figure)
+ * @param {string} spec.id 과업 ID(단계 이름·route·figure_plan·figure_compose·figure)
  * @param {keyof typeof ROLE_BRIEFS} spec.role
  * @param {string} spec.task 이번 일 1~2문장
  * @param {string[]} [spec.steps] 순서대로 할 일

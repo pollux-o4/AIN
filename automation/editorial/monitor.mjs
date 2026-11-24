@@ -17,17 +17,20 @@ const stages = {
   draft: "초고 작성",
   review: "검토",
   route: "수정 위치 확인",
-  figure_plan: "시각자료 제안",
+  figure_plan: "시각자료 위치 제안",
+  figure_compose: "시각자료 구성",
   figure: "시각자료 생성",
 };
 export const stageName = (stage) => stages[stage] ?? stage;
-// 생성 층 표시: 사람이 지금 어느 층(초안·내용·시각)을 기다리는지 · ADR-0011
-const PASS_NAMES = { draft: "초안", content: "내용 다듬기", visual: "시각 마감" };
+// 생성 층 표시: 사람이 지금 몇 장을 어느 층(초안·시각·부분 수정)에서 기다리는지 · ADR-0011·ADR-0026
+const PASS_NAMES = { draw: "그리기", fix: "부분 수정" };
 function workName(state, stage) {
   if (stage !== "figure" || state.figure?.phase !== "generate") return stageName(stage);
-  const { selected } = state.figure;
-  const { id, pass } = currentOf(state.figure);
-  return `${stageName(stage)} ${selected.indexOf(id) + 1}/${selected.length} · ${PASS_NAMES[pass]} ${FIGURE_PASSES.indexOf(pass) + 1}/${FIGURE_PASSES.length}`;
+  const { ids, pass } = currentOf(state.figure);
+  const step = FIGURE_PASSES.includes(pass)
+    ? ` ${FIGURE_PASSES.indexOf(pass) + 1}/${FIGURE_PASSES.length}`
+    : "";
+  return `${stageName(stage)} ${ids.length}장 동시 · ${PASS_NAMES[pass]}${step}`;
 }
 const failureReasons = {
   timeout: "AI 실행 제한 시간을 넘겼습니다.",
@@ -96,6 +99,7 @@ export function runPipeline(run) {
     });
     steps.push(
       figureStep("figure_plan", phase !== "propose"),
+      figureStep("figure_compose", ["design", "generate", "review", "confirmed"].includes(phase)),
       figureStep("figure", ["review", "confirmed"].includes(phase)),
     );
   }
@@ -121,6 +125,9 @@ export function runMonitor(run, now) {
   } else if (state.status === "awaiting_figure_choice") {
     kind = "ready";
     label = "시각자료 위치 선택 대기";
+  } else if (state.status === "awaiting_figure_design") {
+    kind = "ready";
+    label = "시각자료 구성 확인 대기";
   } else if (state.status === "awaiting_figure_review") {
     kind = "ready";
     label = "시각자료 확인 대기";

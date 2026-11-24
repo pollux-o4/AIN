@@ -2,11 +2,16 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import test from "node:test";
-import { figureOutputSchemas, svgIssue } from "../../contracts/figure.mjs";
+import {
+  FIGURE_LIMITS,
+  FIGURE_PASSES,
+  figureOutputSchemas,
+  svgIssue,
+} from "../../contracts/figure.mjs";
 import { actionRequestSchema } from "../../contracts/requests.mjs";
 import { testScratch } from "../../runtime/scratch.mjs";
 import { articleHtml } from "../article-html.mjs";
-import { coverageGap } from "../domain/figures.mjs";
+import { coverageGap, partActions } from "../domain/figures.mjs";
 import {
   flowIssue,
   nextAction,
@@ -89,6 +94,14 @@ function satisfied() {
 const result = (state, stage, out, pass) =>
   send(state, "figure_result", { stage, revision: 1, output: out, ...(pass ? { pass } : {}) });
 const reviewed = { reviewedRevision: 1 };
+// 구성 결과: 고른 자리마다 장면 하나 · ADR-0026
+const designs = (ids, extra = {}) => ({
+  designs: ids.map((id) => ({ id, scene: `${id} 장면`, analogy: `${id} 대상` })),
+  ...extra,
+});
+// 고른 자리를 구성하고 승인해 생성으로 넘긴다
+const approved = (state, ids) =>
+  send(result(state, "figure_compose", designs(ids)), "approve_design", reviewed);
 
 test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 바꾸지 않는다", () => {
   let state = satisfied();
@@ -130,62 +143,76 @@ test("FIGURE-001 선택 단계: 확정 뒤에만 시작하고 본문·확정을 
     missing: [],
     candidates: 2,
   });
+  // 사람이 고른 스타일은 구성 입력에 실리고 구성 결과보다 우선한다 · ADR-0027
+  const picked = send(state, "select_figures", { ...reviewed, figures: ["f1"], look: "stick" });
+  assert.equal(nextAction(picked).look, "stick");
+  assert.equal(result(picked, "figure_compose", designs(["f1"])).figure.style.look, "stick");
   state = send(state, "select_figures", { ...reviewed, figures: ["f2", "f1"] });
   assert.equal(state.status, "waiting_figure");
-  // 그림 한 장이 작업 단위: f1의 초안 → 내용 → 시각, 그다음 f2 · 사람 확인은 모두 마친 뒤 한 번
-  const step = () => nextAction(state);
+  // 구성은 고른 자리 전부를 한 번에 · 생성 결과는 받지 않음 · 승인 전에는 생성하지 않음 · ADR-0026
   assert.deepEqual(
-    [step().figureId, step().pass, step().candidates.map((c) => c.id), step().progress],
-    ["f1", "draft", ["f1"], { index: 1, total: 2 }],
+    [nextAction(state).stage, nextAction(state).candidates.map((c) => c.id)],
+    ["figure_compose", ["f1", "f2"]],
   );
-  assert.throws(() => result(state, "figure", made(["f2"]), "draft"), /Missing figure/);
+  assert.throws(() => result(state, "figure", made(["f1"]), "draw"), /stale/);
+  assert.throws(() => result(state, "figure_compose", designs(["f1"])), /Missing design/);
+  state = result(state, "figure_compose", designs(["f1", "f2"]));
+  assert.equal(state.status, "awaiting_figure_design");
+  state = send(state, "approve_design", reviewed);
+  assert.equal(state.status, "waiting_figure");
+  // 같은 층을 밟는 그림을 한 묶음으로: 그림마다 따로(parts) 동시에 · 사람 확인은 모두 마친 뒤 한 번 · ADR-0026
+  const step = () => nextAction(state);
+  const parts = () =>
+    step().parts.map((part) => [part.figureId, part.candidates.map((c) => c.id), part.progress]);
+  assert.deepEqual(
+    [step().figureIds, step().pass, parts()],
+    [
+      ["f1", "f2"],
+      "draw",
+      [
+        ["f1", ["f1"], { index: 1, total: 2 }],
+        ["f2", ["f2"], { index: 2, total: 2 }],
+      ],
+    ],
+  );
+  // 묶음의 그림이 하나라도 빠진 결과는 받지 않음
+  assert.throws(() => result(state, "figure", made(["f2"]), "draw"), /Missing figure/);
   const noted = (ids, notes) => ({
     figures: made(ids).figures.map((f) => ({ ...f, notes })),
   });
-  state = result(state, "figure", noted(["f1"], "구도만 잡음"), "draft");
-  assert.throws(() => result(state, "figure", made(["f1"]), "draft"), /stale/);
-  assert.deepEqual(
-    [step().figureId, step().pass, step().previous.map((f) => [f.id, f.notes])],
-    ["f1", "content", [["f1", "구도만 잡음"]]],
-  );
-  // 중단·재개해도 끝낸 층은 남고 다음 층부터 이어 감
+  // 중단·재개해도 같은 묶음 요청을 이어 감
   state = send(send(state, "pause"), "resume");
-  assert.deepEqual(
-    [step().figureId, step().pass, step().previous.map((f) => [f.id, f.notes])],
-    ["f1", "content", [["f1", "구도만 잡음"]]],
-  );
-  // 다른 그림의 결과는 받지 않음
+  assert.deepEqual([step().figureIds, step().pass], [["f1", "f2"], "draw"]);
+  // 다른 묶음을 가리키는 결과는 받지 않음
   assert.throws(
     () =>
       send(state, "figure_result", {
         stage: "figure",
         revision: 1,
-        pass: "content",
-        figureId: "f2",
+        pass: "draw",
+        figureIds: ["f2"],
         output: made(["f2"]),
       }),
     /stale/,
   );
-  state = result(state, "figure", made(["f1"]), "content");
-  state = result(state, "figure", noted(["f1"], "마감"), "visual");
-  assert.equal(state.status, "waiting_figure");
-  // 끝낸 그림은 중단·재개 뒤에도 남고 다음 그림의 첫 층부터
-  state = send(send(state, "pause"), "resume");
-  assert.deepEqual(
-    [step().figureId, step().pass, step().previous, step().progress],
-    ["f2", "draft", undefined, { index: 2, total: 2 }],
-  );
-  assert.deepEqual(
-    state.figure.items.map((item) => [item.id, item.notes]),
-    [["f1", undefined]],
-  );
-  for (const pass of ["draft", "content", "visual"])
-    state = result(state, "figure", made(["f2"]), pass);
+  state = result(state, "figure", noted(["f1", "f2"], "마감"), "draw");
+  assert.throws(() => result(state, "figure", made(["f1", "f2"]), "draw"), /stale/);
   // 준비됨 ≠ 확인됨: 사람 확인 전에는 발행 준비 승인 불가
   assert.equal(state.status, "awaiting_figure_review");
   assert.deepEqual(
-    [state.figure.current, state.figure.draft, state.figure.items.map((item) => item.id)],
-    [undefined, undefined, ["f1", "f2"]],
+    [
+      state.figure.current,
+      state.figure.passDrafts,
+      state.figure.items.map((item) => [item.id, item.notes]),
+    ],
+    [
+      undefined,
+      undefined,
+      [
+        ["f1", undefined],
+        ["f2", undefined],
+      ],
+    ],
   );
   assert.throws(() => send(state, "authorize_publication", reviewed));
   state = send(state, "confirm_figures", { ...reviewed, figures: ["f2"] });
@@ -228,43 +255,41 @@ test("ADR-0017 위치 제안 집계: 빠진 단위·후보 한 개는 개선 신
 test("ADR-0022 일관성 계약: 공통 규칙과 두 후보 이상이 가리키는 반복 대상만 그 그림 작업에 넘긴다", () => {
   const style = { accent: " 주황 #f5a623 ", base: "남색 선 2px", labels: "12px 굵게" };
   const contract = {
-    candidates: [
-      {
-        anchor: ANCHOR,
-        claim: "책임 경계",
-        reason: "이유",
-        scene: "장면",
-        motifs: ["상자", "상자", "없는 대상"],
-      },
-      {
-        anchor: ANCHOR2,
-        claim: "결제 순서",
-        reason: "이유",
-        scene: "장면",
-        motifs: ["상자", "카드"],
-      },
+    designs: [
+      { id: "f1", scene: "장면", motifs: ["상자", "상자", "없는 대상"] },
+      { id: "f2", scene: "장면", motifs: ["상자", "카드"] },
     ],
+    world: " 한 창고 ",
     style,
     motifs: [
       { name: "상자", look: "갈색 종이 상자" },
       { name: "상자", look: "중복은 버림" },
-      { name: "카드", look: "한 후보에만 나오면 계약에서 뺌" },
+      { name: "카드", look: "한 그림에만 나오면 계약에서 뺌" },
     ],
   };
-  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", contract);
+  // 계약은 구성 단계가 고른 자리 전부를 보고 한 번 정한다 · ADR-0026
+  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  state = send(state, "select_figures", { ...reviewed, figures: ["f1", "f2"] });
+  state = result(state, "figure_compose", contract);
+  assert.equal(state.figure.world, "한 창고");
   assert.deepEqual(state.figure.style, { ...style, accent: "주황 #f5a623" });
   assert.deepEqual(state.figure.motifs, [{ name: "상자", look: "갈색 종이 상자" }]);
   assert.deepEqual(
     state.figure.candidates.map((c) => c.motifs),
     [["상자"], ["상자", "카드"]],
   );
-  state = send(state, "select_figures", { ...reviewed, figures: ["f2"] });
+  state = send(state, "approve_design", reviewed);
   const action = nextAction(state);
-  assert.deepEqual([action.style, action.motifs], [state.figure.style, state.figure.motifs]);
-  // 계약이 없던 이전 제안은 그대로 진행
+  assert.deepEqual(
+    [action.parts[0].style, action.parts[0].motifs, action.world],
+    [state.figure.style, state.figure.motifs, "한 창고"],
+  );
+  // 계약 없는 구성도 그대로 진행
   const legacy = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
-  const plain = nextAction(send(legacy, "select_figures", { ...reviewed, figures: ["f1"] }));
-  assert.deepEqual([plain.style, plain.motifs, legacy.figure.motifs], [undefined, undefined, []]);
+  const plain = nextAction(
+    approved(send(legacy, "select_figures", { ...reviewed, figures: ["f1"] }), ["f1"]),
+  );
+  assert.deepEqual([plain.parts[0].style, plain.parts[0].motifs], [undefined, undefined]);
 });
 
 test("ADR-0023 후보별 방향: 고른 후보에만 저장하고 그 그림 작업에만 넘긴다", () => {
@@ -381,6 +406,12 @@ test("FIGURE-001 계약: 실행·외부 참조 SVG 거부, 네임스페이스 �
   assert.equal(svgIssue('<svg><rect fill="url(#g)"/><use href="#a"/></svg>'), null);
   const parsed = figureOutputSchemas.figure.parse(made(["f1"]));
   assert.match(parsed.figures[0].svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox/);
+  // 넘친 메모는 버리지 않고 앞부분을 다음 층에 넘김
+  const [long] = made(["f1"]).figures;
+  const kept = figureOutputSchemas.figure.parse({
+    figures: [{ ...long, notes: "가".repeat(FIGURE_LIMITS.notes + 50) }],
+  });
+  assert.equal(kept.figures[0].notes.length, FIGURE_LIMITS.notes);
   assert.equal(
     figureOutputSchemas.figure.safeParse({ figures: [{ id: "f1", svg: "<svg", alt: "a" }] })
       .success,
@@ -427,7 +458,11 @@ async function fixture(t, options = {}) {
               stage: action.stage,
               ...(action.pass ? { pass: action.pass } : {}),
               output:
-                action.stage === "figure_plan" ? plan : made(action.candidates.map((c) => c.id)),
+                action.stage === "figure_plan"
+                  ? plan
+                  : action.stage === "figure_compose"
+                    ? designs(action.recompose ?? action.candidates.map((c) => c.id))
+                    : made(action.figureIds),
             }
           : { ...common, type: "complete", stage: state.stage, output: output[state.stage] };
       records.set(id, { id, event });
@@ -483,9 +518,10 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     [true, false, false, true],
   );
   assert.deepEqual(
-    view.monitor.pipeline.slice(-2).map((step) => [step.name, step.status]),
+    view.monitor.pipeline.slice(-3).map((step) => [step.name, step.status]),
     [
-      ["시각자료 제안", "active"],
+      ["시각자료 위치 제안", "active"],
+      ["시각자료 구성", "pending"],
       ["시각자료 생성", "pending"],
     ],
   );
@@ -513,15 +549,14 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     id: "f2",
     anchor: ANCHOR2,
     claim: "결제 요청과 확인 순서",
-    // 위치 제안의 그림 계획을 사람이 고르기 전에 본다
+    // 위치 선정은 자리·관계만 · 장면·비유는 구성 단계가 채운다 · ADR-0026
     reason: "이유",
-    scene: "장면",
+    scene: null,
     analogy: null,
     kind: "scene",
     motifs: [],
-    without: "요청과 확인의 진행 순서를 놓친다.",
-    relation: null,
     mapping: [],
+    without: "요청과 확인의 진행 순서를 놓친다.",
     route: "image",
     routeBy: "default",
     direction: null,
@@ -566,6 +601,18 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
       ["svg", "user"],
     ],
   );
+  // 구성 결과를 사람이 승인해야 생성 · 의견을 주면 다시 구성 · ADR-0026
+  view = await f.drain(id);
+  assert.deepEqual(
+    [view.monitor.label, view.canApproveDesign, view.figure.candidates[1].scene],
+    ["시각자료 구성 확인 대기", true, "f2 장면"],
+  );
+  await assert.rejects(() => f.act(id, "approve_design", {}, "agent"), { status: 403 });
+  await assert.rejects(() => f.act(id, "revise_design", { feedback: " " }), { status: 400 });
+  view = await f.act(id, "revise_design", { feedback: "같은 창고 안 장면으로", figures: ["f2"] });
+  assert.deepEqual([view.status, view.figure.recompose], ["waiting_figure", ["f2"]]);
+  view = await f.drain(id);
+  view = await f.act(id, "approve_design");
   // 생성 실패는 준비됨으로 표시하지 않음 · 명시적 재시도 뒤에만 다시 호출
   f.jobs.fail = true;
   view = await f.drain(id);
@@ -604,21 +651,34 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   assert.equal(html.match(/<figure/g)?.length, 1);
   assert.match(s.export(id, { format: "zip" }).body.toString("latin1"), /figures\/f1\.svg/);
   assert.throws(() => s.export(id, { format: "pdf" }), { status: 400 });
-  // 실패한 f1 초안 층 1회 + 재개 뒤 (f1·f2) × (초안·내용·시각) 6회
-  assert.deepEqual(f.calls, [...STAGES, "figure_plan", ...Array(7).fill("figure")]);
+  // 구성 2회(처음·f2 다시) + 실패한 초안 층 1회 + 재개 뒤 층 수(한 층은 f1·f2를 동시에 그리는 한 번) · ADR-0026
+  assert.deepEqual(f.calls, [
+    ...STAGES,
+    "figure_plan",
+    "figure_compose",
+    "figure_compose",
+    ...Array(1 + FIGURE_PASSES.length).fill("figure"),
+  ]);
   assert.deepEqual(
     runPipeline(s.store.get(id))
-      .slice(-2)
+      .slice(-3)
       .map((step) => step.status),
-    ["done", "done"],
+    ["done", "done", "done"],
   );
   const labels = s.store.get(id).events.map((event) => event.label);
-  for (const label of ["시각자료 위치 후보 준비됨", "시각자료 준비됨 · 확인 대기", "시각자료 확인"])
+  for (const label of [
+    "시각자료 위치 후보 준비됨",
+    "시각자료 구성 준비됨 · 확인 대기",
+    "시각자료 구성 다시 요청",
+    "시각자료 구성 승인",
+    "시각자료 준비됨 · 확인 대기",
+    "시각자료 확인",
+  ])
     assert.ok(labels.includes(label), label);
   view = await f.act(id, "authorize_publication");
   assert.equal(view.status, "publication_ready");
   assert.equal(view.canDiscardFigures, false);
-  assert.equal(f.calls.length, STAGES.length + 8);
+  assert.equal(f.calls.length, STAGES.length + 4 + FIGURE_PASSES.length);
 });
 
 test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 격리된 파일로 제공", async (t) => {
@@ -640,6 +700,8 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   await f.act(f.id, "request_figures");
   await f.drain(f.id);
   await f.act(f.id, "select_figures", { figures: ["f1"] });
+  await f.drain(f.id);
+  await f.act(f.id, "approve_design");
   await f.drain(f.id);
   const pending = (await (await get("")).json()).html;
   assert.equal(pending.replace(/<figure[\s\S]*?<\/figure>/, ""), plain);
@@ -692,49 +754,79 @@ test("ADR-0025 서비스 설정: image 경로가 활성화되면 기본 image �
   );
 });
 
-test("RES-010 도메인·보기: relation과 mapping은 후보에 저장·노출되고 없으면 생략한다", async (t) => {
-  let state = send(satisfied(), "request_figures", reviewed);
-  state = result(state, "figure_plan", {
-    candidates: [
-      {
-        anchor: ANCHOR,
-        claim: "조건 모두 충족",
-        reason: "이유",
-        scene: "장면",
-        relation: "all-required",
-        mapping: [{ element: " 직렬 밸브 ", concept: " 필수 조건 " }],
-      },
-      {
-        anchor: ANCHOR2,
-        claim: "잘못된 advisory 값은 버림",
-        reason: "이유",
-        scene: "장면",
-        relation: "not-a-relation",
-        mapping: [{ element: "", concept: "x" }],
-      },
-    ],
-  });
-  assert.equal(state.figure.candidates[0].relation, "all-required");
-  assert.deepEqual(state.figure.candidates[0].mapping, [
-    { element: "직렬 밸브", concept: "필수 조건" },
-  ]);
-  assert.equal(Object.hasOwn(state.figure.candidates[1], "relation"), false);
-  assert.equal(Object.hasOwn(state.figure.candidates[1], "mapping"), false);
-
-  const dir = await testScratch(t, "editorial-test");
-  const store = new EditorialStore(join(dir, "state.sqlite"));
-  t.after(() => store.close());
-  const service = new EditorialService({ store, jobs: {}, dispatch: async () => {} });
-  const view = service.view({
-    id: "res010-view",
-    requestId: "res010-req",
-    ai: { model: "fixture" },
+test("ADR-0026 확인 뒤 되돌림: 구성으로 보내면 그 자리만 다시 구성하고 세계·계약은 유지, 수정으로 보내면 직전 그림에서 지적만 고치고 3회까지 받는다", () => {
+  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  state = send(state, "select_figures", { ...reviewed, figures: ["f1", "f2"] });
+  const style = { accent: "주황", base: "선", labels: "12px" };
+  state = result(
     state,
-  });
-  assert.equal(view.figure.candidates[0].relation, "all-required");
-  assert.deepEqual(view.figure.candidates[0].mapping, [
-    { element: "직렬 밸브", concept: "필수 조건" },
-  ]);
-  assert.equal(view.figure.candidates[1].relation, null);
-  assert.deepEqual(view.figure.candidates[1].mapping, []);
+    "figure_compose",
+    designs(["f1", "f2"], { world: "창고", style, motifs: [{ name: "상자", look: "갈색" }] }),
+  );
+  state = send(state, "approve_design", reviewed);
+  for (const pass of FIGURE_PASSES) state = result(state, "figure", made(["f1", "f2"]), pass);
+  assert.equal(state.status, "awaiting_figure_review");
+  const bad = { ...reviewed, figures: ["f2"], feedback: "장면이 틀렸다" };
+  assert.throws(() => send(state, "revise_figures", { ...bad, target: "elsewhere" }));
+  assert.throws(() => send(state, "revise_figures", { ...bad, feedback: " ", target: "compose" }));
+  // 무엇을 그릴지: f2만 다시 구성 · 다른 자리 구성과 세계·계약은 그대로 넘긴다
+  const recomposed = send(state, "revise_figures", { ...bad, target: "compose" });
+  const action = nextAction(recomposed);
+  assert.deepEqual(
+    [action.stage, action.recompose, action.world, action.style, action.feedback],
+    ["figure_compose", ["f2"], "창고", style, "장면이 틀렸다"],
+  );
+  assert.deepEqual(
+    action.candidates.map((c) => [c.id, c.scene]),
+    [
+      ["f1", "f1 장면"],
+      ["f2", undefined],
+    ],
+  );
+  assert.deepEqual(
+    recomposed.figure.items.map((item) => item.id),
+    ["f1"],
+  );
+  let again = result(recomposed, "figure_compose", designs(["f2"]));
+  assert.deepEqual([again.status, again.figure.world], ["awaiting_figure_design", "창고"]);
+  again = send(again, "approve_design", reviewed);
+  assert.deepEqual([nextAction(again).figureIds, nextAction(again).pass], [["f2"], "draw"]);
+  // 어떻게 그렸는지: 직전 그림과 지적을 넘겨 한 층만 고친다
+  const fix = (from, id = "f1") =>
+    send(from, "revise_figures", {
+      ...reviewed,
+      figures: [id],
+      feedback: "선이 어긋났다",
+      target: "fix",
+    });
+  assert.throws(() =>
+    send(state, "revise_figures", {
+      ...reviewed,
+      figures: ["f1", "f2"],
+      feedback: "x",
+      target: "fix",
+    }),
+  );
+  let done = state;
+  for (let round = 1; round <= FIGURE_LIMITS.fixes; round += 1) {
+    const fixing = fix(done);
+    const [act] = partActions(nextAction(fixing));
+    assert.deepEqual(
+      [
+        act.figureId,
+        act.pass,
+        act.previous[0].id,
+        act.candidates[0].fix,
+        fixing.figure.candidates[0].fixes,
+      ],
+      ["f1", "fix", "f1", "선이 어긋났다", round],
+    );
+    done = result(fixing, "figure", made(["f1"]), "fix");
+    assert.deepEqual(
+      [done.status, done.figure.items.map((item) => item.id)],
+      ["awaiting_figure_review", ["f1", "f2"]],
+    );
+  }
+  assert.throws(() => fix(done), /fix limit/);
+  assert.deepEqual(nextAction(fix(done, "f2")).figureIds, ["f2"]);
 });

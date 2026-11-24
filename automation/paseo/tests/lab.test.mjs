@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { labMatrix } from "../../contracts/lab.mjs";
+import { flowIssue, STAGES, transition } from "../../editorial/domain/index.mjs";
+import { EditorialStore } from "../../editorial/index.mjs";
+import { seedFromArticle } from "../lab/seed.mjs";
 import { judgeLabRecord, readLab, writeLabIndex, writeLabRecord } from "../lab/store.mjs";
 
 const VARIANTS = [
@@ -81,5 +85,106 @@ test("lab_003 목록에 없는 변형의 기록도 열로 드러난다", () => {
   assert.deepEqual(
     variants.map((v) => v.id),
     ["baseline", "res010", "b-try"],
+  );
+});
+
+test("lab_004 변형은 대상 정책 두 줄만 다르고(단일 변수) 알 수 없는 변형은 멈춘다", async () => {
+  const { figureSpec } = await import("../prompts/figure.mjs");
+  const { LAB_VARIANTS, objectPolicy } = await import("../lab/variants.mjs");
+  const flat = (spec) => [
+    spec.task,
+    ...(spec.steps ?? []),
+    ...(spec.rules ?? []),
+    ...spec.criteria,
+  ];
+  const actions = [{ stage: "figure_compose" }, { stage: "figure", pass: "draft" }];
+  const base = actions.map((a) => flat(figureSpec(a, objectPolicy("baseline"))));
+  for (const variant of LAB_VARIANTS.filter((v) => v.id !== "baseline")) {
+    const lines = actions.map((a) => flat(figureSpec(a, variant.policy)));
+    const changed = lines.flatMap((spec, i) => spec.filter((line, j) => line !== base[i][j]));
+    assert.ok(changed.length >= 1, variant.id);
+    for (const line of changed)
+      assert.ok(
+        line.includes(variant.policy.plan) ||
+          line === variant.policy.check ||
+          line === variant.policy.draw,
+        line,
+      );
+    assert.equal(lines[0].length, base[0].length);
+  }
+  assert.throws(() => objectPolicy("nope"), /Unknown lab variant/);
+});
+
+test("lab_005 원본 글에서 확정 초안 또는 위치 후보 상태를 시드한다", () => {
+  const runtimeDir = mkdtempSync(join(tmpdir(), "lab-seed-"));
+  const outputs = {
+    diagnose: {
+      purpose: "설명",
+      audience: "개발자",
+      sectionModes: ["explanation"],
+      preserveVoice: "의미 보존",
+      strategy: "경험과 판단",
+    },
+    topic: { problem: "문제", scope: "범위" },
+    audience: { reader: "개발자", intent: "이해" },
+    value: { outcome: "판단", preserve: ["조건"] },
+    research: { evidence: [], uncertainties: ["확인 필요"] },
+    outline: { sections: ["배경", "결과"], rationale: "순서" },
+    draft: { text: "# 초안\n\n확정된 초안입니다.", changeSummary: "초안" },
+    review: { findings: [], preservationCheck: "유지" },
+  };
+  const step = (state, event) =>
+    transition(state, { expectedVersion: state?.version, ...event }).state;
+  let state = step(null, {
+    id: "s",
+    actor: "user",
+    type: "start",
+    articleId: "source-article-123",
+    idea: "seed test",
+  });
+  for (const stage of STAGES)
+    state = step(state, {
+      id: stage,
+      actor: "adapter",
+      type: "complete",
+      revision: state.revision,
+      stage,
+      output: outputs[stage],
+    });
+  state = step(state, { id: "ok", actor: "user", type: "satisfy", reviewedRevision: 1 });
+  state = step(state, { id: "rf", actor: "user", type: "request_figures", reviewedRevision: 1 });
+  state = step(state, {
+    id: "plan",
+    actor: "adapter",
+    type: "figure_result",
+    stage: "figure_plan",
+    revision: 1,
+    output: { candidates: [{ anchor: "확정된 초안입니다.", claim: "관계", reason: "이유" }] },
+  });
+  const store = new EditorialStore(join(runtimeDir, "editorial.sqlite"));
+  store.save({ id: "source-article-123", requestId: "src", state, events: [] });
+  store.close();
+
+  const seeded = (from) => {
+    const { articleId } = seedFromArticle({ runtimeDir, fromArticle: "source-article", from });
+    const reader = new EditorialStore(join(runtimeDir, "editorial.sqlite"));
+    try {
+      return reader.get(articleId).state;
+    } finally {
+      reader.close();
+    }
+  };
+  const fresh = seeded("satisfied");
+  assert.deepEqual([fresh.status, fresh.figure, flowIssue(fresh)], ["satisfied", undefined, null]);
+  assert.equal(fresh.artifacts.draft.output.text, outputs.draft.text);
+  // 구성 실험: 모든 회차가 같은 위치 후보에서 출발 · ADR-0026
+  const choice = seeded("choice");
+  assert.deepEqual(
+    [choice.status, choice.figure.phase, choice.figure.candidates.map((c) => c.id)],
+    ["awaiting_figure_choice", "choose", ["f1"]],
+  );
+  assert.throws(
+    () => seedFromArticle({ runtimeDir, fromArticle: "nope" }),
+    /하나로 찾지 못했습니다/,
   );
 });

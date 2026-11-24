@@ -1,10 +1,10 @@
 // 내보내기: 확정된 글을 소비처와 무관한 표준 형식으로 · 어디서 쓸지는 받는 쪽이 정함 · ADR-0012
 import { z } from "zod";
 import { FIGURE_MARKS } from "../../contracts/figure.mjs";
+import { isAnimated, staticSvg } from "../../contracts/svg-motion.mjs";
 import { toTxt } from "../../contracts/txt.mjs";
 import { escapeHtml, renderArticle } from "../article-html.mjs";
 import { placeFigures } from "../domain/index.mjs";
-import { isAnimated, staticSvg } from "./motion.mjs";
 import { zip } from "./zip.mjs";
 
 const EXPORT_FORMATS = /** @type {const} */ (["txt", "html", "zip"]);

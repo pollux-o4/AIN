@@ -73,10 +73,8 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   // 본문 자리와 도크 목록은 같은 선택 상태 · 본문에서 빼면 도크에서도 빠진다
   const slots = page.locator("#article .figure-slot button");
   await expect(slots).toHaveCount(2);
-  // 계획 단계: 유형과 반복 대상(같은 모습으로 그릴 다른 후보)을 본문 자리에서 바로 읽는다
+  // 위치 단계: 유형을 본문 자리에서 바로 읽는다 · 장면·반복 대상은 구성 단계가 정한다(ADR-0026)
   await expect(slots.nth(0)).toContainText("흐름");
-  await expect(slots.nth(0)).toContainText("주문서 · 후보 2에도 나옴");
-  await expect(choice.locator("#figure-style")).toContainText("주황 #f5a623");
   await choice.getByRole("button", { name: "본문에서 고르기" }).click();
   // 고른 후보에 방향을 덧붙인다(ADR-0023) · 접혀 있다가 펼쳐 쓰고, 새로고침해도 남는다
   const direction = page.locator("#article .figure-direction").nth(1);
@@ -107,6 +105,16 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
     figures: ["f1", "f2"],
     directions: { f2: "두 상태를 좌우로 비교" },
   });
+
+  // 구성 확인: 장면 세계와 자리별 그릴 내용을 보고 승인해야 생성한다 · ADR-0026
+  const design = page.locator("#figure-design");
+  await expect(design).toBeVisible({ timeout: 45000 });
+  await expect(page.getByRole("status")).toHaveText("시각자료 구성 확인 대기");
+  await expect(design).toContainText("한 쇼핑몰 창고");
+  await expect(design).toContainText("주문서 (왼쪽 위가 접힌 흰 종이)");
+  await expect(page.locator("#revise-design-submit")).toBeDisabled();
+  await checkAccessibility(page, testInfo, "figure-design");
+  await clickAction(page, "이대로 그리기", "approve_design");
 
   // 준비됨 ≠ 확인됨: 본문에 '확인 전'으로 놓이고 발행 준비 승인은 아직 불가
   const review = page.locator("#figure-review");
@@ -215,8 +223,8 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await openDock(page, "확인");
   await expect(approval).toContainText("발행 준비를 승인했습니다(본문과 시각자료 1개)");
   await expect(page.getByRole("button", { name: "시각자료 빼기" })).toBeHidden();
-  // 생성은 그림 한 장씩 초안·내용·시각 3층 = 2곳 × 3 = AI 6회 · ADR-0017
-  expect((await loadRun(page)).callsUsed).toBe(6);
+  // 구성 승인으로 예산이 새로 시작 · 그리기 한 층에서 고른 그림을 동시에 그리는 한 번 = AI 1회 · ADR-0026
+  expect((await loadRun(page)).callsUsed).toBe(1);
 });
 
 test("FIGURE-001: 시각자료 없이 진행하면 확정 상태 그대로 발행 준비를 승인", async ({

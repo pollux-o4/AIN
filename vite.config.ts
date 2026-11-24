@@ -1,6 +1,8 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+// 공용 Paseo 모듈은 JS · 데몬 주소의 단일 출처
+import { launcherListen } from "../paseo/endpoint.mjs";
 
 const api = process.env.EDITORIAL_DEV_API_URL ?? "http://127.0.0.1:3230";
 
@@ -8,6 +10,7 @@ export default defineConfig({
   root: "automation/editorial/ui",
   base: "/write/",
   plugins: [react(), tailwindcss()],
+  define: { __PASEO_URL__: JSON.stringify(`http://${launcherListen()}/`) },
   build: { outDir: "../../../.local/editorial-web", emptyOutDir: true },
   server: {
     host: "127.0.0.1",

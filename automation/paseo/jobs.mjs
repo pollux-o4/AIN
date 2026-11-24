@@ -3,7 +3,13 @@ import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { FIGURE_LIMITS, FIGURE_STAGES } from "../contracts/figure.mjs";
 import { itemFields, outputFields } from "../contracts/output-fields.mjs";
-import { nextAction, readerLength, STAGES, transition } from "../editorial/domain/index.mjs";
+import {
+  nextAction,
+  partActions,
+  readerLength,
+  STAGES,
+  transition,
+} from "../editorial/domain/index.mjs";
 import { finalSteps, watchTimeline } from "./activity.mjs";
 import { promptContext, summarizeInputs } from "./context.mjs";
 import {
@@ -24,9 +30,21 @@ import { Workers } from "./workers.mjs";
 const MAX_JOB_MS = FIGURE_LIMITS.generateMs;
 const PROVIDER_CACHE_MS = 60000;
 
+const TERMINAL = ["completed", "failed"];
+const summary = ({ id, agentId, status, deadline, deadlineStopAttempted }) => ({
+  id,
+  agentId,
+  status,
+  deadline,
+  deadlineStopAttempted,
+});
+
 export class Jobs {
   #sessions;
   #reaper;
+  // 끝나지 않은 작업 요약 색인 · 처음 한 번만 디스크를 훑고 이후 save가 갱신(감시 주기마다 전체 기록 재읽기 금지)
+  #active = null;
+  #expiring = false;
   // shortcut: 단일 브리지 프로세스의 작업 잠금 사용, 다중 인스턴스 운영 전 공유 저장소·원자적 잠금 전환
   constructor({ client, root, workRoot, allowedProviders = null, reuseProviders }) {
     Object.assign(this, { client, root, workRoot, allowedProviders });
@@ -48,22 +66,31 @@ export class Jobs {
   }
   // 진행 중 작업의 세션은 정리 대상에서 뺀다
   async #activeAgentIds() {
-    const ids = [];
-    for (const job of await this.#jobs())
-      if (job.agentId && !["completed", "failed"].includes(job.status)) ids.push(job.agentId);
-    return ids;
+    return [...(await this.#activeIndex()).values()].flatMap((job) =>
+      job.agentId ? [job.agentId] : [],
+    );
   }
-  async #jobs() {
+  async #activeIndex() {
+    if (!this.#active) {
+      const found = new Map();
+      for await (const job of this.#jobs())
+        if (!TERMINAL.includes(job.status)) found.set(job.id, job);
+      this.#active ??= found;
+    }
+    return this.#active;
+  }
+  // 기록마다 글 상태·SVG 전체를 담아 크므로 한 장씩 읽고 훑기에 필요한 칸만 남긴다(전체 동시 읽기는 메모리 고갈)
+  async *#jobs() {
     let files;
     try {
       files = await readdir(this.root);
     } catch (e) {
-      if (e.code === "ENOENT") return [];
+      if (e.code === "ENOENT") return;
       throw e;
     }
-    return Promise.all(
-      files.filter((x) => /^[a-f0-9]{64}\.json$/.test(x)).map((x) => this.read(x.slice(0, -5))),
-    );
+    for (const file of files.filter((x) => /^[a-f0-9]{64}\.json$/.test(x))) {
+      yield summary(await this.read(file.slice(0, -5)));
+    }
   }
   /** 쓰지 않는 세션 정리 · all: 대기 담당까지 모두 내려놓음(런타임 종료 시) · ADR-0015 */
   sweepSessions(options) {
@@ -83,6 +110,9 @@ export class Jobs {
     const temp = join(this.root, `${job.id}.tmp`);
     await writeFile(temp, JSON.stringify(job), { mode: 0o600 });
     await rename(temp, join(this.root, `${job.id}.json`));
+    if (this.#active)
+      if (TERMINAL.includes(job.status)) this.#active.delete(job.id);
+      else this.#active.set(job.id, summary(job));
     return job;
   }
   async read(id) {
@@ -99,6 +129,11 @@ export class Jobs {
     }
   }
   async stop(id) {
+    const head = await this.read(id);
+    if (head.kind === "batch") {
+      for (const child of head.parts) await this.stop(child);
+      return this.#pollBatch(head);
+    }
     return this.locked(id, async () => {
       const job = await this.read(id);
       if (["completed", "failed"].includes(job.status)) return job;
@@ -119,6 +154,27 @@ export class Jobs {
   }
   async describe(id) {
     const job = await this.read(id);
+    // 묶음은 장마다 쓴 양·진행을 더해 한 작업으로 보인다
+    if (job.kind === "batch") {
+      const parts = await Promise.all(job.parts.map((child) => this.describe(child)));
+      const usage = parts.some((part) => part.usage)
+        ? Object.fromEntries(
+            ["inputTokens", "cachedInputTokens", "outputTokens"].map((key) => [
+              key,
+              parts.reduce((sum, part) => sum + (part.usage?.[key] ?? 0), 0),
+            ]),
+          )
+        : null;
+      return {
+        ...parts[0],
+        status: job.status,
+        failureKind: job.failureKind ?? null,
+        output: null,
+        usage,
+        steps: parts.flatMap((part) => part.steps),
+        figure: { id: job.action.figureIds.join(","), pass: job.action.pass },
+      };
+    }
     const context = promptContext(job.state, job.action);
     const stage = job.action.stage ?? "route";
     const output = job.event?.output;
@@ -157,7 +213,9 @@ export class Jobs {
     };
   }
   async watchActivity(id, emit) {
-    const job = await this.read(id);
+    let job = await this.read(id);
+    // shortcut: 묶음은 첫 장의 진행만 보여 줌, 장별 진행 표시가 필요해지면 여러 구독을 합침
+    if (job.kind === "batch") job = await this.read(job.parts[0]);
     if (!job.agentId) {
       emit({ phase: "waiting" });
       return () => {};
@@ -215,7 +273,43 @@ export class Jobs {
       throw new Error("Explicit model selection required");
     // 상태·AI 선택이 같으면 같은 작업 회수; HTTP 재전송으로 새 에이전트 생성 방지.
     const id = createHash("sha256").update(JSON.stringify({ state, ai })).digest("hex");
-    return this.locked(`article:${state.articleId}`, () =>
+    if (action.parts) return this.#createBatch(id, state, ai, action);
+    return this.#createOne(id, state, ai, action);
+  }
+  // 그림 묶음: 그림마다 지금과 같은 한 장 작업을 동시에 만든다 · 묶음 작업은 결과를 모으기만 한다 · ADR-0026
+  async #createBatch(id, state, ai, action) {
+    const { parts: _parts, ...shared } = action;
+    // 자식은 그림별 잠금이므로 동시에 띄운다 · 에이전트 기동(수십 초)을 그림 수만큼 기다리지 않음
+    const children = await Promise.all(
+      partActions(action).map((part) => {
+        const childId = createHash("sha256")
+          .update(JSON.stringify({ state, ai, figureId: part.figureId }))
+          .digest("hex");
+        return this.#createOne(childId, state, ai, part, id);
+      }),
+    );
+    return this.locked(id, async () => {
+      try {
+        return await this.read(id);
+      } catch (e) {
+        if (e.code !== "ENOENT") throw e;
+      }
+      return this.save({
+        id,
+        kind: "batch",
+        state,
+        action: shared,
+        ai,
+        parts: children.map((child) => child.id),
+        providerModel: children[0]?.providerModel,
+        ...(children[0]?.labVariant ? { labVariant: children[0].labVariant } : {}),
+        status: "running",
+        createdAt: new Date().toISOString(),
+      });
+    });
+  }
+  async #createOne(id, state, ai, action, parentId) {
+    return this.locked(`article:${state.articleId}:${action.figureId ?? ""}`, () =>
       this.locked(id, async () => {
         await mkdir(this.root, { recursive: true, mode: 0o700 });
         try {
@@ -240,12 +334,15 @@ export class Jobs {
           ai,
           deadline: Date.now() + duration,
           providerModel: `${ai.provider}/${model.id}`,
+          // 연구소 실험이면 어느 변형으로 돌렸는지 남긴다 · 가져오기가 기록의 variant와 대조한다(LAB-001)
+          ...(process.env.AIN_LAB_VARIANT ? { labVariant: process.env.AIN_LAB_VARIANT } : {}),
           // 모드 미지정이면 provider 기본(claude auto · codex auto-review) · 미전달 시 claude가 Always Ask로 떠 도구 작업이 멈춤
           ...((ai.mode ?? provider.defaultModeId)
             ? { modeId: ai.mode ?? provider.defaultModeId }
             : {}),
           status: "starting",
           createdAt: new Date().toISOString(),
+          ...(parentId ? { parentId } : {}),
           inputSummary: summarizeInputs(promptContext(state, withoutFigureBodies(action))),
           ...(!ai.pilot && sessionKeyOf(action) ? { role: sessionKeyOf(action) } : {}),
         };
@@ -324,8 +421,58 @@ export class Jobs {
     return true;
   }
 
+  // 그림 묶음: 한 장씩 확인하고 모두 끝나면 결과를 합쳐 한 번에 검사 · 한 장이라도 실패하면 묶음 실패
+  // shortcut: 실패 뒤 재개는 상태가 바뀌어 끝난 장도 다시 그림, 실패가 잦으면 끝난 장 결과 재사용 검토
+  async #pollBatch(head) {
+    const children = [];
+    for (const child of head.parts) children.push(await this.poll(child));
+    return this.locked(head.id, async () => {
+      const job = await this.read(head.id);
+      if (["completed", "failed"].includes(job.status)) return job;
+      const broken = children.find((child) => ["failed", "needs_attention"].includes(child.status));
+      if (broken) {
+        job.status = broken.status;
+        job.error = broken.error;
+        if (broken.failureKind) job.failureKind = broken.failureKind;
+        return this.save(job);
+      }
+      if (!children.every((child) => child.status === "completed")) return job;
+      job.event = {
+        id: `${job.id}-result`,
+        actor: "adapter",
+        expectedVersion: job.state.version,
+        revision: job.state.revision,
+        type: "figure_result",
+        stage: job.action.stage,
+        pass: job.action.pass,
+        figureIds: job.action.figureIds,
+        output: { figures: children.flatMap((child) => child.event.output.figures) },
+      };
+      try {
+        transition(job.state, job.event);
+        job.status = "completed";
+      } catch (error) {
+        delete job.event;
+        job.status = "failed";
+        job.failureKind = "invalid_output";
+        job.diagnostic = String(error?.message ?? error).slice(0, 600);
+        job.error = "AI output did not satisfy the editorial contract; inspect Paseo session";
+      }
+      return this.save(job);
+    });
+  }
+  // 감시 주기가 겹치지 않게 앞 회차가 끝나기 전에는 건너뛴다
   async expire() {
-    for (const job of await this.#jobs()) {
+    if (this.#expiring) return;
+    this.#expiring = true;
+    try {
+      await this.#expireActive();
+    } finally {
+      this.#expiring = false;
+    }
+  }
+  async #expireActive() {
+    for (const job of [...(await this.#activeIndex()).values()]) {
       if (
         job.deadline &&
         Date.now() > job.deadline &&
@@ -336,6 +483,8 @@ export class Jobs {
     }
   }
   async poll(id) {
+    const head = await this.read(id);
+    if (head.kind === "batch") return this.#pollBatch(head);
     return this.locked(id, async () => {
       const job = await this.read(id);
       if (["completed", "failed"].includes(job.status)) return job;
@@ -445,7 +594,8 @@ export class Jobs {
             job.status = "running";
             return this.save(job);
           }
-          transition(job.state, job.event);
+          // 묶음의 한 장은 묶음이 결과를 모은 뒤 함께 검사한다
+          if (!job.parentId) transition(job.state, job.event);
           if (job.ai.pilot && job.event.output?.marker !== job.state.articleId)
             throw new Error("Pilot marker mismatch");
           job.usage = this.#sessions.turnUsage(job, agent, result);

@@ -31,7 +31,6 @@ export function figureView(state, routesAvailable = ["svg"]) {
         motifs,
         direction,
         without,
-        relation,
         mapping,
         route,
       }) => ({
@@ -44,7 +43,6 @@ export function figureView(state, routesAvailable = ["svg"]) {
         kind: kind ?? null,
         motifs: motifs ?? [],
         without: without ?? null,
-        relation: relation ?? null,
         mapping: mapping ?? [],
         route: effectiveRoute({ kind, route }),
         routeBy: route ? "user" : "default",
@@ -53,6 +51,10 @@ export function figureView(state, routesAvailable = ["svg"]) {
         section: anchorSection(text, anchor),
       }),
     ),
+    // 구성 단계가 정한 장면 세계와 사람이 남긴 구성 의견 · ADR-0026
+    world: figure.world ?? null,
+    feedback: figure.feedback ?? null,
+    recompose: figure.recompose ?? [],
     // 그림 사이 일관성 계약 · ADR-0022
     style: figure.style ?? null,
     motifs: figure.motifs ?? [],

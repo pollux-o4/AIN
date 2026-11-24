@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { figureDirectionsSchema, figureIdsSchema, figureRoutesSchema } from "./figure.mjs";
+import {
+  FIGURE_REVISE_TARGETS,
+  figureDirectionsSchema,
+  figureFeedbackSchema,
+  figureIdsSchema,
+  figureLookSchema,
+  figureRoutesSchema,
+} from "./figure.mjs";
 import { directionSchema } from "./writing-modes.mjs";
 
 export const INPUT_LIMITS = Object.freeze({
@@ -36,6 +43,9 @@ const actionFieldsSchema = z.looseObject({
     "revise_brief",
     "request_figures",
     "select_figures",
+    "approve_design",
+    "revise_design",
+    "revise_figures",
     "confirm_figures",
     "discard_figures",
   ]),
@@ -44,6 +54,8 @@ const actionFieldsSchema = z.looseObject({
   edit: z.unknown().optional(),
   figures: z.unknown().optional(),
   directions: z.unknown().optional(),
+  look: z.unknown().optional(),
+  target: z.unknown().optional(),
 });
 // These checks run separately to preserve duplicate-operation and error precedence.
 export const actionIdentitySchema = actionFieldsSchema.pick({ operationId: true, type: true });
@@ -70,10 +82,28 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
     figures: figureIdsSchema,
     directions: figureDirectionsSchema.optional(),
     routes: figureRoutesSchema.optional(),
+    // 사람이 고른 그림 스타일 · 생략하면 구성이 고른다 · ADR-0027
+    look: figureLookSchema.optional(),
   }),
   actionFieldsSchema.extend({
     type: z.literal("confirm_figures"),
     figures: figureIdsSchema.optional(),
+  }),
+  // 구성 승인(방향 보정 가능)·다시 구성(의견 필수, 자리 생략하면 전부)·확인 뒤 되돌림 · ADR-0026
+  actionFieldsSchema.extend({
+    type: z.literal("approve_design"),
+    directions: figureDirectionsSchema.optional(),
+  }),
+  actionFieldsSchema.extend({
+    type: z.literal("revise_design"),
+    feedback: figureFeedbackSchema,
+    figures: figureIdsSchema.optional(),
+  }),
+  actionFieldsSchema.extend({
+    type: z.literal("revise_figures"),
+    feedback: figureFeedbackSchema,
+    figures: figureIdsSchema,
+    target: z.enum(FIGURE_REVISE_TARGETS),
   }),
   actionFieldsSchema.extend({
     type: actionFieldsSchema.shape.type.exclude([
@@ -81,6 +111,9 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
       "revise_brief",
       "approve_brief",
       "select_figures",
+      "approve_design",
+      "revise_design",
+      "revise_figures",
       "confirm_figures",
     ]),
   }),

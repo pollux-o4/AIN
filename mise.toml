@@ -96,13 +96,13 @@ description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델 
 run = "node automation/n8n/build-workflow.mjs && node automation/paseo/eval.mjs"
 
 [tasks.lab]
-description = "시각자료 연구소 · 색인(index)·판정(judge) · 예) mise run lab -- judge algo-f3 res010 figure 1 fail \"모두 갖춰야가 안 보임\" · 화면은 Storybook 연구소 · LAB-001"
+description = "시각자료 연구소 · 색인(index)·요약(summary)·판정(judge) · 예) mise run lab -- judge algo-f3 res010 figure 1 fail \"모두 갖춰야가 안 보임\" · 화면은 Storybook 연구소 · LAB-001"
 run = "node automation/paseo/lab/cli.mjs"
 
 [tasks."lab:import"]
 description = "앱 실행 기록을 연구소로 가져옴 · 예) mise run lab:import -- 955f26 algo baseline · LAB-001"
 run = "node automation/paseo/lab/import-jobs.mjs"
 
-[tasks."ai:figure-pilot"]
-description = "비용 발생 · 사람이 직접 실행 · 확정 초안을 시드해 위치 제안 --trials회·생성 --generate-trials장을 실제 모델로 돌림 · 결과는 lab:import로 연구소에 옮김 · LAB-001 · TIME-001"
-run = "node automation/paseo/live/figure-pilot.mjs"
+[tasks."lab:run"]
+description = "RES-011 대상 정책 파일럿 실행 · 예) mise run lab:run -- --from 955f26 --case algo --variant metaphor --trials 3 · 실제 모델 비용 발생"
+run = "node automation/paseo/lab/run.mjs"

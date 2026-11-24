@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { FIGURE_PASSES } from "../contracts/figure.mjs";
 
 // 담당 배정 SSoT: 같은 담당의 단계는 한 Paseo 세션에서 이어 맡는다. 작성·검토는 독립성을 위해 분리.
 export const STAGE_ROLES = Object.freeze({
@@ -13,18 +14,12 @@ export const STAGE_ROLES = Object.freeze({
   review: "reviewer",
   // 시각자료 위치 제안·생성 · 본문 담당과 분리 · FIGURE-001
   figure_plan: "illustrator",
+  figure_compose: "illustrator",
   figure: "illustrator",
-});
-// 시각자료 생성 층의 담당: 내용 편집 층은 그린 담당과 분리(작성·검토 분리와 같은 독립성) · ADR-0017
-const FIGURE_PASS_ROLES = Object.freeze({
-  draft: "illustrator",
-  content: "figure_editor",
-  visual: "illustrator",
 });
 /** 담당(프롬프트의 역할 문장) */
 export function roleOf(/** @type {{type: string, stage?: string, pass?: string}} */ action) {
-  if (action.type === "request_figure" && action.stage === "figure")
-    return FIGURE_PASS_ROLES[action.pass ?? "draft"] ?? "illustrator";
+  if (action.type === "request_figure" && action.stage === "figure") return "illustrator"; // 모든 층이 그린 담당 · 내용 독립 검토는 사람 확인과 구성 검수가 맡는다 · ADR-0026
   return STAGE_ROLES[action.type === "request_route" ? "route" : (action.stage ?? "")] ?? null;
 }
 /**
@@ -42,16 +37,18 @@ export function sessionKeyOf(
 
 /**
  * 이 작업 뒤 같은 세션 열쇠로 이어질 작업이 없는가 · 그림 한 장의 세션은 그 그림이 끝나면 바로 내려놓는다
- * (그린 담당은 시각 층, 내용 편집 담당은 내용 층이 마지막)
+ * (마지막 그리기 층·수정 층 뒤)
  */
 export function sessionEndsAfter(
   /** @type {{type: string, stage?: string, pass?: string, figureId?: string}} */ action,
 ) {
+  const at = FIGURE_PASSES.indexOf(/** @type {any} */ (action.pass ?? FIGURE_PASSES[0]));
+  const followed = at !== -1 && at < FIGURE_PASSES.length - 1; // 다음 층이 같은 세션을 이어 씀
   return (
     action.type === "request_figure" &&
     action.stage === "figure" &&
     Boolean(action.figureId) &&
-    (action.pass ?? "draft") !== "draft"
+    !followed
   );
 }
 

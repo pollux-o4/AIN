@@ -42,6 +42,10 @@ export const outputFields = {
     ["preservationCheck", "원문 보존 확인"],
   ],
   figure_plan: [["candidates", "시각자료 위치 후보"]],
+  figure_compose: [
+    ["world", "장면 세계"],
+    ["designs", "자리별 구성"],
+  ],
   figure: [["figures", "만든 시각자료"]],
 };
 // 객체 배열 필드에서 기록·미리보기에 보일 항목 · 나머지(SVG 원문 등)는 노출하지 않음

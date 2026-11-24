@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { FIGURE_LIMITS, FIGURE_REVISE_TARGETS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { FigureImage } from "./FigureImage";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
@@ -14,6 +16,7 @@ export function FigureReview({
   onLocate,
 }: DecisionProps & { onLocate: (id: string) => void }) {
   const { picked, toggle } = usePicked(figure.items.map((item) => item.id));
+  const [feedback, setFeedback] = useState<Record<string, string>>({});
   return (
     <form
       id="figure-review"
@@ -49,6 +52,54 @@ export function FigureReview({
               <button type="button" className="quiet" onClick={() => onLocate(item.id)}>
                 본문에서 보기
               </button>
+              {run.canReviseFigures && (
+                <details className="figure-revise">
+                  <summary>되돌리기</summary>
+                  <label htmlFor={`revise-${item.id}`}>고칠 의견</label>
+                  <textarea
+                    id={`revise-${item.id}`}
+                    rows={3}
+                    maxLength={FIGURE_LIMITS.feedback}
+                    value={feedback[item.id] ?? ""}
+                    onChange={(event) =>
+                      setFeedback((current) => ({ ...current, [item.id]: event.target.value }))
+                    }
+                  />
+                  <div className="submit-row">
+                    <button
+                      type="button"
+                      id={`revise-compose-${item.id}`}
+                      disabled={disabled || !feedback[item.id]?.trim()}
+                      onClick={() =>
+                        void onAction({
+                          type: "revise_figures",
+                          feedback: feedback[item.id].trim(),
+                          figures: [item.id],
+                          target: FIGURE_REVISE_TARGETS[0],
+                        })
+                      }
+                    >
+                      장면 다시 구성
+                    </button>
+                    <button
+                      type="button"
+                      id={`revise-generate-${item.id}`}
+                      className="quiet"
+                      disabled={disabled || !feedback[item.id]?.trim()}
+                      onClick={() =>
+                        void onAction({
+                          type: "revise_figures",
+                          feedback: feedback[item.id].trim(),
+                          figures: [item.id],
+                          target: FIGURE_REVISE_TARGETS[1],
+                        })
+                      }
+                    >
+                      부분 고치기
+                    </button>
+                  </div>
+                </details>
+              )}
             </span>
           </div>
         ))}

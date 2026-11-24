@@ -27,6 +27,7 @@ const RESULTS = {
       stage: action.stage,
       ...(action.pass ? { pass: action.pass } : {}),
       ...(action.figureId ? { figureId: action.figureId } : {}),
+      ...(action.figureIds ? { figureIds: action.figureIds } : {}),
       output,
     }),
   },

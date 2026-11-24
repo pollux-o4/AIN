@@ -107,6 +107,25 @@ const figureRun = (
 const workspace = (run: ReturnType<typeof makeRun>) => () => (
   <Workspace run={run} online submitting={false} onAction={noop} onNotice={noop} />
 );
+const actionWorkspace = (run: ReturnType<typeof makeRun>) => () => (
+  <>
+    <Workspace
+      run={run}
+      online
+      submitting={false}
+      onAction={async (command) => {
+        const result = document.querySelector<HTMLOutputElement>("#figure-action-result");
+        if (result) result.value = JSON.stringify(command);
+      }}
+      onNotice={noop}
+    />
+    <output id="figure-action-result" />
+  </>
+);
+function enterText(field: HTMLTextAreaElement, value: string) {
+  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(field, value);
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+}
 export const 시각자료_고르기: StoryObj = {
   render: workspace(figureRun(makeFigure(), { canSelectFigures: true, canDiscardFigures: true })),
 };
@@ -116,7 +135,7 @@ export const 시각자료_생성중: StoryObj = {
       makeFigure({
         phase: "generate",
         selected: ["f2", "f3"],
-        current: { id: "f2", pass: "content" },
+        current: { ids: ["f2"], pass: "visual" },
       }),
       {
         status: "waiting_ai",
@@ -147,6 +166,89 @@ export const 시각자료_검토: StoryObj = {
       { canConfirmFigures: true, canDiscardFigures: true },
     ),
   ),
+};
+export const 시각자료_구성검수: StoryObj = {
+  render: actionWorkspace(
+    figureRun(
+      makeFigure({
+        phase: "design",
+        world: "주문 흐름을 따라가는 작은 도시",
+        selected: ["f2", "f3"],
+      }),
+      { status: "awaiting_figure_design", canApproveDesign: true },
+    ),
+  ),
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    const feedback = doc.querySelector<HTMLTextAreaElement>("#design-feedback");
+    if (!feedback || !doc.body.textContent?.includes("갈림길"))
+      throw new Error("구성 패널이 보이지 않아요.");
+    enterText(feedback, "갈림길 장면을 더 단순하게 해 주세요.");
+    doc.querySelector<HTMLButtonElement>("#revise-design-submit")?.click();
+    await Promise.resolve();
+    const revise = doc.querySelector<HTMLOutputElement>("#figure-action-result")?.value;
+    if (!revise?.includes('"type":"revise_design"') || !revise.includes('"figures":["f2","f3"]'))
+      throw new Error("다시 구성 요청 본문이 맞지 않아요.");
+    doc.querySelector<HTMLButtonElement>("#work-dock .dock-toggle")?.click();
+    doc.querySelector<HTMLButtonElement>("#approve-design")?.click();
+    await Promise.resolve();
+    if (
+      !doc
+        .querySelector<HTMLOutputElement>("#figure-action-result")
+        ?.value.includes('"type":"approve_design"')
+    )
+      throw new Error("구성 승인 요청이 맞지 않아요.");
+  },
+};
+export const 시각자료_그림되돌리기: StoryObj = {
+  render: actionWorkspace(
+    figureRun(
+      makeFigure({
+        phase: "review",
+        selected: ["f2"],
+        items: [
+          {
+            id: "f2",
+            anchor: "요약",
+            claim: "선택 기준",
+            alt: "두 축 갈림길 그림",
+            caption: "선택을 가르는 두 축",
+            route: "image",
+            mime: "image/png",
+            motion: false,
+            labels: [],
+          },
+        ],
+      }),
+      { canConfirmFigures: true, canReviseFigures: true },
+    ),
+  ),
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    doc.querySelector<HTMLElement>("#work-dock details summary")?.click();
+    const feedback = doc.querySelector<HTMLTextAreaElement>("#revise-f2");
+    if (!feedback) throw new Error("그림 되돌리기 입력란이 없어요.");
+    enterText(feedback, "기준 두 축이 분명하게 보이도록 해 주세요.");
+    doc.querySelector<HTMLButtonElement>("#revise-compose-f2")?.click();
+    await Promise.resolve();
+    const action = doc.querySelector<HTMLOutputElement>("#figure-action-result")?.value;
+    if (
+      !action?.includes('"type":"revise_figures"') ||
+      !action.includes('"target":"compose"') ||
+      !action.includes('"figures":["f2"]') ||
+      !action.includes("기준 두 축이 분명하게 보이도록 해 주세요.")
+    )
+      throw new Error("구성 단계 되돌리기 요청 본문이 맞지 않아요.");
+    doc.querySelector<HTMLButtonElement>("#work-dock .dock-toggle")?.click();
+    doc.querySelector<HTMLButtonElement>("#revise-generate-f2")?.click();
+    await Promise.resolve();
+    if (
+      !doc
+        .querySelector<HTMLOutputElement>("#figure-action-result")
+        ?.value.includes('"target":"fix"')
+    )
+      throw new Error("부분 수정 요청 본문이 맞지 않아요.");
+  },
 };
 export const 시각자료_고르기_이미지연결: StoryObj = {
   render: workspace(

@@ -1,10 +1,10 @@
 // 시각자료 연구소 기록 계약 · 같은 사례를 변형(현재·A·B…)마다 돌린 결과를 한 형식으로 남겨 나란히 비교한다(LAB-001)
 // 기록 쓰기는 paseo/lab, 보기는 editorial/ui/lab이 맡고 둘 다 이 계약만 읽는다
 import { z } from "zod";
-import { FIGURE_RELATIONS } from "./figure.mjs";
 
 const LAB_BASELINE = "baseline";
-const LAB_STAGES = ["plan", "figure"];
+// 위치 선정·구성·생성 · 대상 정책은 구성 단계 변수 · ADR-0026
+const LAB_STAGES = /** @type {const} */ (["plan", "compose", "figure"]);
 const slug = z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/);
 
 const labVariantSchema = z.object({
@@ -15,8 +15,11 @@ const labVariantSchema = z.object({
 });
 
 const labCandidateSchema = z.object({
+  id: z.string().max(4).optional(),
   anchor: z.string().max(30),
-  relation: z.enum(FIGURE_RELATIONS).optional(),
+  analogy: z.string().max(80).optional(),
+  scene: z.string().max(500).optional(),
+  relation: z.string().max(40).optional(),
   without: z.string().max(200).optional(),
   mapping: z
     .array(z.object({ element: z.string(), concept: z.string() }))
@@ -34,7 +37,8 @@ export const labRecordSchema = z.object({
   model: z.string().max(80).nullable(),
   ms: z.number().int().nonnegative().nullable(),
   tokens: z.object({ input: z.number().int(), output: z.number().int() }).nullable(),
-  candidates: z.array(labCandidateSchema).max(20).optional(),
+  candidates: z.array(labCandidateSchema).max(30).optional(),
+  world: z.string().max(300).optional(),
   files: z.array(z.object({ path: z.string().regex(/^[\w.-]+$/), mime: z.string() })).max(8),
   // 시각 확인 집계 · 렌더 명령, 렌더 이미지 열람, 열람 뒤 수정 횟수 · 도구 기록이 없으면 null
   visual: z

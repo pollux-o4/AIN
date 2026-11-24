@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { launcherListen } from "../../../paseo/endpoint.mjs";
 import { RUNTIME_PROTOCOL } from "../contracts/runtime.mjs";
 import { editorialWorkflow } from "../n8n/build-editorial-workflow.mjs";
 
@@ -53,7 +54,8 @@ for (const signal of ["SIGINT", "SIGTERM"])
   });
 try {
   await assertCompatibleBridge();
-  await ensure("http://127.0.0.1:6767/", "paseo");
+  // 공용 데몬 주소는 Paseo 설정 하나가 정한다
+  await ensure(`http://${launcherListen()}/`, "paseo");
   await ensure("http://127.0.0.1:5678/healthz/readiness", "n8n");
   const account = JSON.parse(await readFile(".local/n8n/dev-account.json", "utf8"));
   const base = "http://127.0.0.1:5678/rest";

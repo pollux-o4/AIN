@@ -3,7 +3,8 @@ import { execFileSync, spawn } from "node:child_process";
 import { openSync, readdirSync, readFileSync, readlinkSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { activeRuns, isStale, ownedRole } from "./lifecycle.mjs";
+import { pendingRuns } from "../editorial/store.mjs";
+import { activeRuns, isStale, ownedRole, stopBlockers } from "./lifecycle.mjs";
 
 const root = resolve(".");
 const local = join(root, ".local/ai-runtime");
@@ -55,16 +56,11 @@ function codeChangedAt(dir = root, rel = CODE_DIRS) {
   return latest;
 }
 
-function runningJobs() {
+function readRuns() {
   try {
     const db = new DatabaseSync(join(local, "editorial.sqlite"), { readOnly: true });
     try {
-      return activeRuns(
-        db
-          .prepare("SELECT value FROM editorial_runs")
-          .all()
-          .map((r) => JSON.parse(r.value)),
-      );
+      return pendingRuns(db);
     } finally {
       db.close();
     }
@@ -91,7 +87,9 @@ function status() {
 }
 
 function refuseIfJobs(force) {
-  const jobs = runningJobs();
+  const jobs = stopBlockers(readRuns(), {
+    bridgeRunning: processes().some((p) => p.role === "bridge"),
+  });
   if (!jobs.length || force) return;
   const list = jobs.map((j) => `  ${j.id} ${j.idea}`).join("\n");
   throw new Error(
@@ -155,7 +153,7 @@ async function report() {
   );
   for (const p of procs)
     console.log(`  ${p.role} pid ${p.pid} · 시작 ${new Date(p.startedAt).toLocaleString("ko-KR")}`);
-  const jobs = runningJobs();
+  const jobs = activeRuns(readRuns());
   console.log(jobs.length ? `진행 중 AI 작업 ${jobs.length}건` : "진행 중 AI 작업 없음");
 }
 

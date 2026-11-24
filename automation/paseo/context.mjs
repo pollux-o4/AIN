@@ -25,7 +25,13 @@ function figureContext(state, action) {
     ...(action.candidates ? { candidates: action.candidates } : {}),
     // 그림 사이 일관성 계약(공통 시각 규칙·반복 대상 생김새) · ADR-0022
     ...(action.style ? { style: action.style } : {}),
+    // 사람이 고른 그림 스타일 · ADR-0027
+    ...(action.look ? { look: action.look } : {}),
     ...(action.motifs ? { motifs: action.motifs } : {}),
+    // 구성이 정한 장면 세계 · 다시 구성할 자리 · 사람이 남긴 구성 의견 · ADR-0026
+    ...(action.world ? { world: action.world } : {}),
+    ...(action.recompose ? { recompose: action.recompose } : {}),
+    ...(action.feedback ? { feedback: action.feedback } : {}),
     ...(action.progress ? { progress: action.progress } : {}),
     ...(action.pass ? { pass: action.pass } : {}),
     // 앞 층 결과: svgFile(작업 폴더 파일)·alt·caption·notes

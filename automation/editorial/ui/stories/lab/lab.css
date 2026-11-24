@@ -85,12 +85,47 @@
   font-style: italic;
   margin: 0;
 }
+/* 위에서 아래로 펼치는 3단: 회차 요약 → 자리 한 줄 → 장면·대응표 */
+.lab-muted {
+  color: GrayText;
+}
+.lab-more > summary,
+.lab-candidates summary,
+.lab-variant summary {
+  cursor: pointer;
+}
+.lab-more > summary .lab-head {
+  display: inline-flex;
+}
 .lab-candidates {
   margin: 0.25rem 0;
-  padding-left: 1.25rem;
+  padding-left: 0;
+  list-style: none;
   font-size: 12px;
 }
-.lab-candidates small {
-  display: block;
+.lab-candidates summary {
+  display: list-item;
+}
+.lab-candidates summary > * {
+  display: inline;
+}
+.lab-candidates > li {
+  margin: 0.125rem 0;
+}
+.lab-candidates q {
+  overflow-wrap: anywhere;
+}
+.lab-candidates details > :not(summary) {
+  margin: 0.25rem 0 0.5rem;
   color: GrayText;
+}
+.lab-record img {
+  max-height: 14rem;
+  object-fit: contain;
+}
+.lab-record:has(> .lab-more:only-child) {
+  margin-bottom: 0.25rem;
+}
+.lab-more > summary {
+  padding: 0.125rem 0;
 }

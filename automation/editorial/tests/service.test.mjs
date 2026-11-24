@@ -98,6 +98,21 @@ async function finish(service, id) {
     if (!(await service.advance(id)).continue && !(await approveBrief(service, id))) return;
   throw new Error("Did not finish");
 }
+test("resumePending은 완료 글을 건너뛰고 대기 글만 연결한다", async (t) => {
+  const f = await fixture(t),
+    s = f.service;
+  const waiting = await s.create({ requestId: "resume-waiting", idea: "대기 글" });
+  const completed = await s.create({ requestId: "resume-completed", idea: "완료 글" });
+  await finish(s, completed.id);
+  const before = f.store.list();
+  f.dispatches.length = 0;
+  const restored = new EditorialService({ store: f.store, jobs: f.jobs, dispatch: s.dispatch });
+
+  assert.deepEqual(await restored.resumePending(), [waiting.id]);
+  assert.deepEqual(f.dispatches, [waiting.id]);
+  assert.deepEqual(f.store.list(), before);
+});
+
 test("duplicate submit, persisted recovery, feedback revisions and exact downloads", async (t) => {
   const f = await fixture(t),
     s = f.service;
@@ -788,6 +803,23 @@ test("aiFor: 첫 초안까지 기본, 검토·다시 쓰기·피드백 반영은
   assert.equal(aiFor({ stage: "draft", retry: { stage: "draft" } }, DEFAULT_AI).model, high);
   assert.equal(aiFor({ stage: "outline", feedback: "더 짧게" }, DEFAULT_AI).model, high);
   assert.deepEqual(aiFor({ stage: "draft" }, DEFAULT_AI), {});
+  // 그림 생성의 모든 층(국소 수정 포함)은 시각자료 담당 모델 · ADR-0026
+  const generating = (pass) => ({
+    status: "waiting_figure",
+    figure: { phase: "generate", selected: ["f1"], current: { ids: ["f1"], pass } },
+  });
+  for (const pass of ["draw", "fix"])
+    assert.equal(aiFor(generating(pass), DEFAULT_AI).model, high, pass);
   // 상향 짝이 없는 모델·제공자는 그대로
   assert.deepEqual(aiFor({ stage: "review" }, { provider: "fixture", model: "fixture-model" }), {});
+});
+
+test("store.pending은 대기 상태 글만 요약해 돌려준다", async (t) => {
+  const f = await fixture(t);
+  const waiting = await f.service.create({ requestId: "pending-waiting", idea: "대기 글" });
+  const done = await f.service.create({ requestId: "pending-done", idea: "완료 글" });
+  await finish(f.service, done.id);
+  const ids = f.store.pending().map((run) => run.id);
+  assert.ok(ids.includes(waiting.id));
+  assert.ok(!ids.includes(done.id));
 });

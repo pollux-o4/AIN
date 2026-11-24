@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FIGURE_ROUTES } from "../../../contracts/figure.mjs";
+import { type FIGURE_REVISE_TARGETS, FIGURE_ROUTES } from "../../../contracts/figure.mjs";
 import { historySchema } from "../../../contracts/history.mjs";
 import { type Direction, designViewSchema } from "../../../contracts/writing-modes.mjs";
 
@@ -52,10 +52,15 @@ const runSchema = z.object({
   canSatisfy: z.boolean(),
   canAuthorizePublication: z.boolean(),
   canApproveBrief: z.boolean().default(false),
+  canApproveDesign: z.boolean().default(false),
+  canReviseFigures: z.boolean().default(false),
   // 시각자료(선택 단계) · 이전 서버 응답에는 없으므로 기본값 · FIGURE-001
   figure: z
     .object({
-      phase: z.enum(["propose", "choose", "generate", "review", "confirmed"]),
+      phase: z.enum(["propose", "choose", "compose", "design", "generate", "review", "confirmed"]),
+      world: z.string().nullable().default(null),
+      feedback: z.string().nullable().default(null),
+      recompose: z.array(z.string()).default([]),
       note: z.string().nullable().default(null),
       candidates: z.array(
         z.object({
@@ -66,6 +71,7 @@ const runSchema = z.object({
           reason: z.string().nullable().default(null),
           analogy: z.string().nullable().default(null),
           scene: z.string().nullable().default(null),
+          mapping: z.array(z.object({ element: z.string(), concept: z.string() })).default([]),
           kind: z.string().nullable().default(null),
           motifs: z.array(z.string()).default([]),
           // 사람이 덧붙인 그림 방향 · ADR-0023
@@ -78,7 +84,12 @@ const runSchema = z.object({
         }),
       ),
       style: z
-        .object({ accent: z.string(), base: z.string(), labels: z.string() })
+        .object({
+          look: z.string().optional(),
+          accent: z.string(),
+          base: z.string(),
+          labels: z.string(),
+        })
         .nullable()
         .default(null),
       motifs: z.array(z.object({ name: z.string(), look: z.string() })).default([]),
@@ -94,7 +105,10 @@ const runSchema = z.object({
         })
         .nullable()
         .default(null),
-      current: z.object({ id: z.string(), pass: z.string() }).nullable().default(null),
+      current: z
+        .object({ ids: z.array(z.string()), pass: z.string() })
+        .nullable()
+        .default(null),
       items: z.array(
         z.object({
           id: z.string(),
@@ -202,6 +216,14 @@ export type ActionCommand =
       routes?: Record<string, FigureRoute>;
     }
   | { type: "confirm_figures"; figures?: string[] }
+  | { type: "approve_design"; directions?: Record<string, string> }
+  | { type: "revise_design"; feedback: string; figures?: string[] }
+  | {
+      type: "revise_figures";
+      feedback: string;
+      figures: string[];
+      target: (typeof FIGURE_REVISE_TARGETS)[number];
+    }
   | { type: "request_figures"; feedback?: string }
   | {
       type:

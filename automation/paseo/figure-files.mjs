@@ -27,23 +27,40 @@ export async function inlineFigureFiles(message, workRoot) {
     if ((await stat(path)).size > FIGURE_LIMITS.svg * 4) throw new Error("svgFile is too large");
     figure.svg = await readFile(path, "utf8");
     delete figure.svgFile;
+    if (typeof figure.sourceFile === "string") {
+      figure.source = await readInRoot(figure.sourceFile, root, FIGURE_LIMITS.source);
+      delete figure.sourceFile;
+    }
   }
   return JSON.stringify(output);
 }
 
+async function readInRoot(file, root, limit) {
+  if (!isAbsolute(file)) throw new Error("sourceFile must be an absolute path");
+  const path = await realpath(file);
+  if (!path.startsWith(root)) throw new Error("sourceFile is outside the AI work root");
+  if ((await stat(path)).size > limit * 4) throw new Error("sourceFile is too large");
+  return readFile(path, "utf8");
+}
 // 앞 층 결과를 작업 폴더 파일로 넘긴다 · 큰 SVG를 프롬프트에 싣지 않음 · 응답 계약과 같은 svgFile 모양
 export async function writeFigureInputs(cwd, previous) {
   return Promise.all(
-    previous.map(async ({ svg, ...rest }) => {
+    previous.map(async ({ svg, source, ...rest }) => {
       if (!FIGURE_ID.test(rest.id)) throw new Error("Invalid figure id");
       const svgFile = join(cwd, `input-${rest.id}.svg`);
       await writeFile(svgFile, svg, { mode: 0o600 });
-      return { ...rest, svgFile };
+      if (!source) return { ...rest, svgFile };
+      const sourceFile = join(cwd, `input-${rest.id}.source.mjs`);
+      await writeFile(sourceFile, source, { mode: 0o600 });
+      return { ...rest, svgFile, sourceFile };
     }),
   );
 }
 // 작업 기록에는 SVG 본문을 남기지 않는다(상태 파일에 원본이 있음)
 export const withoutFigureBodies = (action) =>
   action.previous
-    ? { ...action, previous: action.previous.map(({ svg: _svg, ...rest }) => rest) }
+    ? {
+        ...action,
+        previous: action.previous.map(({ svg: _svg, source: _source, ...rest }) => rest),
+      }
     : action;

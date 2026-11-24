@@ -39,10 +39,7 @@ export default defineConfig({
       command: "mise exec -- node automation/editorial/tests/browser-server.mjs",
       // 시각자료 층별 모델도 fixture로 · 실제 AI 비용 호출 없음
       env: Object.fromEntries(
-        ["PLAN", "DRAFT", "CONTENT", "VISUAL"].map((role) => [
-          `AIN_FIGURE_AI_${role}`,
-          "fixture/fixture-model",
-        ]),
+        ["PLAN", "DRAW", "FIX"].map((role) => [`AIN_FIGURE_AI_${role}`, "fixture/fixture-model"]),
       ),
       url: "http://127.0.0.1:3356/write/",
       gracefulShutdown: { signal: "SIGTERM", timeout: 15000 },

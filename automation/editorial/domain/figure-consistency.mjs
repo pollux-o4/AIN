@@ -3,7 +3,9 @@
 import { FIGURE_LIMITS, FIGURE_STYLE_KEYS } from "../../contracts/figure.mjs";
 
 function acceptStyle(style) {
-  return style && Object.fromEntries(FIGURE_STYLE_KEYS.map((key) => [key, style[key].trim()]));
+  if (!style) return style;
+  const rules = Object.fromEntries(FIGURE_STYLE_KEYS.map((key) => [key, style[key].trim()]));
+  return style.look ? { look: style.look, ...rules } : rules;
 }
 // 이름이 겹치지 않는 대상만 상한까지
 function acceptMotifs(motifs = []) {

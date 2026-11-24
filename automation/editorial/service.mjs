@@ -5,6 +5,7 @@ import {
   createRequestSchema,
   requestObjectSchema,
 } from "../contracts/requests.mjs";
+import { isPendingStatus } from "../contracts/status.mjs";
 import { DEFAULT_DIRECTION, directionSchema } from "../contracts/writing-modes.mjs";
 import { coverageGap } from "./domain/figures.mjs";
 import { continuesStage, flowIssue } from "./domain/index.mjs";
@@ -62,21 +63,35 @@ export class EditorialService {
   view(run) {
     return runView(run, this.now(), this.figureRoutes);
   }
+  // 목록 항목은 바뀐 글만 다시 읽는다(글 한 건이 수 MB) · 시간에 따라 표시가 바뀌는 대기 글은 매번 계산
+  #listed = new Map();
   list() {
-    return this.store
-      .list()
-      .filter((r) => !r.archivedAt)
-      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
-      .map((r) => ({
-        id: r.id,
-        title: titleOf(r),
-        revision: r.state.revision,
-        status: r.state.status,
-        label: runMonitor(r, this.now()).label,
-        needsCompletion: flowIssue(r.state) !== null,
-        completionReason: completionNotice(r.state),
-        updatedAt: r.updatedAt ?? null,
-      }));
+    const items = [];
+    const live = new Set();
+    for (const { id, updatedAt, archivedAt, status } of this.store.stamps()) {
+      if (archivedAt) continue;
+      live.add(id);
+      let hit = this.#listed.get(id);
+      if (!hit || hit.updatedAt !== updatedAt || isPendingStatus(status)) {
+        hit = { updatedAt, item: this.#listItem(this.store.get(id)) };
+        this.#listed.set(id, hit);
+      }
+      items.push(hit.item);
+    }
+    for (const id of this.#listed.keys()) if (!live.has(id)) this.#listed.delete(id);
+    return items.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  }
+  #listItem(r) {
+    return {
+      id: r.id,
+      title: titleOf(r),
+      revision: r.state.revision,
+      status: r.state.status,
+      label: runMonitor(r, this.now()).label,
+      needsCompletion: flowIssue(r.state) !== null,
+      completionReason: completionNotice(r.state),
+      updatedAt: r.updatedAt ?? null,
+    };
   }
   get(id) {
     return this.view(this.store.get(id));
@@ -104,6 +119,16 @@ export class EditorialService {
       });
     }
     return this.get(id);
+  }
+  async resumePending() {
+    const resumed = [];
+    for (const { id } of this.store.pending()) {
+      const run = this.store.get(id);
+      if (flowIssue(run.state) || !pending(run.state)) continue;
+      await this.connect(run.id);
+      resumed.push(run.id);
+    }
+    return resumed;
   }
   async create(input) {
     if (!requestObjectSchema.safeParse(input).success) fail("글감을 입력해 주세요.");
@@ -251,6 +276,8 @@ export class EditorialService {
                 reason: gap,
               });
           }
+          if (run.state.status === "awaiting_figure_design")
+            recordEvent(run, this.now(), "figure_design_ready", "시각자료 구성 준비됨 · 확인 대기");
           if (run.state.status === "awaiting_figure_review")
             recordEvent(run, this.now(), "figures_ready", "시각자료 준비됨 · 확인 대기");
           run.pending = null;

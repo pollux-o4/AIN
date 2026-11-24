@@ -3,7 +3,7 @@ import test from "node:test";
 import { crc32 } from "node:zlib";
 import { svgIssue } from "../../contracts/figure.mjs";
 import { BUNDLE_FORMAT, exportArticle } from "../export/index.mjs";
-import { isAnimated, staticSvg } from "../export/motion.mjs";
+import { isAnimated, staticSvg } from "../../contracts/svg-motion.mjs";
 
 const MOVING =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><style>@keyframes up{to{transform:translateY(-2px)}}.h{animation:up 2s infinite}@media (prefers-reduced-motion:reduce){.h{animation:none}}</style><rect class="h" width="4" height="4"><animate attributeName="opacity" values="1;.5;1" dur="2s" repeatCount="indefinite"/></rect><set attributeName="fill" to="red" begin="1s"/></svg>';

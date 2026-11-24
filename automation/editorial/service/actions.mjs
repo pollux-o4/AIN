@@ -3,6 +3,7 @@ import {
   FIGURE_LIMITS,
   figureDirectionsSchema,
   figureIdsSchema,
+  figureLookSchema,
   figureRoutesSchema,
 } from "../../contracts/figure.mjs";
 import { effectiveRoute } from "../../contracts/figure-result.mjs";
@@ -11,6 +12,7 @@ const ROUTE_NAMES = { image: "이미지", svg: "SVG" };
 
 import {
   actionIdentitySchema,
+  actionRequestSchema,
   actionVersionSchema,
   briefEditSchema,
   feedbackSchema,
@@ -32,7 +34,16 @@ import {
 // 최종 검수(만족·발행 준비)는 사람만 · 에이전트는 편집장으로 위임 한도 안에서 수정 지시 · ADR-0006
 // 수정 해석 승인·재해석은 사람 대리로 편집장도 가능(재해석은 수정 지시 한도에 포함) · ADR-0010
 // 시각자료 선택·확인도 넘길 결과물의 검수라 사람만 · FIGURE-001
-const FIGURE_ACTIONS = ["request_figures", "select_figures", "confirm_figures", "discard_figures"];
+const FIGURE_ACTIONS = [
+  "request_figures",
+  "select_figures",
+  "approve_design",
+  "revise_design",
+  "revise_figures",
+  "confirm_figures",
+  "discard_figures",
+];
+const FIGURE_REVISIONS = ["revise_design", "revise_figures"];
 const HUMAN_ONLY = ["satisfy", "authorize_publication", ...FIGURE_ACTIONS];
 function agentFeedbackRounds(events = []) {
   let rounds = 0;
@@ -58,7 +69,18 @@ function agentFeedbackRounds(events = []) {
 
 export async function runAction(service, id, input, actor = "user") {
   if (!requestObjectSchema.safeParse(input).success) fail("요청 내용을 확인해 주세요.");
-  const { operationId, expectedVersion, type, feedback, edit, figures, directions, routes } = input;
+  const {
+    operationId,
+    expectedVersion,
+    type,
+    feedback,
+    edit,
+    figures,
+    directions,
+    routes,
+    look,
+    target,
+  } = input;
   if (!actionIdentitySchema.safeParse(input).success) fail("지원하지 않는 요청입니다.");
   const changed = await service.locked(id, async () => {
     const run = service.store.get(id);
@@ -71,6 +93,8 @@ export async function runAction(service, id, input, actor = "user") {
       figures,
       directions,
       routes,
+      look,
+      target,
     });
     if (Object.hasOwn(run.operations ?? {}, operationId)) {
       if (run.operations[operationId] !== signature)
@@ -83,6 +107,16 @@ export async function runAction(service, id, input, actor = "user") {
       fail("수정할 내용을 입력해 주세요.");
     if (type === "approve_brief" && edit !== undefined && !briefEditSchema.safeParse(edit).success)
       fail("수정 해석 보정 내용을 확인해 주세요.");
+    // 구성 승인·다시 구성·되돌림 입력 검사 · ADR-0026
+    if (FIGURE_REVISIONS.includes(type) || type === "approve_design") {
+      const request = actionRequestSchema.safeParse(input);
+      if (!request.success)
+        fail(
+          type === "approve_design"
+            ? `시각자료 방향은 후보마다 ${FIGURE_LIMITS.direction}자 이내로 적어 주세요.`
+            : `시각자료 의견을 ${FIGURE_LIMITS.feedback}자 이내로 적고 대상을 골라 주세요.`,
+        );
+    }
     if (
       (type === "select_figures" || (type === "confirm_figures" && figures !== undefined)) &&
       !figureIdsSchema.safeParse(figures).success
@@ -100,6 +134,12 @@ export async function runAction(service, id, input, actor = "user") {
       !figureRoutesSchema.safeParse(routes).success
     )
       fail("시각자료 경로를 확인해 주세요.");
+    if (
+      type === "select_figures" &&
+      look !== undefined &&
+      !figureLookSchema.safeParse(look).success
+    )
+      fail("그림 스타일을 확인해 주세요.");
     if (type === "select_figures") {
       for (const figureId of figures) {
         const candidate = run.state.figure.candidates.find((item) => item.id === figureId);
@@ -197,8 +237,13 @@ export async function runAction(service, id, input, actor = "user") {
         ...event,
         reviewedRevision: run.state.revision,
         ...(figures === undefined ? {} : { figures }),
-        ...(type === "select_figures" && directions !== undefined ? { directions } : {}),
+        ...(["select_figures", "approve_design"].includes(type) && directions !== undefined
+          ? { directions }
+          : {}),
+        ...(FIGURE_REVISIONS.includes(type) ? { feedback: feedback.trim() } : {}),
+        ...(type === "revise_figures" ? { target } : {}),
         ...(type === "select_figures" && routes !== undefined ? { routes } : {}),
+        ...(type === "select_figures" && look !== undefined ? { look } : {}),
         ...(type === "request_figures" && feedback !== undefined ? { note: feedback.trim() } : {}),
       });
       // AI를 부르는 요청(위치 제안·생성)만 새 실행 예산
@@ -234,6 +279,9 @@ export async function runAction(service, id, input, actor = "user") {
       revise_brief: "수정 해석 다시 요청",
       request_figures: "시각자료 추가 요청",
       select_figures: "시각자료 위치 선택",
+      approve_design: "시각자료 구성 승인",
+      revise_design: "시각자료 구성 다시 요청",
+      revise_figures: target === "compose" ? "시각자료 다시 구성 요청" : "시각자료 부분 수정 요청",
       confirm_figures: "시각자료 확인",
       discard_figures: "시각자료 없이 진행",
       resume:
@@ -245,7 +293,9 @@ export async function runAction(service, id, input, actor = "user") {
     };
     recordEvent(run, service.now(), type, labels[type], {
       by: actor,
-      ...(["feedback", "revise_brief"].includes(type) ? { reason: feedback.trim() } : {}),
+      ...(["feedback", "revise_brief", ...FIGURE_REVISIONS].includes(type)
+        ? { reason: feedback.trim() }
+        : {}),
       ...(figures === undefined ? {} : { figures }),
     });
     run.operations = { ...run.operations, [operationId]: signature };

@@ -128,6 +128,9 @@ export function runView(run, now, figureRoutesAvailable = ["svg"]) {
     canRequestFigures: state.status === "satisfied" && !state.figure && !needsCompletion,
     canSelectFigures: state.status === "awaiting_figure_choice" && !needsCompletion,
     canConfirmFigures: state.status === "awaiting_figure_review" && !needsCompletion,
+    // 구성 승인·다시 구성과 확인 뒤 되돌림 · ADR-0026
+    canApproveDesign: state.status === "awaiting_figure_design" && !needsCompletion,
+    canReviseFigures: state.status === "awaiting_figure_review" && !needsCompletion,
     canDiscardFigures:
       Boolean(state.figure) && settled(state) && state.status !== "publication_ready",
     canAuthorizePublication:

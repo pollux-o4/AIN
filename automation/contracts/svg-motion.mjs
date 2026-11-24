@@ -1,4 +1,4 @@
-// 움직이는 SVG의 정지판: 애니메이션을 지우는 곳(RSS·메일·인쇄)용 · 기본 속성 = 첫 프레임 · ADR-0011
+// 움직이는 SVG 판별과 정지판(움직임을 지운 기본 속성) · 내보내기·결과 표시·배치 점검이 함께 쓴다 · ADR-0011·ADR-0012
 const SMIL = /<(animate|animateTransform|animateMotion|set)\b[^>]*?(\/>|>[\s\S]*?<\/\1\s*>)/gi;
 const FREEZE = "<style>*{animation:none!important;transition:none!important}</style>";
 

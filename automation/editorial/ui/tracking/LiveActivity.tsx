@@ -136,7 +136,7 @@ export function LiveActivity({ run, online }: { run: Run; online: boolean }) {
         </details>
       )}
       {(activity?.phase === "permission" || activity?.phase === "unavailable") && (
-        <a href="http://localhost:6767/" target="_blank" rel="noopener noreferrer">
+        <a href={__PASEO_URL__} target="_blank" rel="noopener noreferrer">
           AI 실행 보기
         </a>
       )}

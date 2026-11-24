@@ -13,6 +13,7 @@ import { dockLabels } from "./dockLabels";
 import { FeedbackForm } from "./FeedbackForm";
 import { locateFigure } from "./figures/articleMarks";
 import { FigureChoice } from "./figures/FigureChoice";
+import { FigureDesign } from "./figures/FigureDesign";
 import { FigureReview } from "./figures/FigureReview";
 import type { FigureChoiceState } from "./figures/usePicked";
 
@@ -48,11 +49,12 @@ export function WorkDock({
   const pending = isPending(run.status);
   // 작업이 사람을 기다리는 결정 · 도착하면 도크를 펼쳐 알린다
   const figureChoice = choice && run.figure ? run.figure : null;
+  const figureDesign = run.canApproveDesign && run.figure ? run.figure : null;
   const figureReview = run.canConfirmFigures && run.figure ? run.figure : null;
   const blocking =
     Boolean(run.canApproveBrief && run.brief) ||
     run.needsCompletion ||
-    Boolean(figureChoice || figureReview);
+    Boolean(figureChoice || figureDesign || figureReview);
   const approved = ["satisfied", "publication_ready"].includes(run.status);
   const deciding = blocking || run.canSatisfy || run.canAuthorizePublication || approved;
   const tabs = [
@@ -137,7 +139,9 @@ export function WorkDock({
           {open && tabs.length === 1 && tab && (
             <span className="dock-title">
               {tab === "decide"
-                ? labels.decideTitle
+                ? run.canApproveDesign
+                  ? "시각자료 구성 확인"
+                  : labels.decideTitle
                 : tab === "log" && picked
                   ? `${picked.name} 기록`
                   : tabNames[tab]}
@@ -203,6 +207,17 @@ export function WorkDock({
                       onLocate={locate}
                       disabled={disabled}
                       onAction={decide}
+                    />
+                  </section>
+                )}
+                {figureDesign && (
+                  <section aria-label="시각자료 구성 확인">
+                    <FigureDesign
+                      key={`${run.id}:${run.version}`}
+                      figure={figureDesign}
+                      disabled={disabled}
+                      onAction={decide}
+                      onLocate={locate}
                     />
                   </section>
                 )}

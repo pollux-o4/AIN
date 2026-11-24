@@ -62,7 +62,9 @@ const jobs = {
                       },
                     ],
                   }
-                : { figures: [{ id: "f1", svg: "<svg><rect/></svg>", alt: "fixture 도식" }] },
+                : stage === "figure_compose"
+                  ? { world: "fixture 세계", designs: [{ id: "f1", scene: "장면" }] }
+                  : { figures: [{ id: "f1", svg: "<svg><rect/></svg>", alt: "fixture 도식" }] },
           }
         : stage === "route"
           ? { type: "route", target: "outline", reason: "사용자 피드백의 구조 수정" }
@@ -248,9 +250,16 @@ try {
   await delay(QUIET_MS);
   assert.equal(calls.length, beforeChoice, "Figure generation must wait for the human choice");
   await act("select_figures", { figures: ["f1"] });
+  // 구성 결과도 사람 승인 전에는 생성하지 않는다 · ADR-0026
+  run = await waitFor(id, "awaiting_figure_design");
+  const beforeDesign = calls.length;
+  await delay(QUIET_MS);
+  assert.equal(calls.length, beforeDesign, "Figure generation must wait for design approval");
+  await act("approve_design");
   run = await waitFor(id, "awaiting_figure_review");
-  assert.deepEqual(calls.slice(-1 - FIGURE_PASSES.length), [
+  assert.deepEqual(calls.slice(-2 - FIGURE_PASSES.length), [
     "figure_plan",
+    "figure_compose",
     ...FIGURE_PASSES.map(() => "figure"),
   ]);
   assert.equal(service.get(id).canAuthorizePublication, false);
@@ -263,9 +272,9 @@ try {
   assert.equal(service.download(id).text, text);
   await act("authorize_publication");
   assert.deepEqual(store.get(id).state.approval.figures, ["f1"]);
-  assert.equal(calls.length, beforeChoice + FIGURE_PASSES.length);
+  assert.equal(calls.length, beforeChoice + 1 + FIGURE_PASSES.length);
   console.log(
-    "FLOW-001/FLOW-002/FIGURE-001 verified: full8, feedback/download revisions, failure gate, explicit retry, figure proposal/choice/generation/confirmation (fixture Jobs)",
+    "FLOW-001/FLOW-002/FIGURE-001 verified: full8, feedback/download revisions, failure gate, explicit retry, figure proposal/choice/compose/approval/generation/confirmation (fixture Jobs)",
   );
 } finally {
   await runtime?.stop();
