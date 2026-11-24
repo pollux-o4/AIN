@@ -49,7 +49,11 @@ const sectionCard = z.looseObject({
     slot("explain 구간에서만 쓰며, 정의와 함께 보여 줄 구체적인 대상(예시·그림 소재)을 적는다."),
   ),
   walkthrough: maybe(slot("explain 구간에서만 쓰며, 단계별로 따라가는 예제를 적는다.")),
-  refute: maybe(slot("explain 구간에서만 쓰며, 바로잡을 오해와 올바른 설명을 적는다.")),
+  refute: maybe(
+    slot(
+      "explain 구간에서만 쓰며, 이 구간에서 독자가 품을 만한 오해(audience.misconceptions에 적힌 것을 우선한다)가 있을 때 그 오해와 올바른 설명을 적는다. 다룰 오해가 없으면 비워 둔다.",
+    ),
+  ),
   checkQuestion: maybe(
     slot("explain 구간에서만 쓰며, 본문 내용만으로 답할 수 있는 확인 질문을 적는다."),
   ),
@@ -95,10 +99,10 @@ export const stageOutputSchemas = {
   audience: z.looseObject({
     reader: slot("대상 독자가 누구이고 어떤 상황에 있는지 적는다."),
     intent: slot("독자가 이 글에서 얻으려는 목적을 적는다."),
-    readerTask: maybe(slot("독자가 글을 읽은 뒤 할 수 있게 될 일을 1문장으로 적는다.")),
+    readerTask: maybe(slot(slotGuide("readerTask"))),
     knows: list("독자가 이미 알고 있는 배경지식을 적는다.").optional(),
     unknownTerms: list("독자가 모를 만한 전문 용어를 적는다.").optional(),
-    misconceptions: list("독자가 흔히 갖는 오해를 적는다.").optional(),
+    misconceptions: list("독자가 흔히 하는 오해를 적는다.").optional(),
     homonyms: list("이름은 같지만 실제 대상이 다른 개념을 적는다.").optional(),
     scene: maybe(
       slot(
@@ -110,11 +114,7 @@ export const stageOutputSchemas = {
     outcome: slot("readerTask를 이룬 결과 1문장을 적는다."),
     preserve: list("글감과 원문에서 꼭 지켜야 할 내용을 적는다."),
     excluded: list("이번 글의 범위에서 뺄 내용을 적는다.").optional(),
-    promise: maybe(
-      slot(
-        "독자에게 건네는 약속 문장 1개로, 글을 읽고 나면 할 수 있는 일을 담되 종결어미는 diagnose.preserveVoice를 따른다.",
-      ),
-    ),
+    promise: maybe(slot(`${slotGuide("promise")} 종결어미는 diagnose.preserveVoice를 따른다.`)),
   }),
   research: z
     .looseObject({

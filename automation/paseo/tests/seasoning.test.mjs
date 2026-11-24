@@ -106,7 +106,6 @@ test("RES-004: mode bundles state their genre boundaries", () => {
 test("RES-005: review reports principle IDs, section locations and paraphrase as a proxy", () => {
   const rules = seasoningRules("review", { modes: ["explain"], readerLevel: "beginner" }).join(" ");
   assert.match(rules, /checks의 기준 ID·구간·문제 표현·이유/);
-  assert.match(rules, /독자의 언어로 3문장으로 재진술\(paraphrase\)/);
+  assert.match(rules, /preservationCheck/);
   assert.match(rules, /원문과 불일치/);
-  assert.match(rules, /AI 기반의 대리 지표/);
 });

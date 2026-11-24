@@ -283,11 +283,8 @@ test("FLOW-002: outline selects per-section modes without forcing explain cards 
   assert.match(prompt, /title·mode·keyPoint를 기재한다/);
   assert.match(prompt, /기본은 주된 mode 하나/);
   assert.match(prompt, /내용상 필요한 경우에만 구간별로 다른 mode/);
-  assert.match(
-    prompt,
-    /explain 구간에 한하여 설계 카드인 concrete·walkthrough·refute·checkQuestion/,
-  );
-  assert.match(prompt, /숙련 독자 대상인 경우에는 concrete와 walkthrough의 작성을 선택/);
+  assert.match(prompt, /explain 구간에 한하여 설계 카드인 concrete·walkthrough·checkQuestion/);
+  assert.match(prompt, /숙련 독자 대상인 경우에는 concrete와 walkthrough/);
   assert.match(prompt, /다른 mode 구간에는 explain 설계 카드를 사용하지 않는다/);
   assert.match(prompt, /requirements.mode를 우선/);
   assert.match(prompt, /requirements.readerLevel을 우선/);
