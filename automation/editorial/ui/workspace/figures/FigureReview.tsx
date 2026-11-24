@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { FIGURE_LIMITS, FIGURE_REVISE_TARGETS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { FigureImage } from "./FigureImage";
+import { FigureOption } from "./FigureOption";
 import { FigureRetry } from "./FigureRetry";
+import { FigureRevise } from "./FigureRevise";
 import { AnchorQuote } from "./Locate";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import { usePicked } from "./usePicked";
@@ -17,8 +17,8 @@ export function FigureReview({
   onAction,
   onLocate,
 }: DecisionProps & { onLocate: (id: string) => void }) {
-  const { picked, toggle } = usePicked(figure.items.map((item) => item.id));
-  const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const picks = usePicked(figure.items.map((item) => item.id));
+  const { picked } = picks;
   return (
     <form
       id="figure-review"
@@ -35,72 +35,24 @@ export function FigureReview({
           </span>
         </legend>
         {figure.items.map((item) => (
-          <div key={item.id} className="figure-option">
-            <input
-              id={`keep-${item.id}`}
-              type="checkbox"
-              name="figures"
-              value={item.id}
-              checked={picked.includes(item.id)}
-              onChange={() => toggle(item.id)}
-              aria-labelledby={`keep-${item.id}-name`}
-            />
-            <span>
-              <label htmlFor={`keep-${item.id}`}>
+          <FigureOption
+            key={item.id}
+            scope="keep"
+            id={item.id}
+            picks={picks}
+            labelledBy={`keep-${item.id}-name`}
+            label={
+              <>
                 <FigureImage run={run} item={item} />
                 <strong id={`keep-${item.id}-name`}>{item.caption ?? item.claim}</strong>
-              </label>
-              <AnchorQuote text={quote(item.anchor)} id={item.id} onLocate={onLocate} />
-              {run.canReviseFigures && (
-                <details className="figure-revise">
-                  <summary>되돌리기</summary>
-                  <label htmlFor={`revise-${item.id}`}>고칠 의견</label>
-                  <textarea
-                    id={`revise-${item.id}`}
-                    rows={3}
-                    maxLength={FIGURE_LIMITS.feedback}
-                    value={feedback[item.id] ?? ""}
-                    onChange={(event) =>
-                      setFeedback((current) => ({ ...current, [item.id]: event.target.value }))
-                    }
-                  />
-                  <div className="submit-row">
-                    <button
-                      type="button"
-                      id={`revise-compose-${item.id}`}
-                      disabled={disabled || !feedback[item.id]?.trim()}
-                      onClick={() =>
-                        void onAction({
-                          type: "revise_figures",
-                          feedback: feedback[item.id].trim(),
-                          figures: [item.id],
-                          target: FIGURE_REVISE_TARGETS[0],
-                        })
-                      }
-                    >
-                      장면 다시 구성
-                    </button>
-                    <button
-                      type="button"
-                      id={`revise-generate-${item.id}`}
-                      className="quiet"
-                      disabled={disabled || !feedback[item.id]?.trim()}
-                      onClick={() =>
-                        void onAction({
-                          type: "revise_figures",
-                          feedback: feedback[item.id].trim(),
-                          figures: [item.id],
-                          target: FIGURE_REVISE_TARGETS[1],
-                        })
-                      }
-                    >
-                      부분 고치기
-                    </button>
-                  </div>
-                </details>
-              )}
-            </span>
-          </div>
+              </>
+            }
+          >
+            <AnchorQuote text={quote(item.anchor)} id={item.id} onLocate={onLocate} />
+            {run.canReviseFigures && (
+              <FigureRevise id={item.id} disabled={disabled} onAction={onAction} />
+            )}
+          </FigureOption>
         ))}
       </fieldset>
       <FigureRetry figure={figure} disabled={disabled} onAction={onAction} onLocate={onLocate} />

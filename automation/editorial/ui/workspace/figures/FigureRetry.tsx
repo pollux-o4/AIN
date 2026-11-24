@@ -1,4 +1,5 @@
 import { Icon } from "../../shared/Icon";
+import { FigureOption } from "./FigureOption";
 import { LocateButton } from "./Locate";
 import { placeName } from "./plan";
 import type { DecisionProps } from "./SkipFigures";
@@ -12,7 +13,8 @@ export function FigureRetry({
   onLocate,
 }: Omit<DecisionProps, "run"> & { onLocate: (id: string) => void }) {
   const failed = figure.selected.filter((id) => figure.failed[id]);
-  const { picked, toggle } = usePicked(failed, failed.join());
+  const picks = usePicked(failed, failed.join());
+  const { picked } = picks;
   if (!failed.length) return null;
   const byId = new Map(figure.candidates.map((candidate) => [candidate.id, candidate]));
   return (
@@ -27,23 +29,18 @@ export function FigureRetry({
       {failed.map((id) => {
         const candidate = byId.get(id);
         return (
-          <div key={id} className="figure-option">
-            <input
-              id={`retry-${id}`}
-              type="checkbox"
-              checked={picked.includes(id)}
-              onChange={() => toggle(id)}
-            />
-            <span>
-              <label htmlFor={`retry-${id}`}>
-                <strong>{candidate?.claim ?? id}</strong>
-              </label>
-              <small>
-                {placeName(candidate?.section ?? null)} · 사유: {figure.failed[id]}
-              </small>
-              <LocateButton id={id} onLocate={onLocate} />
-            </span>
-          </div>
+          <FigureOption
+            key={id}
+            scope="retry"
+            id={id}
+            picks={picks}
+            label={<strong>{candidate?.claim ?? id}</strong>}
+          >
+            <small>
+              {placeName(candidate?.section ?? null)} · 사유: {figure.failed[id]}
+            </small>
+            <LocateButton id={id} onLocate={onLocate} />
+          </FigureOption>
         );
       })}
       <div className="submit-row">

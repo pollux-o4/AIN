@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FIGURE_LOOKS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
+import { FigureOption } from "./FigureOption";
 import { LocateButton } from "./Locate";
 import { placeName, ROUTE_NAMES } from "./plan";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
@@ -15,7 +16,7 @@ export function FigureChoice({
   onAction,
   onLocate,
 }: Omit<DecisionProps, "run"> & { choice: FigureChoiceState; onLocate: (id: string) => void }) {
-  const { picked, toggle } = choice;
+  const { picked } = choice;
   const first = choice.candidates[0]?.id;
   // 그림 스타일은 글 하나에 하나 · 비우면 구성이 글에 맞춰 고른다 · ADR-0027
   const [look, setLook] = useState<keyof typeof FIGURE_LOOKS | "">("");
@@ -67,32 +68,29 @@ export function FigureChoice({
           </p>
         )}
         {choice.candidates.map((candidate) => (
-          <div key={candidate.id} className="figure-option">
-            <input
-              id={`pick-${candidate.id}`}
-              type="checkbox"
-              name="figures"
-              value={candidate.id}
-              checked={picked.includes(candidate.id)}
-              onChange={() => toggle(candidate.id)}
-            />
-            <span>
-              <label htmlFor={`pick-${candidate.id}`}>
+          <FigureOption
+            key={candidate.id}
+            scope="pick"
+            id={candidate.id}
+            picks={choice}
+            label={
+              <>
                 <small>후보 {choice.numberOf(candidate.id)}</small>
                 <strong>{candidate.claim}</strong>
-              </label>
-              <small>
-                {placeName(candidate.section)}
-                {picked.includes(candidate.id)
-                  ? ` · ${ROUTE_NAMES[choice.routeOf(candidate.id)]}`
-                  : ""}
-                {picked.includes(candidate.id) && choice.directionOf(candidate.id).trim()
-                  ? " · 방향 있음"
-                  : ""}
-              </small>
-              <LocateButton id={candidate.id} onLocate={onLocate} />
-            </span>
-          </div>
+              </>
+            }
+          >
+            <small>
+              {placeName(candidate.section)}
+              {picked.includes(candidate.id)
+                ? ` · ${ROUTE_NAMES[choice.routeOf(candidate.id)]}`
+                : ""}
+              {picked.includes(candidate.id) && choice.directionOf(candidate.id).trim()
+                ? " · 방향 있음"
+                : ""}
+            </small>
+            <LocateButton id={candidate.id} onLocate={onLocate} />
+          </FigureOption>
         ))}
       </fieldset>
       <label className="figure-look">
