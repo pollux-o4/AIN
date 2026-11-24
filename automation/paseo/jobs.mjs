@@ -12,6 +12,7 @@ import {
 } from "../editorial/domain/index.mjs";
 import { finalSteps, watchTimeline } from "./activity.mjs";
 import { promptContext, summarizeInputs } from "./context.mjs";
+import { judgeBatch } from "./figure-batch.mjs";
 import {
   finalResultBlock,
   inlineFigureFiles,
@@ -423,44 +424,28 @@ export class Jobs {
     return true;
   }
 
-  // 그림 묶음: 한 장씩 확인하고 모두 끝나면(성공·실패) 결과를 합쳐 한 번에 검사 · ADR-0026
-  // 한 장이라도 그렸으면 그린 것은 결과로 넘기고 실패한 장은 사유와 함께 알린다(끝난 장을 다시 그리지 않게)
-  // 모두 실패하면 묶음 실패, 사람 조치가 필요한 장이 있으면 묶음 전체가 기다린다
+  // 그림 묶음: 장마다 확인하고 판정(judgeBatch)에 따라 기다림·실패·부분 결과를 저장 · ADR-0026
   async #pollBatch(head) {
-    const children = [];
-    for (const child of head.parts) children.push(await this.poll(child));
+    // 장마다 잠금이 따로라 동시에 확인한다
+    const children = await Promise.all(head.parts.map((child) => this.poll(child)));
     return this.locked(head.id, async () => {
       const job = await this.read(head.id);
       if (["completed", "failed"].includes(job.status)) return job;
-      const settle = (child) => {
-        job.status = child.status;
-        job.error = child.error;
-        if (child.failureKind) job.failureKind = child.failureKind;
+      const verdict = judgeBatch(children);
+      if (verdict.kind === "wait") return job;
+      if (verdict.kind === "settle") {
+        job.status = verdict.from.status;
+        job.error = verdict.from.error;
+        if (verdict.from.failureKind) job.failureKind = verdict.from.failureKind;
         return this.save(job);
-      };
-      const waiting = children.find((child) => child.status === "needs_attention");
-      if (waiting) return settle(waiting);
-      if (!children.every((child) => ["completed", "failed"].includes(child.status))) return job;
-      // 장마다 자기 자리 그림만 받는다 · 자기 그림이 없으면 그 장만 실패(다른 장 결과를 막지 않게)
-      const own = (child) =>
-        child.status === "completed"
-          ? child.event.output.figures.filter((figure) => figure.id === child.action.figureId)
-          : [];
-      const done = children.filter((child) => own(child).length);
-      if (!done.length) {
-        const failure = children.find((child) => child.status === "failed");
-        if (failure) return settle(failure);
+      }
+      if (verdict.kind === "invalid") {
         job.status = "failed";
         job.failureKind = "invalid_output";
         job.error = CONTRACT_ERROR;
         return this.save(job);
       }
-      const failed = children
-        .filter((child) => !own(child).length)
-        .map((child) => ({
-          id: child.action.figureId,
-          error: child.status === "failed" ? child.error : "그림 결과가 이 자리와 맞지 않습니다",
-        }));
+      const { figures, failed } = verdict;
       job.event = {
         id: `${job.id}-result`,
         actor: "adapter",
@@ -470,7 +455,7 @@ export class Jobs {
         stage: job.action.stage,
         pass: job.action.pass,
         figureIds: job.action.figureIds,
-        output: { figures: done.flatMap(own) },
+        output: { figures },
         ...(failed.length ? { failed } : {}),
       };
       try {

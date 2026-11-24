@@ -5,6 +5,7 @@ import test, { after } from "node:test";
 import { stageOutputExamples } from "../../contracts/ai-output.mjs";
 import { nextAction, partActions, transition } from "../../editorial/domain/index.mjs";
 import { scratchDir } from "../../runtime/scratch.mjs";
+import { judgeBatch } from "../figure-batch.mjs";
 import { Jobs } from "../jobs.mjs";
 import { buildPrompt, promptData } from "../prompts/index.mjs";
 import { resultEvent } from "../results.mjs";
@@ -336,4 +337,30 @@ test("FIGURE-001 위치 지시: 사용자 지시가 위치 제안·생성 프롬
   ).state;
   state = send(state, "select_figures", { reviewedRevision: 1, figures: ["f1"] });
   assert.equal(data(buildPrompt(state, nextAction(state))).placementNote, "주문 문단 뒤");
+});
+
+// 묶음 판정은 장 상태만으로 정해진다 · 실행 없이 모든 갈래를 고정한다
+test("ADR-0026 묶음 판정: 기다림·사람 조치·부분 결과·모두 실패·계약 위반", () => {
+  const done = (id, got = id) => ({
+    status: "completed",
+    action: { figureId: id },
+    event: { output: { figures: [{ id: got }] } },
+  });
+  const failed = (id) => ({ status: "failed", error: "멈춤", action: { figureId: id } });
+  assert.equal(
+    judgeBatch([done("f1"), { status: "running", action: { figureId: "f2" } }]).kind,
+    "wait",
+  );
+  const attention = { status: "needs_attention", action: { figureId: "f2" } };
+  assert.equal(judgeBatch([failed("f1"), attention]).from, attention);
+  assert.deepEqual(judgeBatch([done("f1"), failed("f2"), done("f3", "f9")]), {
+    kind: "result",
+    figures: [{ id: "f1" }],
+    failed: [
+      { id: "f2", error: "멈춤" },
+      { id: "f3", error: "그림 결과가 이 자리와 맞지 않습니다" },
+    ],
+  });
+  assert.equal(judgeBatch([failed("f1"), done("f2", "f9")]).kind, "settle");
+  assert.equal(judgeBatch([done("f1", "f9")]).kind, "invalid");
 });
