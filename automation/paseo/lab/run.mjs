@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { appendFileSync, openSync } from "node:fs";
+import { appendFileSync, mkdirSync, openSync } from "node:fs";
 import { createServer } from "node:net";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -26,6 +26,7 @@ async function assertPortFree(url) {
 
 async function startBridge(variant, url, runtimeDir) {
   await assertPortFree(url);
+  mkdirSync(LAB_ROOT, { recursive: true, mode: 0o700 });
   const log = openSync(join(LAB_ROOT, "bridge.log"), "a");
   const child = spawn(process.execPath, ["automation/runtime/server.mjs"], {
     env: { ...process.env, AIN_LAB_VARIANT: variant, [DATA_DIR_ENV]: runtimeDir },
