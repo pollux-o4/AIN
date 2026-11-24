@@ -1,9 +1,10 @@
-import { type Candidate, candidateNumber, type Motif } from "./plan";
+import { type Candidate, candidateNumber, type Motif, motifIndex } from "./plan";
 
 // 같은 반복 대상을 그리는 다른 후보 번호 · 확인할 때 어디끼리 비교할지 알려 준다(ADR-0022)
 function motifRows(candidate: Candidate, candidates: Candidate[], motifs: Motif[]) {
+  const index = motifIndex(motifs);
   return candidate.motifs.flatMap((name): [string, string][] => {
-    const motif = motifs.find((item) => item.name === name);
+    const motif = index.get(name);
     if (!motif) return [];
     const peers = candidates
       .filter((item) => item.id !== candidate.id && item.motifs.includes(name))

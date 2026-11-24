@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { FIGURE_LOOKS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
-import { ROUTE_NAMES } from "./plan";
+import { LocateButton } from "./Locate";
+import { placeName, ROUTE_NAMES } from "./plan";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import type { FigureChoiceState } from "./usePicked";
 
@@ -81,7 +82,7 @@ export function FigureChoice({
                 <strong>{candidate.claim}</strong>
               </label>
               <small>
-                {candidate.section ? `‘${candidate.section}’ 구간` : "도입부"}
+                {placeName(candidate.section)}
                 {picked.includes(candidate.id)
                   ? ` · ${ROUTE_NAMES[choice.routeOf(candidate.id)]}`
                   : ""}
@@ -89,9 +90,7 @@ export function FigureChoice({
                   ? " · 방향 있음"
                   : ""}
               </small>
-              <button type="button" className="quiet" onClick={() => onLocate(candidate.id)}>
-                본문에서 보기
-              </button>
+              <LocateButton id={candidate.id} onLocate={onLocate} />
             </span>
           </div>
         ))}

@@ -2,7 +2,8 @@ import { type FormEvent, useState } from "react";
 import { FIGURE_LIMITS } from "../../../../contracts/figure.mjs";
 import type { Figure } from "../../shared/api";
 import { Icon } from "../../shared/Icon";
-import type { Candidate } from "./plan";
+import { AnchorQuote } from "./Locate";
+import { type Candidate, motifIndex, placeName } from "./plan";
 import type { DecisionProps } from "./SkipFigures";
 import { usePicked } from "./usePicked";
 
@@ -15,18 +16,14 @@ function DesignCandidate({
   motifs: Figure["motifs"];
   onLocate: (id: string) => void;
 }) {
+  const looks = motifIndex(motifs);
   return (
     <article className="figure-design-item">
-      <h3>{candidate.section ? `‘${candidate.section}’ 구간` : "도입부"}</h3>
+      <h3>{placeName(candidate.section)}</h3>
       <p>
         <b>주장</b> {candidate.claim}
       </p>
-      <blockquote className="figure-anchor">
-        <q>{candidate.anchor}</q>
-        <button type="button" className="quiet" onClick={() => onLocate(candidate.id)}>
-          <Icon name="eye" /> 본문에서 보기
-        </button>
-      </blockquote>
+      <AnchorQuote text={candidate.anchor} id={candidate.id} onLocate={onLocate} />
       {candidate.analogy && (
         <p>
           <b>그릴 대상</b> {candidate.analogy}
@@ -54,7 +51,7 @@ function DesignCandidate({
           <b>반복해서 나올 대상</b>{" "}
           {candidate.motifs
             .map((name) => {
-              const motif = motifs.find((item) => item.name === name);
+              const motif = looks.get(name);
               return motif ? `${name} (${motif.look})` : name;
             })
             .join(" · ")}
@@ -127,7 +124,7 @@ export function FigureDesign({
                 checked={picked.includes(candidate.id)}
                 onChange={() => toggle(candidate.id)}
               />
-              {candidate.section ? `‘${candidate.section}’ 구간` : `도입부`} · 자리 {index + 1}
+              {placeName(candidate.section)} · 자리 {index + 1}
             </label>
           ))}
         </fieldset>

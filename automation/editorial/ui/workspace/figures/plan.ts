@@ -13,3 +13,7 @@ export const candidateNumber = (candidates: Candidate[], id: string) =>
   candidates.findIndex((item) => item.id === id) + 1;
 // 경로 표시 이름 · 경로 선택·도크 목록·검토가 같은 이름을 쓴다(ADR-0025)
 export const ROUTE_NAMES: Record<FigureRoute, string> = { svg: "도식(SVG)", image: "그림(이미지)" };
+// 자리 이름 · 도크 목록·구성 확인·본문 자리가 같은 이름을 쓴다
+export const placeName = (section: string | null) => (section ? `‘${section}’ 구간` : "도입부");
+// 반복 대상 이름 → 모양 · 후보마다 다시 훑지 않게 한 번 색인
+export const motifIndex = (motifs: Motif[]) => new Map(motifs.map((motif) => [motif.name, motif]));

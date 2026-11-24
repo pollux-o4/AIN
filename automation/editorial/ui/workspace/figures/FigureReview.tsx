@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FIGURE_LIMITS, FIGURE_REVISE_TARGETS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { FigureImage } from "./FigureImage";
+import { AnchorQuote } from "./Locate";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
 import { usePicked } from "./usePicked";
 
@@ -48,10 +49,7 @@ export function FigureReview({
                 <FigureImage run={run} item={item} />
                 <strong id={`keep-${item.id}-name`}>{item.caption ?? item.claim}</strong>
               </label>
-              <q>{quote(item.anchor)}</q>
-              <button type="button" className="quiet" onClick={() => onLocate(item.id)}>
-                본문에서 보기
-              </button>
+              <AnchorQuote text={quote(item.anchor)} id={item.id} onLocate={onLocate} />
               {run.canReviseFigures && (
                 <details className="figure-revise">
                   <summary>되돌리기</summary>
