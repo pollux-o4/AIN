@@ -21,10 +21,12 @@ function DesignCandidate({
       <p>
         <b>주장</b> {candidate.claim}
       </p>
-      <q>{candidate.anchor}</q>
-      <button type="button" className="quiet" onClick={() => onLocate(candidate.id)}>
-        <Icon name="eye" /> 본문에서 보기
-      </button>
+      <blockquote className="figure-anchor">
+        <q>{candidate.anchor}</q>
+        <button type="button" className="quiet" onClick={() => onLocate(candidate.id)}>
+          <Icon name="eye" /> 본문에서 보기
+        </button>
+      </blockquote>
       {candidate.analogy && (
         <p>
           <b>그릴 대상</b> {candidate.analogy}

@@ -467,7 +467,7 @@ details[open] > :not(summary) {
 #displayed-revision {
   margin-right: auto;
 }
-article {
+article:where(#article) {
   margin: 18px 0 40px;
   padding: clamp(22px, 4vw, 44px);
   background: var(--surface);
@@ -478,27 +478,27 @@ article {
   font-size: 16.5px;
   overflow-wrap: anywhere;
 }
-article.fresh > * {
+article:where(#article).fresh > * {
   animation: rise 560ms var(--ease) both;
   animation-delay: calc(min(var(--i, 0), 12) * 45ms);
 }
-article > :first-child {
+article:where(#article) > :first-child {
   margin-top: 0;
 }
 #article h1 {
   font-size: 28px;
 }
-article h2 {
+article:where(#article) h2 {
   font-size: 22px;
   margin-top: 36px;
 }
-article h3 {
+article:where(#article) h3 {
   font-size: 19px;
 }
-article p {
+article:where(#article) p {
   margin: 16px 0;
 }
-article pre {
+article:where(#article) pre {
   white-space: pre-wrap;
   background: var(--surface-2);
   padding: 18px;
@@ -506,25 +506,25 @@ article pre {
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
-article code {
+article:where(#article) code {
   font-family: ui-monospace, monospace;
   font-size: 0.9em;
 }
-article table {
+article:where(#article) table {
   display: block;
   overflow-x: auto;
   border-collapse: collapse;
   font-size: 14px;
 }
-article th,
-article td {
+article:where(#article) th,
+article:where(#article) td {
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--line);
   padding: 10px;
   min-width: 120px;
 }
-article blockquote {
+article:where(#article) blockquote {
   border-left: 3px solid var(--accent);
   margin: 20px 0;
   padding: 0 20px;
@@ -1107,7 +1107,7 @@ article blockquote {
     padding: 10px 14px;
     white-space: nowrap;
   }
-  article {
+  article:where(#article) {
     font-size: 16px;
   }
   #review {
@@ -1359,7 +1359,7 @@ body {
 .pixel,
 #create-form,
 #feedback-form,
-article,
+article:where(#article),
 #writing-design,
 #edit-memo,
 #live-activity,
@@ -1384,7 +1384,7 @@ article,
 }
 #create-form,
 #feedback-form,
-article,
+article:where(#article),
 .run-list .open {
   --shadow-c: color-mix(in srgb, var(--drop) 22%, transparent);
 }
@@ -1440,7 +1440,7 @@ h1 {
 h2 {
   font-weight: 700;
 }
-article :is(h1, h2, h3) {
+article:where(#article) :is(h1, h2, h3) {
   font-family: var(--pixel-font);
   font-weight: 700;
   line-height: 1.5;
@@ -1705,23 +1705,23 @@ summary h2 {
 .result-heading {
   padding: 8px var(--px) 0;
 }
-article {
+article:where(#article) {
   margin: 18px var(--px) 40px;
   background: var(--surface);
   border: 0;
   font-size: 16.5px;
 }
-article blockquote {
+article:where(#article) blockquote {
   border-left: calc(var(--px) * 2) solid var(--coin);
   color: var(--ink);
   background: color-mix(in srgb, var(--coin) 10%, transparent);
   padding: 8px 18px;
 }
-article pre,
+article:where(#article) pre,
 #history pre {
   border-radius: 0;
 }
-article th {
+article:where(#article) th {
   font-family: var(--pixel-font);
   font-size: 12px;
   border-bottom: var(--px) solid var(--line);
@@ -3108,4 +3108,35 @@ fieldset.figure-list {
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
+}
+/* 그림 구성 확인: 자리마다 한 묶음 · 본문(#article) 문서 스타일과 분리 · ADR-0026 */
+.figure-design-list {
+  display: grid;
+  gap: 18px;
+  margin: 12px 0;
+}
+.figure-design-item {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.figure-design-item h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.figure-design-item :is(p, ul) {
+  margin: 0;
+}
+.figure-anchor {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 0 6px 12px;
+  border-left: calc(var(--px) * 2) solid var(--line);
+  color: var(--muted);
 }
