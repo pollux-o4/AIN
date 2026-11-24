@@ -385,10 +385,26 @@ test("FIGURE-001 위치 선택: 후보 자리를 같은 배치 규칙으로 본�
     ["f1", "f2"],
   );
   assert.doesNotMatch(html, /<figure/);
-  assert.doesNotMatch(
-    articleHtml({ ...view, figure: { ...view.figure, phase: "review" } }),
-    /figure-slot/,
-  );
+  const spots = (figure, busy = false) =>
+    [
+      ...articleHtml({ ...view, busy, figure: { ...view.figure, ...figure } }).matchAll(
+        /data-(?:figure|spot)="(\w+)"/g,
+      ),
+    ].map((m) => m[1]);
+  // 고른 자리는 그림이 생기기 전에도 확정 전까지 실제 상태로 남는다
+  assert.deepEqual(spots({ phase: "design", selected: ["f2"] }), ["design"]);
+  assert.deepEqual(spots({ phase: "compose", selected: ["f2"] }, true), ["composing"]);
+  assert.deepEqual(spots({ phase: "compose", selected: ["f2"] }), ["stopped"]);
+  const drawing = {
+    phase: "generate",
+    selected: ["f1", "f2"],
+    current: { ids: ["f2"], pass: "draw" },
+  };
+  assert.deepEqual(spots({ ...drawing, items: [] }, true), ["queued", "drawing"]);
+  const done = { ...drawing, items: [{ id: "f1", anchor: ANCHOR, alt: "a" }] };
+  assert.deepEqual(spots(done, true), ["f1", "drawing"]);
+  assert.deepEqual(spots({ ...done, phase: "confirmed" }), ["f1"]);
+  assert.deepEqual(spots({ phase: "discarded", selected: ["f1"] }), []);
 });
 
 test("FIGURE-001 계약: 실행·외부 참조 SVG 거부, 네임스페이스 보충, 선택 id 검증", () => {
@@ -740,7 +756,10 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
 // 만드는 중에도 본문에 놓인 다 만든 그림은 파일을 제공해야 깨진 그림으로 보이지 않음
 test("generate phase serves finished figures only", () => {
   const items = [{ id: "f1", svg: "<svg/>" }];
-  assert.deepEqual(placedFigures({ figure: { phase: "generate", items } }), items);
+  assert.deepEqual(
+    placedFigures({ figure: { phase: "generate", items, selected: ["f1"], candidates: [] } }),
+    items,
+  );
   assert.deepEqual(placedFigures({ figure: { phase: "choose", items } }), []);
   assert.deepEqual(placedFigures({ figure: { phase: "discarded", items } }), []);
 });

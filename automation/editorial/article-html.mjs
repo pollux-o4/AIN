@@ -6,7 +6,7 @@ import {
   figureSrc,
   staticFigureSrc,
 } from "../contracts/figure.mjs";
-import { placeFigures } from "./domain/index.mjs";
+import { figureSpots, placeFigures } from "./domain/index.mjs";
 
 const markdown = new MarkdownIt({ html: false, linkify: false })
   .use(cjkFriendly) // 한국어 조사 앞 `**…)**으로` 같은 강조도 닫히게(CommonMark 기본 규칙은 실패)
@@ -33,13 +33,12 @@ export function renderArticle({ title, text: source, figures }, renderFigure) {
     .join("");
 }
 export const escapeHtml = text;
-// 위치 선택 중에는 후보 자리를 같은 배치 규칙(placeFigures)으로 표시 · 화면이 이 빈 자리에 선택 단추를 채운다
-const slotHtml = (candidate) =>
-  `<div class="${FIGURE_MARKS.slotClass}" ${FIGURE_MARKS.candidate}="${text(candidate.id)}"></div>`;
+// 그림이 아직 없는 자리 · 화면이 상태(FIGURE_SPOTS)에 맞는 표시를 채운다
+const slotHtml = (spot) =>
+  `<div class="${FIGURE_MARKS.slotClass}" ${FIGURE_MARKS.candidate}="${text(spot.id)}" ${FIGURE_MARKS.spot}="${text(spot.spot)}"></div>`;
 export function articleHtml(view) {
-  if (view.figure?.phase === "choose")
-    return renderArticle({ ...view, figures: view.figure.candidates }, slotHtml);
-  return renderArticle({ ...view, figures: view.figure?.items ?? [] }, (item) =>
-    figureHtml(view, item),
+  const spots = figureSpots(view.figure, view.busy);
+  return renderArticle({ ...view, figures: spots }, (spot) =>
+    spot.item ? figureHtml(view, spot.item) : slotHtml(spot),
   );
 }

@@ -98,7 +98,18 @@ export const FIGURE_KINDS = Object.freeze({
 export const FIGURE_MARKS = Object.freeze({
   figure: "data-figure",
   candidate: "data-candidate",
+  spot: "data-spot",
   slotClass: "figure-slot",
+});
+// 본문 속 그림 자리의 상태 · 서버가 실제 단계·실행 여부로 정하고 화면은 이름만 보여 준다 · FIGURE-001
+// 고른 자리는 그림이 생기기 전에도 확정 전까지 본문에 남는다(고른 자리가 사라져 보이지 않게)
+export const FIGURE_SPOTS = Object.freeze({
+  candidate: "후보",
+  composing: "구성하는 중",
+  design: "그릴 내용 확인 대기",
+  drawing: "그리는 중",
+  queued: "그리기 대기",
+  stopped: "멈춤 · 확인 필요",
 });
 // 화면의 그림 주소 · 서버 본문 HTML과 화면이 같은 규칙 · 버전(v)이 바뀌면 새 파일
 /** @param {string} runId @param {string} figureId @param {number} version */
