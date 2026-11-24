@@ -6,6 +6,8 @@ export const marks = {
   figure: `figure[${FIGURE_MARKS.figure}]`,
   candidateOf: (slot: HTMLElement) => slot.getAttribute(FIGURE_MARKS.candidate) ?? "",
   figureOf: (figure: HTMLElement) => figure.getAttribute(FIGURE_MARKS.figure) ?? "",
+  // 서버가 정한 자리 상태(FIGURE_SPOTS의 키)
+  spotOf: (slot: HTMLElement) => slot.getAttribute(FIGURE_MARKS.spot) ?? "candidate",
 };
 
 // 본문 속 시각자료·후보 자리로 이동 · 그림이 있으면 그림, 고르는 중이면 후보 자리

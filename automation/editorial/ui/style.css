@@ -2755,7 +2755,7 @@ fieldset.dock-presets {
   border-left: 3px solid var(--line);
   padding-left: 12px;
 }
-#article :has(+ .figure-slot:has([aria-pressed="true"])) {
+#article :has(+ .figure-slot:is(:has([aria-pressed="true"]), :not([data-spot="candidate"]))) {
   border-left-color: var(--accent);
 }
 #article .figure-slot {
@@ -3139,4 +3139,26 @@ fieldset.figure-list {
   padding: 6px 0 6px 12px;
   border-left: calc(var(--px) * 2) solid var(--line);
   color: var(--muted);
+}
+/* 고른 뒤 그림이 생기기 전 자리: 고르기 단추와 같은 틀에 상태만 바꿔 같은 자리가 이어져 보이게 · FIGURE-001 */
+.figure-slot-status {
+  padding: 10px 12px;
+  border: var(--px, 1px) solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.figure-slot-status[data-spot="stopped"] {
+  border-color: var(--coin);
+  border-style: dashed;
+}
+.figure-slot-status[data-spot="drawing"] small::before {
+  content: "● ";
+  color: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .figure-slot-status[data-spot="drawing"] small::before {
+    animation: pulse 1.2s var(--ease) infinite;
+  }
 }
