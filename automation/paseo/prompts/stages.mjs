@@ -6,7 +6,8 @@ import {
   subsectionHeading,
   summaryHeading,
 } from "../../contracts/article-structure.mjs";
-import { slotCheck, slotGuide } from "../../contracts/slot-rules.mjs";
+import { NATURAL_KOREAN } from "../../contracts/natural-korean.mjs";
+import { SLOT_RULES, slotCheck, slotGuide } from "../../contracts/slot-rules.mjs";
 import {
   CARD_SPACE,
   MAX_CASES,
@@ -17,7 +18,6 @@ import { requirementValue } from "../../editorial/domain/index.mjs";
 import {
   HYPE_HINT,
   LEAD,
-  NATURAL_KOREAN,
   resolveDirection,
   reviewChecks,
   SCENE,
@@ -133,10 +133,10 @@ const STAGE_SPECS = {
       "소제목 계층 구조를 정한다. 구간 안에 독자가 나중에 다시 찾아볼 대등한 항목이 2개 이상 있으면 subsections로 나누며, 하위 항목도 같은 기준으로 다시 나눌 수 있다. 계층 깊이는 내용의 포함 관계에 따라 정하며 따로 상한을 두지 않는다. 같은 단계의 항목은 3~5개를 목표로 하되, 하위 항목이 하나뿐이면 나누지 않는다. 하위 항목의 본문 분량은 해당 구간의 budget에 포함된다.",
       "제목과 소제목의 역할을 계층별로 나눈다. 글 제목은 이 글을 읽고 무엇을 알게 되는지를 비유 없이 바로 알 수 있게 쓴다. 구간 title은 그 구간에서 독자가 얻을 답을 짧고 자연스러운 말로 담아, 소제목만 훑어도 글 전체의 구조가 드러나게 한다. 하위 항목의 title은 독자가 다시 찾아볼 대상을 짧은 이름으로 쓰고 같은 단계의 항목끼리 같은 형태를 유지한다. 모든 제목은 정해진 문형에 맞추지 않으며, 독자의 호기심을 끄는 질문은 소제목에 두지 않고 hook에 둔다.",
       "독자 수준은 requirements.readerLevel을 우선하고, 지정된 값이 없으면 diagnose.readerLevel을 따른다. 개념은 선행 개념 순서에 따라 배치하고 구간별 level을 적는다. value.excluded에 들어 있는 내용은 구간으로 넣지 않으며, 핵심 흐름 밖의 심화·호기심 구간은 optional을 true로 둔다.",
-      `procedure가 아닌 구간에는 구간 카드의 항목인 hook(여는 질문: 구간의 첫 문장이 될 질문이나 통념을 뒤집는 주장), cases(research.cases에서 고른 사례 1~${MAX_CASES}개의 장면 원형), underline(강조 문장), principleLine(마무리 문장)을 모두 적는다.`,
+      `procedure가 아닌 구간에는 구간 카드의 항목인 hook(여는 문장: ${SLOT_RULES.hook.role}), cases(research.cases에서 고른 사례 1~${MAX_CASES}개의 장면 원형), underline(강조 문장), principleLine(마무리 문장)을 모두 적는다.`,
       VOICE.slot("title·구간 title·hook·cases·underline·principleLine"),
       "cases에는 audience.scene의 내용을 되풀이하지 않고 그 뒤에 이어지는 장면을 적는다. keyPoint·hook·underline·principleLine은 서로 다른 내용으로 쓰며, 같은 문장을 낱말만 바꾸어 되풀이하지 않는다.",
-      NATURAL_KOREAN,
+      NATURAL_KOREAN.BODY.draft,
       "여러 구간의 같은 항목(underline·principleLine 등)을 모두 같은 문형으로 쓰지 않는다. 문형은 내용에 맞게 정한다.",
       "explain 구간에 한하여 설계 카드인 concrete·walkthrough·checkQuestion을 작성하고, refute는 항목 안내에 적힌 조건에 맞을 때만 작성한다. analogySystem(mapping·limits)은 독자가 바로 떠올리는 일상 사물 하나가 개념과 직접 맞닿을 때만 쓰고, 그런 사물이 없으면 생략한다. 독자가 한 번 더 옮겨 생각해야 하는 추상적 비유(예: 분류 체계를 다른 사물의 배치에 빗대는 것)는 쓰지 않는다. 다만, 숙련 독자 대상인 경우에는 concrete와 walkthrough는 쓰지 않아도 된다. 다른 mode 구간에는 explain 설계 카드를 사용하지 않는다.",
       "requirements.length가 지정되어 있으면 구간마다 budget(공백 포함 글자 수, 정수)을 적되, 전체 합계를 지정 범위의 가운데 값 부근에 맞춘다(초고는 예산보다 조금 길어지는 경향이 있으므로 상한 쪽에 여유를 둔다). 범위를 맞추기 어려우면 구간 수를 2~8개 사이로 줄인다. 글 제목과 도입부는 첫 구간의 budget에, 끝 정리 목록은 마지막 구간의 budget에 넣는다.",

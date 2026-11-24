@@ -1,6 +1,9 @@
 // 짧은 항목(글 제목·독자 과제·약속·구간 한 줄 항목)의 규칙 단일 정의 · ADR-0020
 // role: 쓰는 AI의 항목 안내이자 검토 AI의 점검 질문 · max: 코드가 세는 글자 수 상한(공백 포함, 없으면 세지 않음) · basis: 근거
 // 뜻(역할을 하는가)은 검토가, 글자 수는 코드가 본다(JUDGE-001) · 새 항목은 여기에 한 줄을 더해 확장한다
+import { NATURAL_KOREAN } from "./natural-korean.mjs";
+
+// 짧은 항목은 독자에게 그대로 보이므로 안내·점검 질문에 자연스러운 한국어 기준(SLOT)을 함께 싣는다
 // shortcut: 상한은 한국어 표본 근거가 없는 어림값(RES-007 한계), 실제 글 표본이 쌓이면 조정
 
 /** @typedef {{ role: string, max?: number, basis: string }} SlotRule */
@@ -37,25 +40,18 @@ export const SLOT_RULES = Object.freeze({
   },
 });
 
-// 짧은 항목은 모두 독자에게 그대로 보이므로 자연스러운 한국어 기준을 항목마다 함께 적용한다
-// 제목처럼 만든 단계와 옮겨 쓰는 단계가 다른 항목도 이 안내·점검 질문을 거치면 기준이 빠지지 않는다
-const READABLE = {
-  guide: "소리 내어 읽었을 때 자연스러운 한국어로 쓰고, 번역투를 쓰지 않는다.",
-  check: "소리 내어 읽었을 때 자연스러운 한국어이며 번역투가 없는가.",
-};
-
 /** 구간 카드의 한 줄 항목 · 나머지(title)는 글 전체 항목 */
 export const SECTION_LINES = /** @type {const} */ (["hook", "underline", "principleLine"]);
 
 /** 쓰는 AI에게 주는 항목 안내 @param {keyof typeof SLOT_RULES} name */
 export const slotGuide = (name) => {
   const { role, max } = SLOT_RULES[name];
-  return `${role} ${READABLE.guide}${max ? ` ${max}자 이내로 적는다.` : ""}`;
+  return `${role} ${NATURAL_KOREAN.SLOT.draft}${max ? ` ${max}자 이내로 적는다.` : ""}`;
 };
 
 /** 검토 AI·자기 점검용 질문 @param {keyof typeof SLOT_RULES} name @param {string} label */
 export const slotCheck = (name, label) => {
   const { role, max } = SLOT_RULES[name];
   const limit = max ? ` (${max}자를 넘으면 시스템이 거부한다)` : "";
-  return `${label} 항목이 다음 역할에 맞는가: ${role} ${READABLE.check}${limit}`;
+  return `${label} 항목이 다음 역할에 맞는가: ${role} ${NATURAL_KOREAN.SLOT.check}${limit}`;
 };

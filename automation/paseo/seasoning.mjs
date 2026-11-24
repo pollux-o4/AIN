@@ -1,3 +1,4 @@
+import { NATURAL_KOREAN } from "../contracts/natural-korean.mjs";
 import { slotCheck } from "../contracts/slot-rules.mjs";
 import {
   READER_LEVELS,
@@ -66,20 +67,14 @@ export const LEAD = {
   },
 };
 // 읽기 쉬운 문장(S4): 초고 지시와 검토 질문을 한 쌍으로 둔다(한쪽만 고쳐 어긋나지 않게)
-// 자연스러운 한국어는 글의 목적(독자가 머리를 덜 쓰고 바로 알아듣는다)에서 나온 공통 기준 · 구성 항목과 본문에 함께 적용
+// 자연스러운 한국어(contracts/natural-korean)는 구성 항목과 본문에 함께 적용
 const PLAIN = {
   draft:
     "[S4 쉬운 표현] 한 문장에는 생각 하나만 담는다. 독자가 알기 어려운 용어는 처음 나올 때 괄호나 한 문장으로 풀이하고, 같은 대상은 글 끝까지 같은 이름으로 부른다.",
   check:
     "한 문장에 생각 하나만 담겨 있고, 독자가 알기 어려운 용어가 처음 나올 때 풀이되며, 같은 대상을 끝까지 같은 이름으로 부르는가",
 };
-const NATURAL = {
-  draft:
-    "[자연스러운 한국어] 독자가 소리 내어 읽었을 때 자연스러운 한국어로 쓴다. 번역투, 정해진 문형에 내용을 끼워 맞춘 문장, 독자가 한 번 더 옮겨 생각해야 하는 추상적 비유를 쓰지 않는다. 비유는 독자가 바로 떠올리는 일상 사물이 개념과 직접 대응할 때만 쓴다.",
-  check:
-    "소리 내어 읽었을 때 자연스러운 한국어인가(번역투·정해진 문형에 끼워 맞춘 문장·같은 문형 반복·한 번 더 옮겨 생각해야 하는 비유가 없는가)",
-};
-export const NATURAL_KOREAN = NATURAL.draft;
+const NATURAL = NATURAL_KOREAN.BODY;
 export const BASE = {
   draft: [
     "[공통] 핵심 내용·조건·근거·원문의 목소리를 지키고 군더더기 수식을 뺀다.",
