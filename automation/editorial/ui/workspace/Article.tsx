@@ -1,4 +1,5 @@
 import { type ReactNode, type RefObject, useEffect, useRef } from "react";
+import { useFigureMotion } from "../shared/useFigureMotion";
 
 // 서버가 렌더링한 본문 · 덧붙일 표시(시각자료 자리 등)는 children이 본문 요소를 받아 그린다
 export function Article({
@@ -9,6 +10,7 @@ export function Article({
   children?: (article: RefObject<HTMLElement | null>) => ReactNode;
 }) {
   const article = useRef<HTMLElement>(null);
+  useFigureMotion(article, [html]);
   // 새 본문이 오면 문단 순서대로 등장 모션을 다시 건다
   useEffect(() => {
     const element = article.current;

@@ -100,6 +100,14 @@ export const FIGURE_MARKS = Object.freeze({
   candidate: "data-candidate",
   slotClass: "figure-slot",
 });
+// 화면의 그림 주소 · 서버 본문 HTML과 화면이 같은 규칙 · 버전(v)이 바뀌면 새 파일
+/** @param {string} runId @param {string} figureId @param {number} version */
+export const figureSrc = (runId, figureId, version) =>
+  `/write/api/runs/${runId}/figures/${figureId}?v=${version}`;
+// 화면 밖 그림은 정지판 · 움직이는 원본 주소는 FIGURE_MOTION_ATTR에 둔다
+/** @param {string} src */
+export const staticFigureSrc = (src) => `${src}&motion=static`;
+export const FIGURE_MOTION_ATTR = "data-motion";
 // 공통 시각 규칙 항목 · 계약 검사·저장·화면이 같은 목록을 쓴다 · ADR-0022
 export const FIGURE_STYLE_KEYS = /** @type {const} */ (["accent", "base", "labels"]);
 // 그림 스타일 · 글 하나에 하나를 구성이 고른다 · 그리기 규칙은 paseo/prompts/looks.mjs · ADR-0027

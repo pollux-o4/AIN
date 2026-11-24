@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { type FIGURE_REVISE_TARGETS, FIGURE_ROUTES } from "../../../contracts/figure.mjs";
+import {
+  type FIGURE_REVISE_TARGETS,
+  FIGURE_ROUTES,
+  figureSrc,
+} from "../../../contracts/figure.mjs";
 import { historySchema } from "../../../contracts/history.mjs";
 import type { actionRequestSchema } from "../../../contracts/requests.mjs";
 import { type Direction, designViewSchema } from "../../../contracts/writing-modes.mjs";
@@ -198,8 +202,7 @@ export type { Direction };
 export type Design = Run["design"];
 export type Figure = NonNullable<Run["figure"]>;
 export type FigureRoute = (typeof FIGURE_ROUTES)[number];
-export const figureUrl = (run: Run, id: string) =>
-  `/write/api/runs/${run.id}/figures/${id}?v=${run.version}`;
+export const figureUrl = (run: Run, id: string) => figureSrc(run.id, id, run.version);
 export type RecentRun = z.infer<typeof recentSchema>["runs"][number];
 export type BriefEdit = {
   intent?: string;

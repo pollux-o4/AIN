@@ -1,6 +1,11 @@
 import MarkdownIt from "markdown-it";
 import cjkFriendly from "markdown-it-cjk-friendly";
-import { FIGURE_MARKS } from "../contracts/figure.mjs";
+import {
+  FIGURE_MARKS,
+  FIGURE_MOTION_ATTR,
+  figureSrc,
+  staticFigureSrc,
+} from "../contracts/figure.mjs";
 import { placeFigures } from "./domain/index.mjs";
 
 const markdown = new MarkdownIt({ html: false, linkify: false })
@@ -11,10 +16,10 @@ const text = (value) => markdown.utils.escapeHtml(String(value));
 // 시각자료는 동일 출처 파일을 <img>로만 표시(스크립트 실행 없음) · 확인 전이면 그 사실을 함께 표시
 function figureHtml(view, item) {
   const pending = view.figure.phase !== "confirmed";
-  const src = `/write/api/runs/${view.id}/figures/${item.id}?v=${view.version}`;
+  const src = figureSrc(view.id, item.id, view.version);
   return (
     `<figure class="figure" ${FIGURE_MARKS.figure}="${text(item.id)}"${pending ? ' data-pending=""' : ""}>` +
-    `<img src="${text(src)}" alt="${text(item.alt)}" loading="lazy">` +
+    `<img src="${text(staticFigureSrc(src))}" ${FIGURE_MOTION_ATTR}="${text(src)}" alt="${text(item.alt)}" loading="lazy">` +
     `<figcaption>${pending ? '<span class="figure-flag">확인 전</span>' : ""}${text(item.caption ?? item.claim)}</figcaption>` +
     "</figure>"
   );

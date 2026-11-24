@@ -712,7 +712,7 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   );
   assert.match(
     pending,
-    /<img src="\/write\/api\/runs\/[a-f0-9-]+\/figures\/f1\?v=\d+" alt="f1 설명"/,
+    /<img src="\/write\/api\/runs\/[a-f0-9-]+\/figures\/f1\?v=\d+&amp;motion=static" data-motion="\/write\/api\/runs\/[a-f0-9-]+\/figures\/f1\?v=\d+" alt="f1 설명"/,
   );
   assert.match(pending, /확인 전/);
   const file = await get("/figures/f1");
@@ -722,6 +722,9 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   const servedSvg = await file.text();
   assert.match(servedSvg, /^<svg xmlns/);
   assert.equal(servedSvg, f.service.figure(f.id, "f1").body);
+  assert.equal(file.headers.get("cache-control"), "no-store");
+  const versioned = await get("/figures/f1?v=1&motion=static");
+  assert.match(versioned.headers.get("cache-control"), /immutable/);
   assert.match(
     (await get("/figures/f1?download")).headers.get("content-disposition"),
     /figure-.*-r1-f1\.svg/,

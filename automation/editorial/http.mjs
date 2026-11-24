@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { staticSvg } from "../contracts/svg-motion.mjs";
 import { articleHtml } from "./article-html.mjs";
 import { readAsset } from "./assets.mjs";
 import { readJson } from "./http-json.mjs";
@@ -142,16 +143,21 @@ export function editorialHttp({
       }
       if (req.method === "GET" && action?.startsWith("/figures/")) {
         const file = service.figure(id, action.slice(9));
-        const download = new URL(req.url, origin).searchParams.has("download");
+        const query = new URL(req.url, origin).searchParams;
+        const download = query.has("download");
+        const svg = file.mime === "image/svg+xml";
+        // 정지판은 화면 밖 그림용 · 움직임 판별·제거 규칙은 contracts/svg-motion 하나
+        const body = svg && query.get("motion") === "static" ? staticSvg(file.body) : file.body;
         res.writeHead(200, {
-          "Content-Type": file.mime === "image/svg+xml" ? `${file.mime}; charset=utf-8` : file.mime,
-          "Cache-Control": "no-store",
+          "Content-Type": svg ? `${file.mime}; charset=utf-8` : file.mime,
+          // 주소에 글 버전(v)이 있으면 내용이 바뀌지 않으므로 다시 받지 않는다
+          "Cache-Control": query.has("v") ? "private, max-age=31536000, immutable" : "no-store",
           "X-Content-Type-Options": "nosniff",
           // AI가 만든 파일: 직접 열어도 스크립트·외부 요청 불가
           "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
           ...(download ? { "Content-Disposition": `attachment; filename="${file.filename}"` } : {}),
         });
-        res.end(file.body);
+        res.end(body);
         return true;
       }
       if (req.method === "GET" && action === "/export") {
