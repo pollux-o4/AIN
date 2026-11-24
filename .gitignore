@@ -3,3 +3,6 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Playwright 실패 산출물(실행마다 재생성)
+test-results/
