@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { AI_MODELS } from "../../contracts/ai-models.mjs";
+import { LIVE_RUNTIME_DIR } from "../../contracts/runtime.mjs";
 import { flowIssue, STAGES } from "../../editorial/domain/index.mjs";
 import { EditorialStore } from "../../editorial/index.mjs";
 
@@ -32,23 +33,44 @@ function cloneState(sourceState, articleId, from) {
   return state;
 }
 
-/** @param {{ runtimeDir: string, fromArticle: string, from?: "satisfied" | "choice" }} options */
-export function seedFromArticle({ runtimeDir, fromArticle, from = "satisfied" }) {
-  mkdirSync(runtimeDir, { recursive: true });
-  const store = new EditorialStore(join(runtimeDir, "editorial.sqlite"));
+/** 실험 글은 연구소 저장소에만 · 실사용 "내 글"에 복제본이 쌓이지 않게 한다(LAB-001) @param {string} path */
+export function labRuntime(path) {
+  const dir = resolve(path);
+  if (dir === resolve(LIVE_RUNTIME_DIR))
+    throw new Error(`연구소는 실사용 저장소(${LIVE_RUNTIME_DIR})를 쓸 수 없습니다.`);
+  return dir;
+}
+
+/** 원본은 실사용 저장소에서 읽고(읽기 전용) 복제본은 연구소 저장소에 쓴다
+ * @param {{ runtimeDir: string, sourceDir?: string, fromArticle: string, from?: "satisfied" | "choice" }} options */
+export function seedFromArticle({
+  runtimeDir,
+  sourceDir = LIVE_RUNTIME_DIR,
+  fromArticle,
+  from = "satisfied",
+}) {
+  const target = labRuntime(runtimeDir);
+  mkdirSync(target, { recursive: true });
+  const source = new EditorialStore(join(sourceDir, "editorial.sqlite"));
+  let matches;
   try {
-    const matches = store.findByPrefix(fromArticle);
+    matches = source.findByPrefix(fromArticle);
+  } finally {
+    source.close();
+  }
+  const store = new EditorialStore(join(target, "editorial.sqlite"));
+  try {
     if (matches.length !== 1)
       throw new Error(`원본 글을 하나로 찾지 못했습니다: ${fromArticle} (${matches.length}건)`);
-    const source = matches[0].state;
+    const origin = matches[0].state;
     const ready =
       from === "choice"
-        ? source.figure?.phase === "choose"
-        : source.satisfiedRevision === source.revision &&
-          STAGES.every((stage) => source.artifacts?.[stage]);
+        ? origin.figure?.phase === "choose"
+        : origin.satisfiedRevision === origin.revision &&
+          STAGES.every((stage) => origin.artifacts?.[stage]);
     if (!ready) throw new Error(`원본 글이 ${from} 시작 상태가 아닙니다: ${fromArticle}`);
     const articleId = randomUUID();
-    const state = cloneState(source, articleId, from);
+    const state = cloneState(origin, articleId, from);
     const now = Date.now();
     const run = {
       id: articleId,

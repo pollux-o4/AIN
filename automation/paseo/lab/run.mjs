@@ -4,12 +4,12 @@ import { createServer } from "node:net";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { DEFAULT_RUNTIME_URL } from "../../contracts/runtime.mjs";
+import { DATA_DIR_ENV, DEFAULT_RUNTIME_URL } from "../../contracts/runtime.mjs";
 import { EditorialStore } from "../../editorial/index.mjs";
 import { requireLiveConsent } from "../live/consent.mjs";
 import { createHttpSession, drive, fix } from "./drive.mjs";
 import { importArticle } from "./import.mjs";
-import { seedFromArticle } from "./seed.mjs";
+import { labRuntime, seedFromArticle } from "./seed.mjs";
 import { LAB_ROOT, writeLabIndex } from "./store.mjs";
 import { LAB_VARIANTS, objectPolicy } from "./variants.mjs";
 
@@ -24,11 +24,11 @@ async function assertPortFree(url) {
   });
 }
 
-async function startBridge(variant, url) {
+async function startBridge(variant, url, runtimeDir) {
   await assertPortFree(url);
   const log = openSync(join(LAB_ROOT, "bridge.log"), "a");
   const child = spawn(process.execPath, ["automation/runtime/server.mjs"], {
-    env: { ...process.env, AIN_LAB_VARIANT: variant },
+    env: { ...process.env, AIN_LAB_VARIANT: variant, [DATA_DIR_ENV]: runtimeDir },
     // 브리지가 실행 중에 죽으면 원인을 남긴다 · 원문은 서버가 기록하지 않음
     stdio: ["ignore", log, log],
   });
@@ -86,7 +86,8 @@ function parse() {
       looks: { type: "string", default: "" },
       feedback: { type: "string" },
       url: { type: "string", default: DEFAULT_RUNTIME_URL },
-      runtime: { type: "string", default: ".local/ai-runtime" },
+      // 실험 글은 연구소 저장소에만 · 실사용 목록에 복제본이 쌓이지 않게 한다(LAB-001)
+      runtime: { type: "string", default: join(LAB_ROOT, "runtime") },
     },
     strict: true,
   }).values;
@@ -94,7 +95,7 @@ function parse() {
 
 export async function main() {
   const options = parse();
-  requireLiveConsent(`RES-011 ${options.trials ?? 3}회 위치 제안과 그림 생성`);
+  requireLiveConsent(`RES-009 ${options.trials ?? 3}회 위치 제안과 그림 생성`);
   if (!options.from || !options.case || !options.variant)
     throw new Error(
       "사용법: node automation/paseo/lab/run.mjs --from <글 id 앞부분> --case <사례 앞이름> --variant <id> --trials 3 [--stage plan|compose|figure] [--figures f2,f3,f4] · compose·figure는 위치 후보 선택 대기 글에서 시작",
@@ -115,7 +116,7 @@ export async function main() {
         .filter(Boolean)
     : [];
   if (new Set(figures).size !== figures.length) throw new Error("--figures에 중복 id가 있습니다.");
-  const runtimeDir = resolve(options.runtime);
+  const runtimeDir = labRuntime(options.runtime);
   const jobsDir = resolve(runtimeDir, "jobs");
   const url = options.url;
   const ref = `${execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim()}${
@@ -132,7 +133,7 @@ export async function main() {
   process.on("SIGTERM", onTerm);
   let bridge;
   try {
-    bridge = await startBridge(options.variant, url);
+    bridge = await startBridge(options.variant, url, runtimeDir);
     const http = await createHttpSession(url);
     const runOne = async (look, trial) => {
       // 구성·생성 실험은 모든 회차가 같은 위치 후보에서 출발해야 변수가 대상 정책 하나로 남는다 · ADR-0026

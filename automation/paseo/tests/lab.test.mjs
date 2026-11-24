@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { labMatrix } from "../../contracts/lab.mjs";
 import { flowIssue, STAGES, transition } from "../../editorial/domain/index.mjs";
 import { EditorialStore } from "../../editorial/index.mjs";
-import { seedFromArticle } from "../lab/seed.mjs";
+import { labRuntime, seedFromArticle } from "../lab/seed.mjs";
 import { judgeLabRecord, readLab, writeLabIndex, writeLabRecord } from "../lab/store.mjs";
 
 const VARIANTS = [
@@ -166,7 +166,12 @@ test("lab_005 원본 글에서 확정 초안 또는 위치 후보 상태를 시�
   store.close();
 
   const seeded = (from) => {
-    const { articleId } = seedFromArticle({ runtimeDir, fromArticle: "source-article", from });
+    const { articleId } = seedFromArticle({
+      runtimeDir,
+      sourceDir: runtimeDir,
+      fromArticle: "source-article",
+      from,
+    });
     const reader = new EditorialStore(join(runtimeDir, "editorial.sqlite"));
     try {
       return reader.get(articleId).state;
@@ -184,7 +189,13 @@ test("lab_005 원본 글에서 확정 초안 또는 위치 후보 상태를 시�
     ["awaiting_figure_choice", "choose", ["f1"]],
   );
   assert.throws(
-    () => seedFromArticle({ runtimeDir, fromArticle: "nope" }),
+    () => seedFromArticle({ runtimeDir, sourceDir: runtimeDir, fromArticle: "nope" }),
     /하나로 찾지 못했습니다/,
   );
+});
+
+// 실험 복제본이 실사용 "내 글"에 쌓이지 않도록 실사용 저장소 지정은 거부
+test("LAB-001 연구소는 실사용 저장소를 쓰지 않는다", () => {
+  assert.throws(() => labRuntime(".local/ai-runtime"), /실사용 저장소/);
+  assert.match(labRuntime(".local/figure-lab/runtime"), /figure-lab\/runtime$/);
 });

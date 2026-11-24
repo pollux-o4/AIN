@@ -4,7 +4,12 @@ import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { connectLocalPaseo } from "../../../paseo/sdk.mjs";
-import { AGENT_TOKEN_FILE, RUNTIME_PROTOCOL } from "../contracts/runtime.mjs";
+import {
+  AGENT_TOKEN_FILE,
+  dataDir,
+  LIVE_RUNTIME_DIR,
+  RUNTIME_PROTOCOL,
+} from "../contracts/runtime.mjs";
 import { EditorialService, EditorialStore, editorialHttp } from "../editorial/index.mjs";
 import { Jobs } from "../paseo/index.mjs";
 
@@ -52,14 +57,15 @@ async function ensureAgentToken(path) {
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
-  const local = resolve(".local/ai-runtime");
+  const local = resolve(LIVE_RUNTIME_DIR);
+  const data = resolve(dataDir(process.env));
   const token = (await readFile(join(local, "bridge-token"), "utf8")).trim();
   const agentToken = await ensureAgentToken(join(local, AGENT_TOKEN_FILE));
   const client = await connectLocalPaseo();
   const jobs = new Jobs({
     client,
-    root: join(local, "jobs"),
-    workRoot: join(local, "workspaces"),
+    root: join(data, "jobs"),
+    workRoot: join(data, "workspaces"),
     allowedProviders:
       process.env.AI_ALLOWED_PROVIDERS?.split(",").map((value) => value.trim()) ?? null,
   });
@@ -74,7 +80,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     60_000,
   );
   sweeper.unref();
-  const store = new EditorialStore(join(local, "editorial.sqlite"));
+  const store = new EditorialStore(join(data, "editorial.sqlite"));
   const n8nUrl = process.env.EDITORIAL_N8N_URL ?? "http://localhost:5678";
   const editorial = new EditorialService({
     store,

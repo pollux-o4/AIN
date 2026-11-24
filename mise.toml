@@ -104,5 +104,5 @@ description = "앱 실행 기록을 연구소로 가져옴 · 예) mise run lab:
 run = "node automation/paseo/lab/import-jobs.mjs"
 
 [tasks."lab:run"]
-description = "RES-011 대상 정책 파일럿 실행 · 예) mise run lab:run -- --from 955f26 --case algo --variant metaphor --trials 3 · 실제 모델 비용 발생"
+description = "그림 연구 파일럿 실행(RES-009) · 연구소 전용 저장소 .local/figure-lab/runtime에만 씀 · 예) mise run lab:run -- --from 955f26 --case algo --variant metaphor --trials 3 · 실제 모델 비용 발생"
 run = "node automation/paseo/lab/run.mjs"

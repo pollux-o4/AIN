@@ -661,6 +661,39 @@ article blockquote {
   color: var(--busy);
   background: color-mix(in srgb, var(--busy) 14%, transparent);
 }
+.chip.approved {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  font-weight: 600;
+}
+.run-id {
+  font: 12px / 1 var(--mono, ui-monospace, monospace);
+  color: var(--muted);
+  margin-left: auto;
+}
+.run-list .handoff {
+  align-self: center;
+  flex: none;
+}
+.library-filter {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.library-filter button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.library-filter button[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
 .chip.warn {
   color: var(--warn-ink);
   background: var(--warn-bg);

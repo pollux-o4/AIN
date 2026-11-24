@@ -3,3 +3,5 @@ export const PENDING_STATUSES = Object.freeze(["waiting_ai", "waiting_route", "w
 /** @param {unknown} status */
 export const isPendingStatus = (status) =>
   typeof status === "string" && PENDING_STATUSES.includes(status);
+// 사람이 발행 준비를 승인한 상태 · 다른 프로젝트로 넘길 수 있는 글은 이것뿐(ADR-0012)
+export const PUBLICATION_READY = "publication_ready";

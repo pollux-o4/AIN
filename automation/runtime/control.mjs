@@ -3,11 +3,12 @@ import { execFileSync, spawn } from "node:child_process";
 import { openSync, readdirSync, readFileSync, readlinkSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { LIVE_RUNTIME_DIR } from "../contracts/runtime.mjs";
 import { pendingRuns } from "../editorial/index.mjs";
 import { activeRuns, isStale, ownedRole, stopBlockers } from "./lifecycle.mjs";
 
 const root = resolve(".");
-const local = join(root, ".local/ai-runtime");
+const local = join(root, LIVE_RUNTIME_DIR);
 const SESSION_URL = "http://127.0.0.1:3230/write/session";
 const CODE_DIRS = [
   "automation/cli",
@@ -142,7 +143,7 @@ async function start({ force }) {
     if (child.exitCode !== null) break;
     await wait(500);
   }
-  throw new Error("시작 실패: .local/ai-runtime/editorial-background.log 확인");
+  throw new Error(`시작 실패: ${LIVE_RUNTIME_DIR}/editorial-background.log 확인`);
 }
 
 async function report() {

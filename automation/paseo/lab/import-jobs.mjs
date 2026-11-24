@@ -1,3 +1,4 @@
+import { LIVE_RUNTIME_DIR } from "../../contracts/runtime.mjs";
 import { importArticle } from "./import.mjs";
 
 const [articleId, caseId, variant, trialArg = "1"] = process.argv.slice(2);
@@ -7,7 +8,7 @@ if (!articleId || !caseId || !variant) {
 }
 
 const records = await importArticle({
-  jobsDir: ".local/ai-runtime/jobs",
+  jobsDir: `${LIVE_RUNTIME_DIR}/jobs`,
   articleId,
   caseId,
   variant,

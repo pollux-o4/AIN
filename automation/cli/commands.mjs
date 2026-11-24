@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { isPendingStatus } from "../contracts/status.mjs";
+import { handoffRequest } from "../contracts/handoff.mjs";
+import { isPendingStatus, PUBLICATION_READY } from "../contracts/status.mjs";
 import { directionSchema, lengthRange } from "../contracts/writing-modes.mjs";
 import { actionCommands } from "./actions.mjs";
 import { CliError } from "./client.mjs";
@@ -59,7 +60,18 @@ function lengthOption(value) {
 }
 
 export const commands = {
-  list: (c) => c.list(),
+  // --ready: 다른 프로젝트로 넘길 수 있는 글(발행 준비 승인)만
+  list: async (c, _args, o) => {
+    const runs = await c.list();
+    return o.ready ? runs.filter((run) => run.status === PUBLICATION_READY) : runs;
+  },
+  // 다른 프로젝트 담당자에게 줄 가져오기 요청 · 화면 복사와 같은 문구
+  handoff: async (c, [id]) => {
+    const run = await c.get(need(id));
+    if (run.status !== PUBLICATION_READY)
+      throw new CliError("발행 준비가 승인된 글만 넘길 수 있습니다. 화면에서 승인해 주세요.");
+    return handoffRequest(run);
+  },
   show: (c, [id], o) => c.get(need(id)).then((run) => summary(run, { text: Boolean(o.text) })),
   history: (c, [id]) => c.history(need(id)),
   usage: (c, [id], o) =>

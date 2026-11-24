@@ -5,13 +5,13 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { AGENT_TOKEN_FILE, DEFAULT_RUNTIME_URL } from "../contracts/runtime.mjs";
+import { AGENT_TOKEN_FILE, DEFAULT_RUNTIME_URL, LIVE_RUNTIME_DIR } from "../contracts/runtime.mjs";
 import { actionUsage } from "./actions.mjs";
 import { AinClient, CliError } from "./client.mjs";
 import { commands } from "./commands.mjs";
 
 export const USAGE = `ain <명령> [인자] · 출력 JSON(download는 TXT)
-  list                                   작업 목록
+  list [--ready]                         작업 목록 (--ready: 발행 준비 승인된 글만)
   show <id> [--text]                     상태·가능한 동작 (--text: 본문 포함)
   history <id>                           작성·수정 과정
   usage <id> [--json]                    시간·토큰 사용량(회차→단계→시도, 큰 것부터)
@@ -22,6 +22,7 @@ ${actionUsage()}
   download <id> [--revision n]           TXT 출력
   export <id> --out <파일> [--format txt|html|zip] [--motion animated|static] [--revision n]
                                          내보내기(zip: 원고 md·html·그림 SVG·manifest.json)
+  handoff <id>                           다른 프로젝트에 줄 가져오기 요청(발행 준비 승인된 글)
   delete <id>                            목록에서 삭제(원고 보존)`;
 
 export async function main(argv, io) {
@@ -48,6 +49,7 @@ export async function main(argv, io) {
         .concat([
           ["text", { type: "boolean" }],
           ["json", { type: "boolean" }],
+          ["ready", { type: "boolean" }],
         ]),
     ),
     strict: false,
@@ -66,10 +68,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     writeFile,
     sleep: delay,
     client: async () => {
-      const path = join(
-        process.env.AIN_RUNTIME_DIR ?? resolve(".local/ai-runtime"),
-        AGENT_TOKEN_FILE,
-      );
+      const path = join(process.env.AIN_RUNTIME_DIR ?? resolve(LIVE_RUNTIME_DIR), AGENT_TOKEN_FILE);
       const token = await readFile(path, "utf8").catch(() => {
         throw new CliError(
           `에이전트 토큰이 없습니다: ${path} · \`mise run editorial\`로 서비스를 한 번 시작해 주세요.`,

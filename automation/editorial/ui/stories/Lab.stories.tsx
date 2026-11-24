@@ -28,7 +28,7 @@ const exampleLab: Lab = {
     { id: "baseline", label: "현재", hypothesis: "기준", changes: [] },
     {
       id: "res010",
-      label: "A · RES-010",
+      label: "A · RES-009",
       hypothesis: "원칙 3개를 지시문에 넣는다",
       changes: ["without·relation·mapping"],
     },

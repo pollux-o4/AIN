@@ -3,10 +3,11 @@
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { connectLocalPaseo } from "../../../paseo/sdk.mjs";
+import { LIVE_RUNTIME_DIR } from "../contracts/runtime.mjs";
 import { Jobs } from "./jobs.mjs";
 
 const { values } = parseArgs({ options: { all: { type: "boolean", default: false } } });
-const local = resolve(".local/ai-runtime");
+const local = resolve(LIVE_RUNTIME_DIR);
 const client = await connectLocalPaseo();
 try {
   const jobs = new Jobs({ client, root: join(local, "jobs"), workRoot: join(local, "workspaces") });

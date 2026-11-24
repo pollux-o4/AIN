@@ -1,6 +1,6 @@
 // image 경로 · 이미지 생성 모델은 client 포트로 주입한다(Higgsfield MCP 등 교체 가능 · ADR-0025)
 
-// 지시문은 스타일 → 장면 → 배치 → 글자 순서 · 섹션이 빠지면 예측 가능한 방식으로 실패한다(RES-009 출처 8)
+// 지시문은 스타일 → 장면 → 배치 → 글자 순서 · 섹션이 빠지면 예측 가능한 방식으로 실패한다(RES-009)
 /** @param {import("../types.mjs").RouteInput} input @param {boolean} textInImage */
 export function imagePrompt(input, textInImage) {
   const style = input.style ? Object.values(input.style).join(" / ") : "";

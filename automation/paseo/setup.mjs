@@ -1,8 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { LIVE_RUNTIME_DIR } from "../contracts/runtime.mjs";
 
-const root = resolve(".local/ai-runtime");
+const root = resolve(LIVE_RUNTIME_DIR);
 await mkdir(root, { recursive: true, mode: 0o700 });
 const tokenPath = join(root, "bridge-token");
 try {

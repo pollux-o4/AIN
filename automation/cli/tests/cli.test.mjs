@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import test from "node:test";
+import { handoffRequest } from "../../contracts/handoff.mjs";
 import { editorialHttp } from "../../editorial/index.mjs";
 import { main } from "../ain.mjs";
 import { AinClient } from "../client.mjs";
@@ -126,4 +127,13 @@ test("agent_001 token is required and never accepted from browsers", async (t) =
   });
   assert.equal(browser.status, 401);
   assert.throws(() => editorialHttp({ service: {}, token: agentToken, agentToken }), /separate/);
+});
+
+// 다른 프로젝트로 넘길 글은 발행 준비 승인된 것만 · 제목이 겹쳐도 id로 특정(ADR-0012)
+test("handoff는 발행 준비 승인된 글만 id로 넘긴다", async (t) => {
+  const f = await fixture(t);
+  const run = (argv) => main(argv, f.io());
+  assert.deepEqual(JSON.parse((await run(["list", "--ready"])).out), []);
+  await assert.rejects(() => run(["handoff", ID]), /발행 준비가 승인된 글만/);
+  assert.match(handoffRequest({ id: ID, title: "초안" }), new RegExp(`export ${ID} --format zip`));
 });

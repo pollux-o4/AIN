@@ -2,10 +2,10 @@ import { spawn } from "node:child_process";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { launcherListen } from "../../../paseo/endpoint.mjs";
-import { RUNTIME_PROTOCOL } from "../contracts/runtime.mjs";
+import { LIVE_RUNTIME_DIR, RUNTIME_PROTOCOL } from "../contracts/runtime.mjs";
 import { editorialWorkflow } from "../n8n/build-editorial-workflow.mjs";
 
-const root = resolve(".local/ai-runtime");
+const root = resolve(LIVE_RUNTIME_DIR);
 await mkdir(root, { recursive: true, mode: 0o700 });
 const children = [];
 async function healthy(url) {
@@ -39,7 +39,8 @@ async function ensure(url, task, env = {}) {
   await log.close();
   for (let i = 0; i < 90; i++) {
     if (await healthy(url)) return;
-    if (child.exitCode !== null) throw new Error(`${task} 시작 실패: .local/ai-runtime 로그 확인`);
+    if (child.exitCode !== null)
+      throw new Error(`${task} 시작 실패: ${LIVE_RUNTIME_DIR} 로그 확인`);
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`${task} 시작 시간 초과`);

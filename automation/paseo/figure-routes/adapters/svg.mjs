@@ -5,7 +5,7 @@ import { xmlSafeSvg } from "../../../contracts/svg-xml.mjs";
 
 const FILE = "figure.svg";
 
-// svg 경로 · 그리는 법(ADR-0024 단계 또는 현행 AI 생성)은 draw 포트가 맡고, 어댑터는 계약 변환만 한다
+// svg 경로 · 그리는 법(ADR-0026 생성 층)은 draw 포트가 맡고, 어댑터는 계약 변환만 한다
 /**
  * @param {{
  *   id: string,

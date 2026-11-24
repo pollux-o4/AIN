@@ -28,7 +28,7 @@ export const FIGURE_LIMITS = Object.freeze({
   feedback: 600,
   // 이 그림이 없으면 독자가 놓치는 것 · 사람이 고를 근거 · ADR-0025
   without: 200,
-  // 그림 요소 → 본문 개념 대응표 · 개념 사이 관계·깨지는 경우도 한 줄씩 옮긴다 · 파일럿 판정 근거(RES-011)
+  // 그림 요소 → 본문 개념 대응표 · 개념 사이 관계·깨지는 경우도 한 줄씩 옮긴다 · 파일럿 판정 근거(RES-009)
   mapping: 12,
   mappingText: 80,
   // 그림 속 글자 요소 예산 · 글자가 많으면 그림이 읽히지 않고 생성·점검 시간도 는다(LAB-001 looks2: 29~72개) · 배치 점검 도구가 센다
@@ -122,7 +122,7 @@ export const figureLookSchema = z.enum(Object.keys(FIGURE_LOOKS));
 // 위치 선정 → (사람 선택) → 구성 → (사람 승인) → 생성 · ADR-0026
 export const FIGURE_STAGES = /** @type {const} */ (["figure_plan", "figure_compose", "figure"]);
 // 생성은 두 층: 초안(구도·내용 자기 판정) → 시각(마감·움직임) · 무엇을 그릴지는 구성이 정하므로 내용 층을 초안에 합침 · ADR-0011·ADR-0026
-// 그리기 한 층 · 초안·시각 두 층은 같은 세션의 인계만 늘려 합침(RES-011)
+// 그리기 한 층 · 초안·시각 두 층은 같은 세션의 인계만 늘려 합침(RES-009)
 export const FIGURE_PASSES = /** @type {const} */ (["draw"]);
 // 확인 뒤 지적만 고치는 층 · 직전 그림과 의견을 받아 국소 수정 · ADR-0026
 export const FIGURE_FIX_PASS = "fix";
