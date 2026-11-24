@@ -6,11 +6,18 @@ import { pathToFileURL } from "node:url";
 import { connectLocalPaseo } from "../../../paseo/sdk.mjs";
 import {
   AGENT_TOKEN_FILE,
+  DEFAULT_OUTBOX,
   dataDir,
   LIVE_RUNTIME_DIR,
+  OUTBOX_ENV,
   RUNTIME_PROTOCOL,
 } from "../contracts/runtime.mjs";
-import { EditorialService, EditorialStore, editorialHttp } from "../editorial/index.mjs";
+import {
+  EditorialService,
+  EditorialStore,
+  editorialHttp,
+  fileOutbox,
+} from "../editorial/index.mjs";
 import { Jobs } from "../paseo/index.mjs";
 
 // Composition root: modules own policies; this file only wires their adapters and lifecycle.
@@ -85,6 +92,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   const editorial = new EditorialService({
     store,
     jobs,
+    outbox: fileOutbox(resolve(process.env[OUTBOX_ENV] ?? DEFAULT_OUTBOX)),
     dispatch: async (id) => {
       const response = await fetch(`${n8nUrl}/webhook/ain-editorial`, {
         method: "POST",

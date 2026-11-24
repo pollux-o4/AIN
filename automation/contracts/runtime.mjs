@@ -5,6 +5,9 @@ export const LIVE_RUNTIME_DIR = ".local/ai-runtime";
 export const DATA_DIR_ENV = "AIN_DATA_DIR";
 /** @param {Record<string, string | undefined>} env */
 export const dataDir = (env) => env[DATA_DIR_ENV] ?? LIVE_RUNTIME_DIR;
+// 보낼 폴더 · 받는 쪽은 여기 놓인 묶음 파일만 읽는다(ADR-0012)
+export const OUTBOX_ENV = "AIN_OUTBOX";
+export const DEFAULT_OUTBOX = ".local/outbox";
 // 에이전트 CLI 인증 파일: LIVE_RUNTIME_DIR 아래 · AGENT-001
 export const AGENT_TOKEN_FILE = "agent-token";
 export const DEFAULT_RUNTIME_URL = "http://127.0.0.1:3230";

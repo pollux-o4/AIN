@@ -130,7 +130,7 @@ export function editorialHttp({
         return true;
       }
       const match = path.match(
-        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/restore|\/download|\/export|\/history|\/figures\/f[1-9]\d?)?$/,
+        /^\/write\/api\/runs\/([a-f0-9-]{36})(\/actions|\/archive|\/restore|\/download|\/export|\/handoff|\/history|\/figures\/f[1-9]\d?)?$/,
       );
       if (!match) {
         json(res, 404, { error: "화면을 찾을 수 없습니다." });
@@ -193,6 +193,11 @@ export function editorialHttp({
       }
       if (req.method === "POST" && action === "/actions") {
         json(res, 200, await service.action(id, await readJson(req), agent ? "agent" : "user"));
+        return true;
+      }
+      // 발행용 넘기기 · 승인 회차 묶음을 보낼 폴더에 두고 요청 문구를 돌려준다(ADR-0012)
+      if (req.method === "POST" && action === "/handoff") {
+        json(res, 200, await service.handoff(id));
         return true;
       }
       if (req.method === "POST" && action === "/archive") {

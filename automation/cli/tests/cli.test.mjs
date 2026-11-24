@@ -44,6 +44,9 @@ async function fixture(t) {
       return { id, archived: true };
     },
     download: () => ({ text: "본문\n", filename: "a.txt" }),
+    handoff: () => {
+      throw Object.assign(new Error("발행 준비가 승인된 글만 넘길 수 있습니다."), { status: 409 });
+    },
     export: (id, options) => {
       calls.push(["export", id, options]);
       return {
@@ -135,5 +138,8 @@ test("handoff는 발행 준비 승인된 글만 id로 넘긴다", async (t) => {
   const run = (argv) => main(argv, f.io());
   assert.deepEqual(JSON.parse((await run(["list", "--ready"])).out), []);
   await assert.rejects(() => run(["handoff", ID]), /발행 준비가 승인된 글만/);
-  assert.match(handoffRequest({ id: ID, title: "초안" }), new RegExp(`export ${ID} --format zip`));
+  assert.match(
+    handoffRequest({ id: ID, title: "초안", revision: 1, path: "/o/a.zip" }),
+    /묶음 파일: \/o\/a\.zip/,
+  );
 });

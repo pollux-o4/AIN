@@ -29,6 +29,7 @@ export class AinClient {
   history = (id) => this.request(`runs/${id}/history`);
   create = (body) => this.request("runs", { body });
   action = (id, body) => this.request(`runs/${id}/actions`, { body });
+  handoff = (id) => this.request(`runs/${id}/handoff`, { body: {} });
   archive = (id) => this.request(`runs/${id}/archive`, { body: {} });
   download = (id, revision) =>
     this.request(`runs/${id}/download${revision ? `?revision=${Number(revision)}` : ""}`, {

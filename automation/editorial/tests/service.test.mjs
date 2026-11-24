@@ -416,6 +416,10 @@ test("user satisfaction and separate publication authorization never dispatch; f
   assert.equal(view.canDownload, true);
   assert.equal(view.canFeedback, true);
   const text = s.download(run.id).text;
+  // 발행용 넘기기는 승인 전 거부 · 작업용 내려받기와 분리(ADR-0012)
+  const sent = new Map();
+  s.outbox = { write: async (name, body) => (sent.set(name, body), `/outbox/${name}`) };
+  await assert.rejects(() => s.handoff(run.id), { status: 409 });
   const approve = {
     operationId: "authorize",
     type: "authorize_publication",
@@ -423,6 +427,11 @@ test("user satisfaction and separate publication authorization never dispatch; f
   };
   view = await s.action(run.id, approve);
   await s.action(run.id, approve);
+  const handed = await s.handoff(run.id);
+  assert.match(handed.path, /^\/outbox\/article-.*-r\d+\.zip$/);
+  assert.match(handed.request, new RegExp(`묶음 파일: ${handed.path}`));
+  const manifest = Buffer.from([...sent.values()][0]).toString("utf8");
+  assert.match(manifest, /"approval": \{\s*"revision": \d+,\s*"approvedAt": \d+/);
   assert.equal(view.status, "publication_ready");
   assert.equal(view.label, "발행 준비 승인");
   assert.equal(view.canAuthorizePublication, false);

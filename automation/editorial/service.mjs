@@ -22,6 +22,7 @@ import { failRun, runAction } from "./service/actions.mjs";
 import { observeActivity } from "./service/activity.mjs";
 import { aiFor, DEFAULT_AI } from "./service/ai-policy.mjs";
 import { figureFile } from "./service/figures.mjs";
+import { handoff } from "./service/handoff.mjs";
 import { executionHistory } from "./service/history.mjs";
 import {
   EDITORIAL_LIMITS,
@@ -33,7 +34,15 @@ import {
 import { completionNotice, displayedDraft, presented, runView, titleOf } from "./service/view.mjs";
 
 export class EditorialService {
-  constructor({ store, jobs, dispatch, ai = DEFAULT_AI, now = Date.now, figureRoutes = ["svg"] }) {
+  constructor({
+    store,
+    jobs,
+    dispatch,
+    ai = DEFAULT_AI,
+    now = Date.now,
+    figureRoutes = ["svg"],
+    outbox = null,
+  }) {
     // 연결된 그림 경로 · 실행 설정이라 상태에 저장하지 않는다(ADR-0025)
     Object.assign(this, {
       store,
@@ -42,6 +51,7 @@ export class EditorialService {
       ai,
       now,
       figureRoutes: Object.freeze([...figureRoutes]),
+      outbox,
     });
     // shortcut: 로컬 단일 서비스의 작업별 잠금, 다중 프로세스 운영 전 DB 기반 실행 lease 도입
     this.locks = new Map();
@@ -355,6 +365,10 @@ export class EditorialService {
       { id: run.id, title: titleOf(run), revision: target, text, figures },
       parsed.data,
     );
+  }
+  // 발행용 넘기기 · 승인 회차만 보낼 폴더로(작업용 export와 분리)
+  handoff(id) {
+    return handoff(this.store.get(id), this.outbox);
   }
   download(id, revision) {
     const file = this.export(id, { revision, format: "txt" });

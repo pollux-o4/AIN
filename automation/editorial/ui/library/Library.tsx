@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { handoffRequest } from "../../../contracts/handoff.mjs";
 import { PUBLICATION_READY } from "../../../contracts/status.mjs";
-import type { RecentRun } from "../shared/api";
+import { api, type RecentRun } from "../shared/api";
 import { Icon } from "../shared/Icon";
 import { isPending } from "../tracking/useRunTracking";
 
@@ -34,6 +33,7 @@ export function Library({ runs, error, onRetry, onOpen, onCompose, onArchive }: 
   // 넘길 글 고르기: 발행 준비 승인된 글만 보기 · 제목이 겹쳐도 id로 구분
   const [readyOnly, setReadyOnly] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [handoffError, setHandoffError] = useState("");
   const readyCount = useMemo(() => (runs ?? []).filter(isReady).length, [runs]);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -42,11 +42,16 @@ export function Library({ runs, error, onRetry, onOpen, onCompose, onArchive }: 
     );
   }, [runs, query, readyOnly]);
   const copyHandoff = async (run: RecentRun) => {
+    setHandoffError("");
     try {
-      await navigator.clipboard.writeText(handoffRequest(run));
+      const { request } = await api.handoff(run.id);
+      await navigator.clipboard.writeText(request);
       setCopied(run.id);
-    } catch {
+    } catch (error) {
       setCopied(null);
+      setHandoffError(
+        error instanceof Error ? error.message : "가져오기 요청을 만들지 못했습니다.",
+      );
     }
   };
   return (
@@ -116,8 +121,15 @@ export function Library({ runs, error, onRetry, onOpen, onCompose, onArchive }: 
         </p>
       )}
       <p className="sr-only" aria-live="polite">
-        {copied ? "가져오기 요청을 복사했습니다. 다른 프로젝트 담당자에게 붙여 넣으세요." : ""}
+        {copied
+          ? "묶음 파일을 보낼 폴더에 두고 가져오기 요청을 복사했습니다. 다른 프로젝트 담당자에게 붙여 넣으세요."
+          : ""}
       </p>
+      {handoffError && (
+        <p className="state hint" role="alert">
+          {handoffError}
+        </p>
+      )}
       {shown.length > 0 && (
         <ul id="recent" className="run-list">
           {shown.map((run) => (

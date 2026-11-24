@@ -51,7 +51,7 @@ function markdownWith(text, figures, motion) {
 }
 
 /**
- * @param {{ id: string, title: string, revision: number, text: string, figures: any[] }} article
+ * @param {{ id: string, title: string, revision: number, text: string, figures: any[], approval?: { revision: number, approvedAt: number | null } }} article
  * @param {{ format: string, motion: string }} options
  */
 export function exportArticle(article, options) {
@@ -105,6 +105,8 @@ export function exportArticle(article, options) {
     format: BUNDLE_FORMAT,
     version: BUNDLE_VERSION,
     article: { id: article.id, title: article.title, revision: article.revision },
+    // 발행용 넘기기에만 있음 · 받는 쪽이 사람이 승인한 최종본인지 확인한다
+    ...(article.approval ? { approval: article.approval } : {}),
     motion,
     entry: { markdown: "article.md", html: "article.html", fragment: "article-body.html" },
     // 그림은 anchor 문장이 든 문단 바로 뒤 · 본문은 글자 그대로라 받는 쪽이 다시 배치할 수 있음

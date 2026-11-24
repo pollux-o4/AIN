@@ -283,6 +283,9 @@ export const api = {
   action: (id: string, body: Action) => request(`runs/${id}/actions`, runSchema, body),
   archive: (id: string) =>
     request(`runs/${id}/archive`, z.object({ id: z.string(), archived: z.literal(true) }), {}),
+  // 발행용 넘기기 · 서버가 승인 회차 묶음을 보낼 폴더에 두고 요청 문구를 준다
+  handoff: (id: string) =>
+    request(`runs/${id}/handoff`, z.object({ path: z.string(), request: z.string() }), {}),
   restore: (id: string) =>
     request(`runs/${id}/restore`, z.object({ id: z.string(), archived: z.literal(false) }), {}),
 };

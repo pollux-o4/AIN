@@ -21,6 +21,11 @@
   - 움직임: `motion=animated`(기본값)와 `static`(SMIL 요소를 없애고 CSS 애니메이션을 멈춰 첫 프레임만 표시) 중 선택한다. `static`은 애니메이션을 제거하는 소비처(RSS·메일·인쇄)용이다.
   - 범위: 지정 회차의 본문과 현재 회차에서 사람이 확인한 시각자료(`figure.phase=confirmed`)만 포함한다. 확인 전인 준비 상태의 그림이나 이전 회차의 그림은 넣지 않는다.
   - 통로: `GET /write/api/runs/<id>/export?format&motion&revision`, CLI `ain export <id> --out <파일> [--format] [--motion]`, 화면의 '내보내기' 메뉴를 제공한다. 응답은 내려받기 전용(`Content-Disposition: attachment` 및 CSP sandbox)으로 반환한다.
+- 발행용 넘기기(2026-11-24 사용자 결정): 작업용 내보내기와 분리한다.
+  - 최종 판정은 보내는 쪽 책임이다. 발행 준비 승인된 회차의 본문과 승인 때 확인된 그림만 묶고, 회차·형식은 고를 수 없다. 승인 전이면 409로 거부한다.
+  - 묶음은 보낼 폴더(`AIN_OUTBOX`, 기본 `.local/outbox`)에 둔다. 받는 쪽은 그 파일만 읽고 AIN의 CLI·토큰·DB를 모른다.
+  - `manifest.json`의 `approval`(승인 회차·시각)로 받는 쪽이 최종본인지 확인한다.
+  - 통로: `POST /write/api/runs/<id>/handoff`, CLI `ain handoff <id>`, 화면 '가져오기 요청 복사'. 셋 다 같은 요청 문구(`contracts/handoff.mjs`)를 준다.
 - 제약: ZIP은 무압축(STORE)만 지원하고 ZIP64는 지원하지 않는다(코드에 `shortcut`으로 표시). PDF와 PNG 래스터 형식은 제공하지 않으며, 필요해지면 렌더러 도입을 검토한다.
 - 책임: 형식 생성은 `automation/editorial/export/`가 맡으며, 본문 렌더러는 화면과 공용(`article-html.mjs` renderArticle)으로 쓴다.
 - 관련: ADR-0011, FIGURE-001, AGENT-001
