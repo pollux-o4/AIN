@@ -3284,3 +3284,35 @@ fieldset.figure-list {
     transform: translateY(-4px);
   }
 }
+
+/* 그림체 바꾸기 · ADR-0027 · 후보 카드 안 label 격자 규칙(#work-dock .figure-option label)을 덮는다 */
+.look-select {
+  display: grid;
+  gap: 6px;
+  margin-block: 12px;
+}
+#work-dock .look-select label,
+.look-select label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+.look-select label .hint {
+  display: inline;
+  font-weight: 400;
+}
+.look-select select {
+  max-width: 100%;
+}
+#work-dock .look-select .look-peers,
+.look-select .look-peers {
+  align-items: flex-start;
+  justify-content: flex-start;
+  font-weight: 400;
+}
+.look-peers input {
+  flex: none;
+  margin-top: 3px;
+}

@@ -137,7 +137,7 @@ export const figureHtml = html
   .replace("대표적입니다.</p>", `대표적입니다.</p>${slot("f1")}`)
   .replace("가릅니다.</blockquote>", `가릅니다.</blockquote>${slot("f2")}`)
   .replace("</table>", `</table>${slot("f3")}`);
-const candidates: Figure["candidates"] = [
+export const candidates: Figure["candidates"] = [
   {
     id: "f1",
     anchor: "메인프레임, 클라이언트-서버, SOA, 마이크로서비스, 모듈러 모놀리스가 대표적입니다.",
@@ -155,6 +155,8 @@ const candidates: Figure["candidates"] = [
     routeBy: "default",
     section: "어떤 아키텍처가 있나",
     origin: "ai",
+    look: null,
+    lookBy: "auto",
   },
   {
     id: "f2",
@@ -172,6 +174,8 @@ const candidates: Figure["candidates"] = [
     routeBy: "default",
     section: "어떤 아키텍처가 있나",
     origin: "ai",
+    look: null,
+    lookBy: "auto",
   },
   {
     id: "f3",
@@ -189,6 +193,8 @@ const candidates: Figure["candidates"] = [
     routeBy: "default",
     section: "무엇이 다른가",
     origin: "ai",
+    look: null,
+    lookBy: "auto",
   },
 ];
 type Figure = NonNullable<Run["figure"]>;

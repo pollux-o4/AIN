@@ -50,7 +50,7 @@ export function FigureReview({
           >
             <AnchorQuote text={quote(item.anchor)} id={item.id} onLocate={onLocate} />
             {run.canReviseFigures && (
-              <FigureRevise id={item.id} disabled={disabled} onAction={onAction} />
+              <FigureRevise id={item.id} figure={figure} disabled={disabled} onAction={onAction} />
             )}
           </FigureOption>
         ))}

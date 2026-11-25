@@ -3,7 +3,7 @@ import { Compose } from "../compose/Compose";
 import { Library } from "../library/Library";
 import { Settings } from "../shell/Settings";
 import { Workspace } from "../workspace/Workspace";
-import { figureHtml, makeFigure, makeRun, recent } from "./fixtures";
+import { candidates, figureHtml, makeFigure, makeRun, recent } from "./fixtures";
 
 const noop = async () => {};
 const meta: Meta = { title: "화면" };
@@ -154,6 +154,7 @@ export const 시각자료_검토: StoryObj = {
             id: "f2",
             anchor: "요약",
             claim: "선택 기준",
+            look: null,
             alt: "두 축 갈림길 그림",
             caption: "선택을 가르는 두 축",
             route: "image",
@@ -180,6 +181,7 @@ export const 시각자료_부분실패: StoryObj = {
             id: "f2",
             anchor: "요약",
             claim: "선택 기준",
+            look: null,
             alt: "두 축 갈림길 그림",
             caption: "선택을 가르는 두 축",
             route: "image",
@@ -245,6 +247,7 @@ export const 시각자료_그림되돌리기: StoryObj = {
             id: "f2",
             anchor: "요약",
             claim: "선택 기준",
+            look: null,
             alt: "두 축 갈림길 그림",
             caption: "선택을 가르는 두 축",
             route: "image",
@@ -282,6 +285,58 @@ export const 시각자료_그림되돌리기: StoryObj = {
         ?.value.includes('"target":"fix"')
     )
       throw new Error("부분 수정 요청 본문이 맞지 않아요.");
+  },
+};
+// 그린 뒤 그림체만 바꾸기 · 같은 대상이 나오는 그림은 함께 바꾸는 것이 기본(ADR-0027)
+const madeItem = (id: string) => ({
+  id,
+  anchor: "요약",
+  claim: `${id} 주장`,
+  look: "manual",
+  alt: `${id} 그림`,
+  caption: `${id} 캡션`,
+  route: "svg" as const,
+  mime: "image/svg+xml",
+  motion: false,
+  labels: [],
+});
+export const 시각자료_그림체바꾸기: StoryObj = {
+  render: actionWorkspace(
+    figureRun(
+      makeFigure({
+        phase: "review",
+        style: { look: "manual", accent: "파랑", base: "회색 선", labels: "12px" },
+        candidates: candidates.map((c) => ({ ...c, look: "manual" })),
+        selected: ["f2", "f3"],
+        items: [madeItem("f2"), madeItem("f3")],
+      }),
+      { canConfirmFigures: true, canReviseFigures: true },
+    ),
+  ),
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    doc.querySelector<HTMLElement>("#work-dock details summary")?.click();
+    const select = doc.querySelector<HTMLSelectElement>("#revise-look-f2");
+    if (!select) throw new Error("그림체 고르기가 없어요.");
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(
+      select,
+      "sketchnote",
+    );
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await Promise.resolve();
+    if (!doc.querySelector(".look-peers input:checked"))
+      throw new Error("같은 대상이 나오는 그림을 함께 바꾸는 선택이 없어요.");
+    const compose = doc.querySelector<HTMLButtonElement>("#revise-compose-f2");
+    if (!compose?.textContent?.includes("2개를 이 그림체로"))
+      throw new Error("그림체만 바꾸는 버튼 이름이 맞지 않아요.");
+    if (!doc.querySelector<HTMLButtonElement>("#revise-generate-f2")?.disabled)
+      throw new Error("그림체를 바꿀 때 부분 고치기는 막혀야 해요.");
+    compose.click();
+    await Promise.resolve();
+    const action = doc.querySelector<HTMLOutputElement>("#figure-action-result")?.value ?? "";
+    for (const part of ['"figures":["f2","f3"]', '"look":"sketchnote"', '"target":"compose"'])
+      if (!action.includes(part)) throw new Error(`그림체 바꾸기 요청에 ${part}가 없어요.`);
+    if (action.includes('"feedback"')) throw new Error("의견 없이 바꿀 때 의견을 보내면 안 돼요.");
   },
 };
 export const 시각자료_고르기_이미지연결: StoryObj = {

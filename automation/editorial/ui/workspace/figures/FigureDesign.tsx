@@ -3,7 +3,8 @@ import { FIGURE_LIMITS } from "../../../../contracts/figure.mjs";
 import type { Figure } from "../../shared/api";
 import { Icon } from "../../shared/Icon";
 import { AnchorQuote } from "./Locate";
-import { type Candidate, motifIndex, placeName } from "./plan";
+import { LookSelect } from "./LookSelect";
+import { type Candidate, type LookId, lookName, motifIndex, motifPeers, placeName } from "./plan";
 import type { DecisionProps } from "./SkipFigures";
 import { usePicked } from "./usePicked";
 
@@ -24,6 +25,12 @@ function DesignCandidate({
         <b>주장</b> {candidate.claim}
       </p>
       <AnchorQuote text={candidate.anchor} id={candidate.id} onLocate={onLocate} />
+      {candidate.look && (
+        <p>
+          <b>그림체</b> {lookName(candidate.look)}
+          {candidate.lookBy === "user" ? " · 직접 고름" : ""}
+        </p>
+      )}
       {candidate.analogy && (
         <p>
           <b>그릴 대상</b> {candidate.analogy}
@@ -73,10 +80,27 @@ export function FigureDesign({
   );
   const { picked, toggle } = usePicked(candidates.map(({ id }) => id));
   const [feedback, setFeedback] = useState(figure.feedback ?? "");
+  const [look, setLook] = useState<LookId | "">("");
+  const [withPeers, setWithPeers] = useState(true);
+  const text = feedback.trim();
+  // 고른 자리와 같은 대상이 나오는 자리 · 그림체만 바꿀 때 함께 바꿀지 묻는다(ADR-0022·0027)
+  const peerIds = new Set(picked.flatMap((id) => motifPeers(candidates, id).ids));
+  for (const id of picked) peerIds.delete(id);
+  const peers = {
+    ids: [...peerIds],
+    names: [...new Set(picked.flatMap((id) => motifPeers(candidates, id).names))],
+  };
+  const targets = look && withPeers ? [...picked, ...peers.ids] : picked;
   const send = (event: FormEvent) => {
     event.preventDefault();
-    void onAction({ type: "revise_design", feedback: feedback.trim(), figures: picked });
+    void onAction({
+      type: "revise_design",
+      figures: targets,
+      ...(text ? { feedback: text } : {}),
+      ...(look ? { look } : {}),
+    });
   };
+  const shared = new Set(picked.map((id) => candidates.find((c) => c.id === id)?.look ?? null));
   return (
     <section id="figure-design">
       <h2>그릴 내용 확인</h2>
@@ -113,7 +137,6 @@ export function FigureDesign({
           maxLength={FIGURE_LIMITS.feedback}
           value={feedback}
           onChange={(event) => setFeedback(event.target.value)}
-          required
         />
         <fieldset className="figure-list">
           <legend>다시 구성할 자리</legend>
@@ -128,11 +151,20 @@ export function FigureDesign({
             </label>
           ))}
         </fieldset>
+        <LookSelect
+          id="design-look"
+          current={shared.size === 1 ? [...shared][0] : null}
+          value={look}
+          onChange={setLook}
+          peers={peers}
+          withPeers={withPeers}
+          onWithPeers={setWithPeers}
+        />
         <div className="submit-row">
           <button
             id="revise-design-submit"
             type="submit"
-            disabled={disabled || !feedback.trim() || !picked.length}
+            disabled={disabled || !(text || look) || !picked.length}
           >
             다시 구성
           </button>

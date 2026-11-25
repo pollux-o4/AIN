@@ -85,6 +85,9 @@ const runSchema = z.object({
           // 렌더링된 본문 기준 평문 범위·누가 넣은 자리인지 · 이전 응답에는 없다 · ADR-0030
           quote: z.string().optional(),
           origin: z.enum(["ai", "human"]).default("ai"),
+          // 그림별 스타일과 누가 정했는지 · ADR-0027
+          look: z.string().nullable().default(null),
+          lookBy: z.enum(["auto", "user"]).default("auto"),
         }),
       ),
       style: z
@@ -119,6 +122,7 @@ const runSchema = z.object({
           id: z.string(),
           anchor: z.string(),
           claim: z.string(),
+          look: z.string().nullable().default(null),
           alt: z.string(),
           caption: z.string().nullable(),
           route: z.enum(FIGURE_ROUTES).default("svg"),
