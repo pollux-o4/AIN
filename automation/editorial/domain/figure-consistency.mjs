@@ -35,12 +35,18 @@ export function bindConsistency(output, candidates) {
     ...(style ? { style } : {}),
   };
 }
-// 그림 한 장 작업에 넘길 계약: 공통 규칙과 그 그림이 가리키는 반복 대상만
+// 그림 한 장의 실제 스타일: 그림별 스타일이 있으면 그것, 없으면 글의 기본 · ADR-0027
+export function lookOf(figure, id) {
+  return figure.candidates?.find((c) => c.id === id)?.look ?? figure.style?.look;
+}
+// 그림 한 장 작업에 넘길 계약: 공통 규칙(그 그림의 스타일로)과 그 그림이 가리키는 반복 대상만
 export function consistencyFor(figure, id) {
   const names = figure.candidates.find((c) => c.id === id)?.motifs ?? [];
   const motifs = (figure.motifs ?? []).filter((motif) => names.includes(motif.name));
+  const look = lookOf(figure, id);
+  const style = figure.style || look ? { ...figure.style, ...(look ? { look } : {}) } : null;
   return {
-    ...(figure.style ? { style: figure.style } : {}),
+    ...(style ? { style } : {}),
     ...(motifs.length ? { motifs } : {}),
   };
 }

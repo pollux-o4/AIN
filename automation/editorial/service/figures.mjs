@@ -3,6 +3,7 @@ import {
   FIGURE_MIMES,
   legacyFigureResult,
 } from "../../contracts/figure-result.mjs";
+import { lookOf } from "../domain/figure-consistency.mjs";
 import { currentOf } from "../domain/figure-progress.mjs";
 import { plainOf } from "../domain/figure-range.mjs";
 import { coverageGap } from "../domain/figures.mjs";
@@ -36,6 +37,7 @@ export function figureView(state, routesAvailable = ["svg"]) {
         without,
         mapping,
         route,
+        lookBy,
       }) => ({
         id,
         anchor,
@@ -53,6 +55,9 @@ export function figureView(state, routesAvailable = ["svg"]) {
         routeBy: route ? "user" : "default",
         // 사람이 덧붙인 그림 방향 · ADR-0023
         direction: direction ?? null,
+        // 실제로 그릴 스타일과 누가 정했는지 · ADR-0027
+        look: lookOf(figure, id) ?? null,
+        lookBy: lookBy === "user" ? "user" : "auto",
         section: anchorSection(text, anchor),
       }),
     ),
@@ -76,6 +81,7 @@ export function figureView(state, routesAvailable = ["svg"]) {
         id: item.id,
         anchor: item.anchor,
         claim: item.claim,
+        look: lookOf(figure, item.id) ?? null,
         alt: result.alt,
         caption: result.caption,
         route: result.route,

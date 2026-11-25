@@ -293,6 +293,49 @@ test("ADR-0022 일관성 계약: 공통 규칙과 두 후보 이상이 가리키
   assert.deepEqual([plain.parts[0].style, plain.parts[0].motifs], [undefined, undefined]);
 });
 
+test("ADR-0027 그림별 스타일: 구성이 그림마다 고를 수 있고, 사람은 그린 뒤 의견 없이 그 그림만 바꾼다", () => {
+  let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
+  state = send(state, "select_figures", { ...reviewed, figures: ["f1", "f2"] });
+  const style = { look: "manual", accent: "파랑", base: "선", labels: "12px" };
+  const compose = designs(["f1", "f2"], { style });
+  compose.designs[1].look = "sketchnote";
+  state = send(result(state, "figure_compose", compose), "approve_design", reviewed);
+  // 그림 작업은 자기 스타일을 받는다 · 나머지 공통 규칙은 같다
+  const looks = (s) => nextAction(s).parts.map((p) => p.style.look);
+  assert.deepEqual(looks(state), ["manual", "sketchnote"]);
+  for (const pass of FIGURE_PASSES) state = result(state, "figure", made(["f1", "f2"]), pass);
+  // 부분 고치기는 의견이 있어야 하고 스타일을 바꾸지 않는다
+  const base = { ...reviewed, figures: ["f1"] };
+  assert.throws(() => send(state, "revise_figures", { ...base, target: "fix", look: "stick" }));
+  assert.throws(() => send(state, "revise_figures", { ...base, target: "compose" }));
+  // 스타일만 바꾸기: 그 자리만 다시 구성하고, 다시 구성해도 사람이 고른 스타일이 남는다
+  state = send(state, "revise_figures", { ...base, target: "compose", look: "stick" });
+  const action = nextAction(state);
+  assert.deepEqual([action.recompose, action.feedback], [["f1"], undefined]);
+  assert.deepEqual(
+    action.candidates.map((c) => [c.id, c.look, c.lookBy]),
+    [
+      ["f1", "stick", "user"],
+      ["f2", "sketchnote", undefined],
+    ],
+  );
+  const redone = designs(["f1"]);
+  redone.designs[0].look = "anatomy";
+  state = send(result(state, "figure_compose", redone), "approve_design", reviewed);
+  assert.deepEqual(looks(state), ["stick"]);
+  assert.equal(
+    actionRequestSchema.safeParse({
+      operationId: "op",
+      expectedVersion: 1,
+      type: "revise_figures",
+      figures: ["f1"],
+      target: "compose",
+      look: "stick",
+    }).success,
+    true,
+  );
+});
+
 test("ADR-0023 후보별 방향: 고른 후보에만 저장하고 그 그림 작업에만 넘긴다", () => {
   let state = result(send(satisfied(), "request_figures", reviewed), "figure_plan", plan);
   state = send(state, "select_figures", {
@@ -579,6 +622,9 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
     route: "image",
     routeBy: "default",
     direction: null,
+    // 구성 전이라 그림체 미정 · ADR-0027
+    look: null,
+    lookBy: "auto",
     section: "결제",
   });
   assert.deepEqual(

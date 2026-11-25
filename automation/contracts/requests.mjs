@@ -57,6 +57,9 @@ export const briefEditSchema = z.strictObject({
   priorities: items.optional(),
   preserve: items.optional(),
 });
+// 다시 구성은 의견이나 새 스타일 중 하나가 있으면 된다 · ADR-0027
+const revisionReason = (/** @type {{feedback?: string, look?: string}} */ value) =>
+  Boolean(value.feedback?.trim() || value.look);
 export const actionRequestSchema = z.discriminatedUnion("type", [
   actionFieldsSchema
     .extend({ ...placeFigureFields, type: z.literal("place_figure") })
@@ -86,17 +89,28 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
     type: z.literal("approve_design"),
     directions: figureDirectionsSchema.optional(),
   }),
-  actionFieldsSchema.extend({
-    type: z.literal("revise_design"),
-    feedback: figureFeedbackSchema,
-    figures: figureIdsSchema.optional(),
-  }),
-  actionFieldsSchema.extend({
-    type: z.literal("revise_figures"),
-    feedback: figureFeedbackSchema,
-    figures: figureIdsSchema,
-    target: z.enum(FIGURE_REVISE_TARGETS),
-  }),
+  actionFieldsSchema
+    .extend({
+      type: z.literal("revise_design"),
+      feedback: figureFeedbackSchema.optional(),
+      figures: figureIdsSchema.optional(),
+      // 고른 자리만 이 스타일로 · 의견 없이 스타일만 바꿀 수 있다 · ADR-0027
+      look: figureLookSchema.optional(),
+    })
+    .refine(revisionReason, "의견이나 스타일을 적어 주세요."),
+  actionFieldsSchema
+    .extend({
+      type: z.literal("revise_figures"),
+      feedback: figureFeedbackSchema.optional(),
+      figures: figureIdsSchema,
+      target: z.enum(FIGURE_REVISE_TARGETS),
+      look: figureLookSchema.optional(),
+    })
+    .refine(
+      (value) =>
+        value.target === "fix" ? Boolean(value.feedback) && !value.look : revisionReason(value),
+      "부분 고치기는 의견이, 다시 구성은 의견이나 스타일이 필요합니다.",
+    ),
   // 실패한 그림만 다시 · 끝난 그림은 그대로 · ADR-0026
   actionFieldsSchema.extend({
     type: z.literal("retry_figures"),

@@ -124,7 +124,7 @@ export const staticFigureSrc = (src) => `${src}&motion=static`;
 export const FIGURE_MOTION_ATTR = "data-motion";
 // 공통 시각 규칙 항목 · 계약 검사·저장·화면이 같은 목록을 쓴다 · ADR-0022
 export const FIGURE_STYLE_KEYS = /** @type {const} */ (["accent", "base", "labels"]);
-// 그림 스타일 · 글 하나에 하나를 구성이 고른다 · 그리기 규칙은 paseo/prompts/looks.mjs · ADR-0027
+// 그림 스타일 · 그림마다 내용에 맞게 고른다(글의 기본 하나 + 그림별 예외) · 그리기 규칙은 paseo/prompts/looks.mjs · ADR-0027
 export const FIGURE_LOOKS = Object.freeze({
   anatomy: { label: "입체 해부도", fits: "실물 비유의 입체 아이소메트릭 그림" },
   sketchnote: { label: "손그림 노트", fits: "개념 정리·단계·요약, 점 격자 종이의 펜과 마커 노트" },
@@ -181,6 +181,8 @@ export const figureOutputSchemas = {
           ),
           // 이 그림에 나오는 반복 대상 이름 · motifs의 name과 글자 그대로 같아야 이어진다
           motifs: advisory(z.array(z.string().max(FIGURE_LIMITS.motifName))),
+          // 기본 스타일(style.look)과 다르게 그릴 때만 · 모르는 값은 버린다 · ADR-0027
+          look: advisory(figureLookSchema),
         }),
       )
       .min(1),
@@ -253,10 +255,11 @@ export const figureOutputExamples = {
           },
         ],
         motifs: ["이 그림에 나오는 반복 대상의 name을 적고, 없으면 생략한다."],
+        look: "이 그림만 기본 스타일과 다른 스타일이 더 잘 맞을 때 그 id를 적고, 아니면 생략한다.",
       },
     ],
     style: {
-      look: "글 전체에 쓸 그림 스타일 id 하나를 적는다.",
+      look: "그림들의 기본 스타일 id 하나를 적는다.",
       accent: "원인 → 결과 경로에만 쓸 강조색 하나를 색 이름과 hex로 적는다.",
       base: "모든 그림이 함께 쓸 바탕색·선 색·보조색과 선 굵기를 적는다.",
       labels: "라벨 글자 크기·굵기·배치 방식을 적는다.",
