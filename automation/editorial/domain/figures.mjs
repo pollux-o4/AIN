@@ -8,6 +8,7 @@ import {
   FIGURE_PASSES,
   FIGURE_REVISE_TARGETS,
   figureOutputSchemas,
+  revisionReady,
 } from "../../contracts/figure.mjs";
 import { bindConsistency, consistencyFor } from "./figure-consistency.mjs";
 import { HUMAN_EDITS } from "./figure-human.mjs";
@@ -391,18 +392,19 @@ function advanceFigure(state, output, failures = new Map()) {
   state.figure = { ...rest, phase: "review", items };
   state.status = "awaiting_figure_review";
 }
-const feedbackText = (value) =>
-  typeof value === "string" && value.trim().length > 0 && value.length <= FIGURE_LIMITS.feedback;
-// 다시 구성 요청은 의견이나 새 스타일 중 하나가 있으면 된다 · 스타일만 바꿀 때 의견을 지어내지 않게 · ADR-0027
-const reasonGiven = (event) => feedbackText(event.feedback) || Boolean(event.look);
 // 다시 구성: 고른 자리 전부면 세계·계약도 새로, 일부면 나머지 구성과 세계·계약을 유지 · ADR-0026
-function recompose(figure, targets, feedback) {
-  const rest = omit(figure, [...PROGRESS_KEYS, "recompose"]);
+// 사람이 고른 그림체는 대상 자리에 남기고, 의견이 없으면 의견 없이 다시 구성한다 · ADR-0027
+function recompose(figure, targets, { feedback, look } = {}) {
+  const rest = omit({ ...figure, candidates: withLook(figure.candidates, targets, look) }, [
+    ...PROGRESS_KEYS,
+    "recompose",
+  ]);
+  const text = feedback?.trim();
   const all = targets.length === figure.selected.length;
   return {
     ...rest,
     phase: "compose",
-    ...(feedback ? { feedback } : {}),
+    ...(text ? { feedback: text } : {}),
     ...(all ? {} : { recompose: targets }),
   };
 }
@@ -527,15 +529,11 @@ export function figureTransition(state, event) {
       requireThat(
         state.status === "awaiting_figure_design" &&
           reviewed &&
-          reasonGiven(event) &&
+          revisionReady(event) &&
           subset(targets, figure.selected),
         "Design revision requires feedback on selected figures",
       );
-      state.figure = recompose(
-        { ...figure, candidates: withLook(figure.candidates, targets, event.look) },
-        targets,
-        event.feedback?.trim(),
-      );
+      state.figure = recompose(figure, targets, event);
       state.status = FIGURE_WAITING;
       return true;
     }
@@ -544,7 +542,7 @@ export function figureTransition(state, event) {
       requireThat(
         state.status === "awaiting_figure_review" &&
           reviewed &&
-          (event.target === FIGURE_FIX_PASS ? feedbackText(event.feedback) : reasonGiven(event)) &&
+          revisionReady(event) &&
           FIGURE_REVISE_TARGETS.includes(event.target) &&
           subset(event.figures, made),
         "Figure revision requires feedback on prepared figures",
@@ -555,16 +553,10 @@ export function figureTransition(state, event) {
         !fixing || (event.figures.length === 1 && fixes(event.figures[0]) < FIGURE_LIMITS.fixes),
         "Figure fix takes one figure within the fix limit",
       );
-      const feedback = event.feedback?.trim();
       const items = figure.items.filter((item) => !event.figures.includes(item.id));
       if (event.target === "compose") {
-        const targets = ordered(event.figures, figure.selected);
         state.figure = {
-          ...recompose(
-            { ...figure, candidates: withLook(figure.candidates, targets, event.look) },
-            targets,
-            feedback,
-          ),
+          ...recompose(figure, ordered(event.figures, figure.selected), event),
           items,
         };
       } else {
@@ -575,7 +567,7 @@ export function figureTransition(state, event) {
           items,
           phase: "generate",
           candidates: figure.candidates.map((c) =>
-            c.id === id ? { ...c, fix: feedback, fixes: fixes(id) + 1 } : c,
+            c.id === id ? { ...c, fix: event.feedback.trim(), fixes: fixes(id) + 1 } : c,
           ),
           current: { ids: [id], pass: FIGURE_FIX_PASS },
           passDrafts: { [id]: figure.items.find((item) => item.id === id) },

@@ -304,6 +304,19 @@ export const figureRoutesSchema = z
 export const FIGURE_REVISE_TARGETS = /** @type {const} */ (["compose", "fix"]);
 // 사람이 구성·그림에 남기는 의견 · ADR-0026
 export const figureFeedbackSchema = text(FIGURE_LIMITS.feedback);
+// 되돌림 요청이 갖출 것 · 부분 고치기는 의견만(그림체 유지), 다시 구성은 의견이나 새 그림체 중 하나 · ADR-0026·0027
+// 요청 검사와 상태 전이가 같은 규칙을 쓴다
+export function revisionReady(
+  /** @type {{target?: unknown, feedback?: unknown, look?: unknown}} */ value,
+) {
+  const feedback =
+    typeof value.feedback === "string" &&
+    value.feedback.trim().length > 0 &&
+    value.feedback.length <= FIGURE_LIMITS.feedback;
+  return value.target === FIGURE_FIX_PASS
+    ? feedback && !value.look
+    : feedback || Boolean(value.look);
+}
 
 // 사람이 본문 범위로 자리를 추가·조절 · 평문 범위(W3C TextQuoteSelector 모양) · ADR-0030
 const figureQuoteSchema = z.strictObject({
