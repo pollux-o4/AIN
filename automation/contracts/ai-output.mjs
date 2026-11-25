@@ -55,7 +55,9 @@ const sectionCard = z.looseObject({
     ),
   ),
   checkQuestion: maybe(
-    slot("explain 구간에서만 쓰며, 본문 내용만으로 답할 수 있는 확인 질문을 적는다."),
+    slot(
+      "explain 구간에서만 쓴다. 이름이나 정의를 묻지 않고, 독자가 '왜 그런지' 스스로 설명해 보게 하는 질문을 적는다. 본문에 넣는다면 답은 같은 구간 안에 두며, 넣을 자리와 횟수는 내용에 맞게 정한다.",
+    ),
   ),
   hook: maybe(slot(slotGuide("hook"))),
   cases: list(

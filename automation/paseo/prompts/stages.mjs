@@ -186,7 +186,7 @@ const STAGE_SPECS = {
         section
           ? `"${sectionHeading(section.title)}" 소제목 줄로 시작하여 이 구간만 쓴다.${section.index ? " previousSection(바로 앞 구간)과 자연스럽게 이어지게 쓰되 앞선 내용을 되풀이하지 않는다." : ""}`
           : `outline.sections의 순서대로 각 구간을 쓴다. 모든 구간은 "${sectionHeading("title")}" 소제목 줄로 시작한다.`,
-        `구간 카드에 subsections가 있으면 하위 소제목으로 들어가기 전에 아래에 이어질 항목을 1~2문장으로 안내한 뒤 subsections를 순서대로 쓴다. 하위 소제목 줄은 title을 그대로 써서 한 단계씩 낮추어 적되, 구간 바로 아래는 "${subsectionHeading("title", 1)}", 그 아래는 "${subsectionHeading("title", 2)}" 형식으로 적고 단계를 건너뛰지 않는다.`,
+        `구간 카드에 subsections가 있으면 순서대로 쓴다. 하위 소제목 줄은 title을 그대로 써서 한 단계씩 낮추어 적되, 구간 바로 아래는 "${subsectionHeading("title", 1)}", 그 아래는 "${subsectionHeading("title", 2)}" 형식으로 적고 단계를 건너뛰지 않는다.`,
         ...(!section || section.index === section.total - 1
           ? [
               `글의 마지막에는 '${summaryHeading}' 아래에 모든 구간의 principleLine을 순서대로 글자 그대로 목록으로 묶어 정리한다(principleLine이 없는 구간은 keyPoint를 쓴다). 이 끝 정리는 본문 소제목 계층 바깥에 따로 둔다.`,
