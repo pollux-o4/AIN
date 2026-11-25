@@ -122,7 +122,7 @@ const CLOSING = {
 // 구간 카드 규칙: 카드를 쓰는 mode(procedure 제외) 구간이 하나라도 있을 때만
 export const STORY_RULES = {
   draft: [
-    `[S 구간 카드] procedure가 아닌 구간은 hook을 첫 문장으로 두고, 그 뒤에 cases의 장면과 keyPoint 풀이, underline을 담는다. 문단을 몇 개로 나눌지는 내용에 맞게 정한다. ${UNDERLINE.draft} ${CLOSING.draft}`,
+    `[S 구간 카드] procedure가 아닌 구간은 hook, cases의 장면, keyPoint 풀이, underline을 담는다. hook은 구간 앞부분에 두되, 첫 문장으로 둘지 장면 뒤에 둘지는 내용에 맞게 정하고 구간마다 같은 짜임이 이어지지 않게 한다. 질문으로 열었다면 답과 상관없는 장면을 길게 늘어놓지 않는다. 문단을 몇 개로 나눌지는 내용에 맞게 정한다. ${UNDERLINE.draft} ${CLOSING.draft}`,
     "[S 반복 금지] keyPoint 풀이는 장면이 보여 준 내용에서 한 걸음 나아가 그 이유나 실행 방법을 설명한다. 여는 질문(hook)·장면·강조 문장(underline)을 낱말만 바꾸어 다시 쓰지 않는다.",
     "[S 원문 유지] hook·underline·principleLine은 구간 카드에 적힌 문장을 글자 그대로 쓴다(시스템이 글자를 대조한다). 카드에 없는 사례나 핵심 원칙을 새로 넣지 않으며, 카드에서 해당 항목이 비어 있으면 그 요소는 뺀다.",
   ],
@@ -144,7 +144,7 @@ export const CHECKS = [
   {
     id: "S3",
     story: true,
-    ask: "구간 첫머리에 내놓은 여는 질문(질문·주장)의 답이 같은 구간 안에 들어 있는가 (cardTransfer.missingHooks)",
+    ask: "구간 앞부분의 여는 문장(질문·주장)이 말하듯 자연스럽고 그 답이 같은 구간 안에 들어 있으며, 여는 문장과 장면의 짜임이 구간마다 되풀이되지 않는가 (cardTransfer.missingHooks)",
   },
   {
     id: "S4",
