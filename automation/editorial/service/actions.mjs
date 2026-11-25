@@ -36,6 +36,8 @@ import {
 const FIGURE_ACTIONS = [
   "request_figures",
   "select_figures",
+  "place_figure",
+  "remove_figure",
   "approve_design",
   "revise_design",
   "revise_figures",
@@ -69,6 +71,9 @@ function agentFeedbackRounds(events = []) {
 export async function runAction(service, id, input, actor = "user") {
   if (!requestObjectSchema.safeParse(input).success) fail("요청 내용을 확인해 주세요.");
   const {
+    figure,
+    quote,
+    claim,
     operationId,
     expectedVersion,
     type,
@@ -85,6 +90,9 @@ export async function runAction(service, id, input, actor = "user") {
     const run = service.store.get(id);
     const beforeStatus = run.state.status;
     const signature = JSON.stringify({
+      figure,
+      quote,
+      claim,
       expectedVersion,
       type,
       feedback,
@@ -102,6 +110,17 @@ export async function runAction(service, id, input, actor = "user") {
     }
     if (!actionVersionSchema.safeParse(input).success || expectedVersion !== run.state.version)
       fail("다른 화면에서 작업이 변경됐습니다. 최신 내용을 확인해 주세요.", 409);
+    if (
+      type === "place_figure" &&
+      typeof quote?.exact === "string" &&
+      quote.exact.length > FIGURE_LIMITS.range
+    )
+      fail(`시각자료 범위는 ${FIGURE_LIMITS.range}자 이내로 골라 주세요.`);
+    if (
+      ["place_figure", "remove_figure"].includes(type) &&
+      !actionRequestSchema.safeParse(input).success
+    )
+      fail("시각자료 범위·후보 번호·주장을 확인해 주세요.");
     if (["feedback", "revise_brief"].includes(type) && !feedbackSchema.safeParse(feedback).success)
       fail("수정할 내용을 입력해 주세요.");
     if (type === "approve_brief" && edit !== undefined && !briefEditSchema.safeParse(edit).success)
@@ -232,19 +251,34 @@ export async function runAction(service, id, input, actor = "user") {
     } else if (["satisfy", "authorize_publication"].includes(type)) {
       run.state = userTransition(run.state, { ...event, reviewedRevision: run.state.revision });
     } else if (FIGURE_ACTIONS.includes(type)) {
-      run.state = userTransition(run.state, {
-        ...event,
-        reviewedRevision: run.state.revision,
-        ...(figures === undefined ? {} : { figures }),
-        ...(["select_figures", "approve_design"].includes(type) && directions !== undefined
-          ? { directions }
-          : {}),
-        ...(FIGURE_REVISIONS.includes(type) ? { feedback: feedback.trim() } : {}),
-        ...(type === "revise_figures" ? { target } : {}),
-        ...(type === "select_figures" && routes !== undefined ? { routes } : {}),
-        ...(type === "select_figures" && look !== undefined ? { look } : {}),
-        ...(type === "request_figures" && feedback !== undefined ? { note: feedback.trim() } : {}),
-      });
+      try {
+        run.state = userTransition(run.state, {
+          ...event,
+          ...(["place_figure", "remove_figure"].includes(type) ? { figure, quote, claim } : {}),
+          reviewedRevision: run.state.revision,
+          ...(figures === undefined ? {} : { figures }),
+          ...(["select_figures", "approve_design"].includes(type) && directions !== undefined
+            ? { directions }
+            : {}),
+          ...(FIGURE_REVISIONS.includes(type) ? { feedback: feedback.trim() } : {}),
+          ...(type === "revise_figures" ? { target } : {}),
+          ...(type === "select_figures" && routes !== undefined ? { routes } : {}),
+          ...(type === "select_figures" && look !== undefined ? { look } : {}),
+          ...(type === "request_figures" && feedback !== undefined
+            ? { note: feedback.trim() }
+            : {}),
+        });
+      } catch (error) {
+        const messages = {
+          not_found: "선택한 글을 본문에서 찾을 수 없습니다.",
+          ambiguous: "같은 글이 여러 곳에 있습니다. 앞뒤 글을 함께 지정해 주세요.",
+          crosses_unit: "소제목 경계를 넘지 않도록 범위를 골라 주세요.",
+          overlaps: "다른 시각자료 후보의 범위와 겹칩니다.",
+          too_long: `시각자료 범위는 ${FIGURE_LIMITS.range}자 이내로 골라 주세요.`,
+        };
+        if (type === "place_figure" && messages[error.message]) fail(messages[error.message], 409);
+        throw error;
+      }
       // AI를 부르는 요청(위치 제안·생성)만 새 실행 예산
       if (pending(run.state)) {
         run.pending = null;
@@ -278,6 +312,8 @@ export async function runAction(service, id, input, actor = "user") {
       revise_brief: "수정 해석 다시 요청",
       request_figures: "시각자료 추가 요청",
       select_figures: "시각자료 위치 선택",
+      place_figure: "시각자료 자리 추가",
+      remove_figure: "시각자료 자리 취소",
       approve_design: "시각자료 구성 승인",
       revise_design: "시각자료 구성 다시 요청",
       revise_figures: target === "compose" ? "시각자료 다시 구성 요청" : "시각자료 부분 수정 요청",

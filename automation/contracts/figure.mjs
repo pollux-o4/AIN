@@ -4,6 +4,8 @@ import { z } from "zod";
 export const FIGURE_LIMITS = Object.freeze({
   // 시각화할 수 있는 곳은 모두 제안 · 사람이 고른다 · 이 값은 한 글의 안전 상한(FIGURE_ID 범위 안) · ADR-0017
   candidates: 30,
+  // 사람이 고른 범위(평문) 상한 · 여러 문장을 묶어도 한 구간 안 · ADR-0030
+  range: 1500,
   // 그림 한 장의 한 층 · 생성(/anatomy Figure)은 도구로 만들고 검사해 일반 단계(5분)보다 길다 · ADR-0011
   generateMs: 3600000,
   skipReason: 200,
@@ -299,3 +301,37 @@ export const figureRoutesSchema = z
 export const FIGURE_REVISE_TARGETS = /** @type {const} */ (["compose", "fix"]);
 // 사람이 구성·그림에 남기는 의견 · ADR-0026
 export const figureFeedbackSchema = text(FIGURE_LIMITS.feedback);
+
+// 사람이 본문 범위로 자리를 추가·조절 · 평문 범위(W3C TextQuoteSelector 모양) · ADR-0030
+const figureQuoteSchema = z.strictObject({
+  exact: text(FIGURE_LIMITS.range),
+  prefix: z.string().max(FIGURE_LIMITS.range).optional(),
+  suffix: z.string().max(FIGURE_LIMITS.range).optional(),
+});
+// 요청 필드 · 새 자리는 주장(claim)이 필수, 기존 자리 조절은 후보 id가 필수
+export const placeFigureFields = {
+  figure: z.string().regex(FIGURE_ID).optional(),
+  quote: figureQuoteSchema,
+  claim: text(FIGURE_LIMITS.claim).optional(),
+};
+export const removeFigureFields = { figure: z.string().regex(FIGURE_ID) };
+export const placeNeedsTarget = (/** @type {{ figure?: string, claim?: string }} */ value) =>
+  value.figure !== undefined || value.claim !== undefined;
+// 범위 거부 사유 · 서버 판정과 화면·CLI 문구가 같은 표를 쓴다
+export const FIGURE_PLACE_ERRORS = Object.freeze({
+  not_found: "선택한 글을 본문에서 찾을 수 없습니다.",
+  ambiguous: "같은 글이 여러 곳에 있습니다. 앞뒤 글을 함께 골라 주세요.",
+  crosses_unit: "소제목 경계를 넘지 않도록 범위를 골라 주세요.",
+  overlaps: "다른 시각자료 후보의 범위와 겹칩니다.",
+  too_long: `시각자료 범위는 ${FIGURE_LIMITS.range}자 이내로 골라 주세요.`,
+  full: `시각자료 후보는 ${FIGURE_LIMITS.candidates}개까지입니다.`,
+  unknown: "시각자료 후보를 찾을 수 없습니다.",
+  ai_claim: "AI 후보의 주장은 바꿀 수 없습니다.",
+  ai_remove: "직접 추가한 자리만 취소할 수 있습니다.",
+});
+// 비어 있는 가장 작은 시각자료 id · O(n)
+export function nextFigureId(/** @type {Array<{ id: string }>} */ candidates) {
+  const used = new Set(candidates.map((candidate) => candidate.id));
+  for (let n = 1; n <= 99; n++) if (!used.has(`f${n}`)) return `f${n}`;
+  return null;
+}

@@ -15,6 +15,9 @@ export const ACTIONS = Object.freeze({
   resume: { actor: "agent", cost: true, summary: "재개" },
   complete_requirements: { actor: "agent", cost: true, summary: "요구사항 보완" },
   request_figures: { actor: "agent", cost: true, summary: "시각자료 위치 제안(선택: 위치 지시)" },
+  // 사람이 본문 범위로 자리 추가·범위 조절·취소 · AI 호출 없음 · ADR-0030
+  place_figure: { actor: "agent", summary: "시각자료 자리 추가·범위 조절" },
+  remove_figure: { actor: "agent", summary: "직접 추가한 시각자료 자리 취소" },
   select_figures: { actor: "agent", cost: true, summary: "만들 위치·스타일 선택 → 구성" },
   approve_design: { actor: "agent", cost: true, summary: "구성 승인 → 그림 생성" },
   revise_design: {

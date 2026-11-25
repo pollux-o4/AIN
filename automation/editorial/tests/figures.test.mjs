@@ -11,6 +11,7 @@ import {
 import { actionRequestSchema } from "../../contracts/requests.mjs";
 import { testScratch } from "../../runtime/scratch.mjs";
 import { articleHtml } from "../article-html.mjs";
+import { plainOf, resolveQuote } from "../domain/figure-range.mjs";
 import { coverageGap, partActions } from "../domain/figures.mjs";
 import {
   flowIssue,
@@ -564,6 +565,8 @@ test("FIGURE-001 서비스: 제안 AI 1회·생성은 그림 수 × 층 수, 실
   assert.deepEqual(view.figure.candidates[1], {
     id: "f2",
     anchor: ANCHOR2,
+    quote: ANCHOR2,
+    origin: "ai",
     claim: "결제 요청과 확인 순서",
     // 위치 선정은 자리·관계만 · 장면·비유는 구성 단계가 채운다 · ADR-0026
     reason: "이유",
@@ -716,6 +719,26 @@ test("FIGURE-001 화면 전달: 본문 HTML에 시각자료만 끼우고 SVG는 
   assert.equal(plain.includes("<figure"), false);
   await f.act(f.id, "request_figures");
   await f.drain(f.id);
+  const post = async (type, fields) => {
+    const response = await fetch(`${origin}/write/api/runs/${f.id}/actions`, {
+      method: "POST",
+      headers: { cookie, origin, "content-type": "application/json" },
+      body: JSON.stringify({
+        type,
+        operationId: `http-${++seq}`,
+        expectedVersion: f.service.get(f.id).version,
+        ...fields,
+      }),
+    });
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  const placed = await post("place_figure", {
+    quote: { exact: "그래서 둘을 나눕니다." },
+    claim: "책임",
+  });
+  assert.equal(placed.figure.candidates.find((c) => c.id === "f3").origin, "human");
+  await post("remove_figure", { figure: "f3" });
   await f.act(f.id, "select_figures", { figures: ["f1"] });
   await f.drain(f.id);
   await f.act(f.id, "approve_design");
@@ -852,4 +875,134 @@ test("ADR-0026 확인 뒤 되돌림: 구성으로 보내면 그 자리만 다시
   }
   assert.throws(() => fix(done), /fix limit/);
   assert.deepEqual(nextAction(fix(done, "f2")).figureIds, ["f2"]);
+});
+
+test("ADR-0030 평문 선택은 표시를 건너 원문 범위를 복원한다", () => {
+  const text =
+    "## 제목\n\n- 먼저 **굵은 글**과 `코드` 그리고 [링크](https://example.test)를 읽는다.";
+  assert.equal(plainOf(text), "제목 먼저 굵은 글과 코드 그리고 링크를 읽는다.");
+  assert.deepEqual(resolveQuote(text, { exact: "먼저 굵은 글과 코드 그리고 링크를 읽는다." }, []), {
+    anchor: text.slice(text.indexOf("먼저")),
+  });
+  assert.equal(plainOf("*한* _글_ `x`"), "한 글 x");
+  assert.deepEqual(
+    resolveQuote("앞 같은 말 뒤 다른 같은 말 끝", { exact: "같은 말", prefix: "다른 " }, []),
+    { anchor: "같은 말" },
+  );
+  assert.deepEqual(
+    resolveQuote("앞 같은 말 뒤 다른 같은 말 끝", { exact: "같은 말", suffix: " 끝" }, []),
+    { anchor: "같은 말" },
+  );
+  assert.deepEqual(resolveQuote("글  사이\n공백", { exact: "글 사이 공백" }, []), {
+    anchor: "글  사이\n공백",
+  });
+});
+test("ADR-0030 선택 거부 다섯 종류와 자기 범위 조절", () => {
+  assert.deepEqual(resolveQuote("본문", { exact: "없음" }, []), { error: "not_found" });
+  assert.deepEqual(resolveQuote("같음 같음", { exact: "같음" }, []), { error: "ambiguous" });
+  assert.deepEqual(resolveQuote("첫 문장\n\n## 다음\n\n끝", { exact: "첫 문장 다음 끝" }, []), {
+    error: "crosses_unit",
+  });
+  const candidates = [{ id: "f1", anchor: "본문" }];
+  assert.deepEqual(resolveQuote("본문 내용", { exact: "본문 내용" }, candidates), {
+    error: "overlaps",
+  });
+  assert.deepEqual(
+    resolveQuote(
+      "본문 내용",
+      { exact: "본문 내용" },
+      candidates.filter((c) => c.id !== "f1"),
+    ),
+    { anchor: "본문 내용" },
+  );
+  assert.deepEqual(resolveQuote("가".repeat(1501), { exact: "가".repeat(1501) }, []), {
+    error: "too_long",
+  });
+});
+test("ADR-0030 사람 후보 추가·변경·삭제는 선택 대기에서 집계를 갱신한다", () => {
+  const initial = satisfied();
+  assert.throws(() =>
+    send(initial, "place_figure", {
+      ...reviewed,
+      quote: { exact: "그래서 둘을 나눕니다." },
+      claim: "경계",
+    }),
+  );
+  let state = result(send(initial, "request_figures", reviewed), "figure_plan", plan);
+  state = send(state, "place_figure", {
+    ...reviewed,
+    quote: { exact: "그래서 둘을 나눕니다." },
+    claim: "경계",
+  });
+  // 본문 읽는 순서 자리에 끼운다(번호가 본문 순서와 맞게)
+  const byText = (s) =>
+    s.figure.candidates.map((c) => s.artifacts.draft.output.text.indexOf(c.anchor));
+  assert.deepEqual(
+    byText(state),
+    [...byText(state)].sort((a, b) => a - b),
+  );
+  const human = (s) => s.figure.candidates.find((c) => c.id === "f3");
+  assert.deepEqual(human(state), {
+    id: "f3",
+    anchor: "그래서 둘을 나눕니다.",
+    claim: "경계",
+    reason: "경계",
+    origin: "human",
+  });
+  assert.equal(state.figure.coverage.candidates, 3);
+  state = send(state, "place_figure", {
+    ...reviewed,
+    figure: "f3",
+    quote: { exact: "배송은 결제 뒤에 시작합니다." },
+    claim: "순서",
+  });
+  assert.equal(human(state).reason, "순서");
+  assert.equal(flowIssue(state), null);
+  assert.throws(() => send(state, "remove_figure", { ...reviewed, figure: "f1" }));
+  assert.throws(() =>
+    send(state, "place_figure", {
+      ...reviewed,
+      figure: "f1",
+      quote: { exact: ANCHOR },
+      claim: "변경",
+    }),
+  );
+  state = send(state, "remove_figure", { ...reviewed, figure: "f3" });
+  assert.equal(state.figure.coverage.candidates, 2);
+  state = send(state, "place_figure", {
+    ...reviewed,
+    figure: "f1",
+    quote: { exact: "그래서 둘을 나눕니다." },
+  });
+  assert.equal(state.figure.candidates[0].anchor, "그래서 둘을 나눕니다.");
+});
+test("ADR-0030 서비스는 요약과 중복 요청·입력 오류를 처리한다", async (t) => {
+  const f = await fixture(t);
+  await f.act(f.id, "request_figures");
+  await f.drain(f.id);
+  const input = {
+    type: "place_figure",
+    operationId: "human-place",
+    expectedVersion: f.service.get(f.id).version,
+    quote: { exact: "그래서 둘을 나눕니다." },
+    claim: "책임 경계",
+  };
+  const view = await f.service.action(f.id, input);
+  const added = view.figure.candidates.find((c) => c.origin === "human");
+  assert.equal(added.quote, input.quote.exact);
+  assert.equal(view.figure.candidates[0].origin, "ai");
+  assert.equal(view.canSelectFigures, true);
+  assert.equal((await f.service.action(f.id, input)).version, view.version);
+  await assert.rejects(() => f.service.action(f.id, { ...input, claim: "다른 주장" }), {
+    status: 409,
+  });
+  await assert.rejects(
+    () => f.act(f.id, "place_figure", { quote: { exact: "없음" }, claim: "관계" }),
+    /찾을 수 없습니다/,
+  );
+  await assert.rejects(() => f.act(f.id, "place_figure", { quote: { exact: "범위" } }), {
+    status: 400,
+  });
+  await f.act(f.id, "remove_figure", { figure: "f3" });
+  assert.equal(f.service.get(f.id).figure.candidates.length, 2);
 });

@@ -7,6 +7,9 @@ import {
   figureIdsSchema,
   figureLookSchema,
   figureRoutesSchema,
+  placeFigureFields,
+  placeNeedsTarget,
+  removeFigureFields,
 } from "./figure.mjs";
 import { directionSchema } from "./writing-modes.mjs";
 
@@ -55,6 +58,10 @@ export const briefEditSchema = z.strictObject({
   preserve: items.optional(),
 });
 export const actionRequestSchema = z.discriminatedUnion("type", [
+  actionFieldsSchema
+    .extend({ ...placeFigureFields, type: z.literal("place_figure") })
+    .refine(placeNeedsTarget),
+  actionFieldsSchema.extend({ ...removeFigureFields, type: z.literal("remove_figure") }),
   actionFieldsSchema.extend({ type: z.literal("feedback"), feedback: feedbackSchema }),
   actionFieldsSchema.extend({ type: z.literal("revise_brief"), feedback: feedbackSchema }),
   actionFieldsSchema.extend({
@@ -97,6 +104,8 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
   }),
   actionFieldsSchema.extend({
     type: actionFieldsSchema.shape.type.exclude([
+      "place_figure",
+      "remove_figure",
       "feedback",
       "revise_brief",
       "approve_brief",

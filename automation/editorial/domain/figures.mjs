@@ -10,6 +10,7 @@ import {
   figureOutputSchemas,
 } from "../../contracts/figure.mjs";
 import { bindConsistency, consistencyFor } from "./figure-consistency.mjs";
+import { HUMAN_EDITS } from "./figure-human.mjs";
 import { anchorSection } from "./figure-placement.mjs";
 import { currentOf, passOf, pendingIds } from "./figure-progress.mjs";
 
@@ -31,6 +32,8 @@ export const FIGURE_AWAITING = Object.freeze([
 export const FIGURE_USER_EVENTS = Object.freeze([
   "request_figures",
   "select_figures",
+  "place_figure",
+  "remove_figure",
   "approve_design",
   "revise_design",
   "revise_figures",
@@ -92,7 +95,7 @@ export function figureIssue(state, status) {
   const candidates = figure.candidates;
   if (
     !Array.isArray(candidates) ||
-    candidates.length < 1 ||
+    (candidates.length < 1 && figure.phase !== "choose") ||
     candidates.length > FIGURE_LIMITS.candidates ||
     !candidates.every((c) => typeof c?.id === "string" && text.includes(c.anchor))
   )
@@ -435,10 +438,26 @@ export function figureTransition(state, event) {
           ...figure,
           phase: "choose",
           candidates,
+          skipped: output.skipped ?? [],
           coverage: coverageOf(draftText(state), candidates, output.skipped ?? []),
         };
         state.status = "awaiting_figure_choice";
       } else advanceFigure(state, output, failuresOf(event, currentOf(figure).ids));
+      return true;
+    }
+    case "place_figure":
+    case "remove_figure": {
+      requireThat(
+        state.status === "awaiting_figure_choice" && reviewed,
+        "시각자료 위치 선택 대기 중에만 자리를 바꿀 수 있습니다.",
+      );
+      const text = draftText(state);
+      const candidates = HUMAN_EDITS[event.type](figure.candidates, event, text);
+      state.figure = {
+        ...figure,
+        candidates,
+        coverage: coverageOf(text, candidates, figure.skipped ?? []),
+      };
       return true;
     }
     case "select_figures": {

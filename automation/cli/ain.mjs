@@ -19,6 +19,7 @@ export const USAGE = `ain <명령> [인자] · 출력 JSON(download는 TXT)
   wait <id> [--timeout 초]               진행 종료까지 대기 후 본문 포함 요약
 ${actionUsage()}
                                          구조 입력은 --input '{"figures":["f1"],"look":"manual"}'
+                                         자리 추가는 --input '{"quote":{"exact":"문장"},"claim":"보여 줄 것"}'
   download <id> [--revision n]           TXT 출력
   export <id> --out <파일> [--format txt|html|zip] [--motion animated|static] [--revision n]
                                          내보내기(zip: 원고 md·html·그림 SVG·manifest.json)

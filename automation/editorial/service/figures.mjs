@@ -4,6 +4,7 @@ import {
   legacyFigureResult,
 } from "../../contracts/figure-result.mjs";
 import { currentOf } from "../domain/figure-progress.mjs";
+import { plainOf } from "../domain/figure-range.mjs";
 import { coverageGap } from "../domain/figures.mjs";
 import { anchorSection, placedFigures } from "../domain/index.mjs";
 import { fail } from "./lifecycle.mjs";
@@ -24,6 +25,7 @@ export function figureView(state, routesAvailable = ["svg"]) {
       ({
         id,
         anchor,
+        origin,
         claim,
         reason,
         analogy,
@@ -38,6 +40,8 @@ export function figureView(state, routesAvailable = ["svg"]) {
         id,
         anchor,
         claim,
+        quote: plainOf(anchor),
+        origin: origin ?? "ai",
         reason: reason ?? null,
         analogy: analogy ?? null,
         scene: scene ?? null,
