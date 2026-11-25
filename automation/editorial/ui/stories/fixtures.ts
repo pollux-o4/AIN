@@ -154,6 +154,7 @@ const candidates: Figure["candidates"] = [
     route: "svg",
     routeBy: "default",
     section: "어떤 아키텍처가 있나",
+    origin: "ai",
   },
   {
     id: "f2",
@@ -170,6 +171,7 @@ const candidates: Figure["candidates"] = [
     route: "image",
     routeBy: "default",
     section: "어떤 아키텍처가 있나",
+    origin: "ai",
   },
   {
     id: "f3",
@@ -186,6 +188,7 @@ const candidates: Figure["candidates"] = [
     route: "svg",
     routeBy: "default",
     section: "무엇이 다른가",
+    origin: "ai",
   },
 ];
 type Figure = NonNullable<Run["figure"]>;

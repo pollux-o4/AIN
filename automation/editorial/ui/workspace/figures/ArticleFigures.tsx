@@ -1,9 +1,10 @@
 import type { RefObject } from "react";
-import type { Run } from "../../shared/api";
-import { marks } from "./articleMarks";
+import type { ActionCommand, Run } from "../../shared/api";
+import { locateFigure, marks } from "./articleMarks";
 import { FigurePlanNote } from "./FigurePlanNotes";
 import { ChoiceSlot, StatusSlot } from "./FigureSlots";
 import { MarkPortals } from "./MarkPortals";
+import { PlaceFigure } from "./PlaceFigure";
 import type { FigureChoiceState } from "./usePicked";
 
 // 본문에 덧붙이는 시각자료 표시 · 자리 상태는 서버가 정하고(FIGURE_SPOTS) 여기서는 상태별 표시만 고른다
@@ -13,11 +14,15 @@ export function ArticleFigures({
   html,
   choice,
   figure,
+  disabled,
+  onAction,
 }: {
   article: RefObject<HTMLElement | null>;
   html: string;
   choice: FigureChoiceState | null;
   figure: Run["figure"];
+  disabled: boolean;
+  onAction: (command: ActionCommand) => Promise<void>;
 }) {
   const candidates = figure?.candidates ?? [];
   if (!candidates.length) return null;
@@ -29,6 +34,16 @@ export function ArticleFigures({
   const shared = { article, html };
   return (
     <>
+      {choice && (
+        <PlaceFigure
+          article={article}
+          html={html}
+          choice={choice}
+          disabled={disabled}
+          onAction={onAction}
+          onLocate={locateFigure}
+        />
+      )}
       <MarkPortals
         {...shared}
         selector={marks.slot}
@@ -39,7 +54,14 @@ export function ArticleFigures({
           const { candidate, number } = found;
           const spot = marks.spotOf(slot);
           if (spot === "candidate" && choice)
-            return <ChoiceSlot candidate={candidate} choice={choice} />;
+            return (
+              <ChoiceSlot
+                candidate={candidate}
+                choice={choice}
+                disabled={disabled}
+                onAction={onAction}
+              />
+            );
           return (
             <StatusSlot
               candidate={candidate}

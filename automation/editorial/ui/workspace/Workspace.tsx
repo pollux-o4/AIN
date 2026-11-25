@@ -56,6 +56,8 @@ export function Workspace({
                   html={run.html}
                   choice={figureChoice}
                   figure={run.figure}
+                  disabled={!online || submitting}
+                  onAction={onAction}
                 />
               )}
             </Article>

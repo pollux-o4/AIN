@@ -1,6 +1,8 @@
 import { FIGURE_SPOTS } from "../../../../contracts/figure.mjs";
+import type { ActionCommand } from "../../shared/api";
 import { Icon } from "../../shared/Icon";
 import { FigureDirection } from "./FigureDirection";
+import { FigurePlaceTools } from "./FigurePlaceTools";
 import { FigurePlan } from "./FigurePlan";
 import { FigureRoute } from "./FigureRoute";
 import { type Candidate, kindName, type Motif } from "./plan";
@@ -16,9 +18,13 @@ function slotLabel(number: number, candidate: Candidate, state: string) {
 export function ChoiceSlot({
   candidate,
   choice,
+  disabled,
+  onAction,
 }: {
   candidate: Candidate;
   choice: FigureChoiceState;
+  disabled: boolean;
+  onAction: (command: ActionCommand) => Promise<void>;
 }) {
   const { id } = candidate;
   const on = choice.picked.includes(id);
@@ -38,6 +44,14 @@ export function ChoiceSlot({
           <FigurePlan candidate={candidate} candidates={choice.candidates} motifs={choice.motifs} />
         </span>
       </button>
+      <div className="figure-slot-tools">
+        <FigurePlaceTools
+          candidate={candidate}
+          choice={choice}
+          disabled={disabled}
+          onAction={onAction}
+        />
+      </div>
       {on && <FigureRoute id={id} choice={choice} />}
       {on && <FigureDirection id={id} choice={choice} />}
     </div>

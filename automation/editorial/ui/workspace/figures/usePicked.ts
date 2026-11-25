@@ -48,6 +48,9 @@ export type FigureChoiceState = Picks &
     routesAvailable: FigureRoute[];
     motifs: Motif[];
     numberOf: (id: string) => number;
+    // 범위를 조절 중인 후보 · 본문 패널과 도크·본문 카드가 함께 본다(ADR-0030)
+    adjusting: string | null;
+    adjust: (id: string | null) => void;
   };
 // 위치 선택의 단일 상태(고르기·방향·경로) · 본문 자리와 도크 목록이 함께 쓴다(FIGURE-001)
 export function useFigureChoice(run: Run | null): FigureChoiceState | null {
@@ -57,6 +60,7 @@ export function useFigureChoice(run: Run | null): FigureChoiceState | null {
   const picks = usePicked(ids, key);
   const directions = useDirections(key, picks.picked);
   const routes = useRoutes(key, candidates, picks.picked);
+  const [adjusting, adjust] = useState<string | null>(null);
   if (!candidates.length) return null;
   return {
     ...picks,
@@ -66,5 +70,7 @@ export function useFigureChoice(run: Run | null): FigureChoiceState | null {
     candidates,
     motifs: run?.figure?.motifs ?? [],
     numberOf: (id) => candidateNumber(candidates, id),
+    adjusting: ids.includes(adjusting ?? "") ? adjusting : null,
+    adjust,
   };
 }

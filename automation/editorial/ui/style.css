@@ -3165,3 +3165,122 @@ fieldset.figure-list {
 .figure-slot-error {
   color: var(--coin);
 }
+
+/* 본문 범위로 시각자료 자리 추가·범위 조절 · 본문 DOM은 그대로 두고 Highlight API로 칠한다 · ADR-0030 */
+::highlight(figure-range) {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  text-decoration: underline dotted var(--accent) 1px;
+  text-underline-offset: 3px;
+}
+::highlight(figure-range-focus) {
+  background-color: color-mix(in srgb, var(--accent) 26%, transparent);
+  text-decoration: underline var(--accent) 2px;
+  text-underline-offset: 3px;
+}
+::highlight(figure-pick) {
+  background-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--ink);
+}
+.figure-place {
+  position: fixed;
+  /* 작업 도크(40) 위 · 범위를 고르는 동안만 잠깐 뜬다 */
+  z-index: 45;
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: var(--px, 1px) solid var(--accent);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 18%, transparent);
+  font-size: 13.5px;
+}
+.figure-place-summary {
+  margin: 0;
+  color: var(--muted);
+}
+.figure-place-steps {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.figure-place-steps button {
+  min-height: 32px;
+  padding: 2px 4px;
+  font-size: 12.5px;
+}
+.figure-place-clash {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.figure-place-clash button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.figure-place-form {
+  display: grid;
+  gap: 8px;
+}
+.figure-place-form label {
+  display: grid;
+  gap: 4px;
+}
+.figure-place-form textarea {
+  width: 100%;
+  font: inherit;
+}
+.figure-place-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.figure-place-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+}
+.figure-place-tools button {
+  min-height: 28px;
+  padding: 2px 8px;
+  font-size: 12.5px;
+}
+.figure-place-tools button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.figure-origin {
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 12px;
+}
+#article .figure-slot-tools {
+  padding: 4px 12px 8px;
+  border: var(--px, 1px) solid var(--accent);
+  border-top: 0;
+  background: var(--surface);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .figure-place {
+    animation: figure-place-in 120ms ease-out;
+  }
+}
+@keyframes figure-place-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

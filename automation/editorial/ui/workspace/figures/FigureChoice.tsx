@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FIGURE_LOOKS } from "../../../../contracts/figure.mjs";
 import { Icon } from "../../shared/Icon";
 import { FigureOption } from "./FigureOption";
+import { FigurePlaceTools } from "./FigurePlaceTools";
 import { LocateButton } from "./Locate";
 import { placeName, ROUTE_NAMES } from "./plan";
 import { type DecisionProps, SkipFigures } from "./SkipFigures";
@@ -46,8 +47,9 @@ export function FigureChoice({
         <legend>
           시각자료를 만들 위치
           <span className="hint">
-            본문에 표시한 후보 자리에서 바로 고를 수 있습니다. 고른 문장 뒤에 놓을 시각자료를
-            만들며(AI 호출) 본문은 바뀌지 않습니다.
+            본문에 표시한 후보 자리에서 바로 고를 수 있습니다. 후보가 없는 곳은 본문 문장을 끌어
+            골라 직접 추가합니다. 고른 범위 뒤에 놓을 시각자료를 만들며(AI 호출) 본문은 바뀌지
+            않습니다.
           </span>
         </legend>
         {figure.note && <p id="figure-note">요청한 위치: {figure.note}</p>}
@@ -90,6 +92,12 @@ export function FigureChoice({
                 : ""}
             </small>
             <LocateButton id={candidate.id} onLocate={onLocate} />
+            <FigurePlaceTools
+              candidate={candidate}
+              choice={choice}
+              disabled={disabled}
+              onAction={onAction}
+            />
           </FigureOption>
         ))}
       </fieldset>

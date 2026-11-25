@@ -82,6 +82,9 @@ const runSchema = z.object({
           route: z.enum(FIGURE_ROUTES).default("svg"),
           routeBy: z.enum(["user", "default"]).default("default"),
           section: z.string().nullable(),
+          // 렌더링된 본문 기준 평문 범위·누가 넣은 자리인지 · 이전 응답에는 없다 · ADR-0030
+          quote: z.string().optional(),
+          origin: z.enum(["ai", "human"]).default("ai"),
         }),
       ),
       style: z

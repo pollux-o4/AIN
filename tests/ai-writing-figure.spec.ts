@@ -71,7 +71,7 @@ test("FIGURE-001: 위치를 고르고 확인한 시각자료만 본문 뒤에 �
   await checkAccessibility(page, testInfo, "figure-choice");
 
   // 본문 자리와 도크 목록은 같은 선택 상태 · 본문에서 빼면 도크에서도 빠진다
-  const slots = page.locator("#article .figure-slot button");
+  const slots = page.locator("#article .figure-slot-toggle");
   await expect(slots).toHaveCount(2);
   // 위치 단계: 유형을 본문 자리에서 바로 읽는다 · 장면·반복 대상은 구성 단계가 정한다(ADR-0026)
   await expect(slots.nth(0)).toContainText("흐름");
