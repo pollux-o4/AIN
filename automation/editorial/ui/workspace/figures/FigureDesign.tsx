@@ -1,11 +1,12 @@
-import { type FormEvent, useState } from "react";
-import { FIGURE_LIMITS } from "../../../../contracts/figure.mjs";
+import { type FormEvent, useMemo, useState } from "react";
+import { FIGURE_LIMITS, revisionReady } from "../../../../contracts/figure.mjs";
 import type { Figure } from "../../shared/api";
 import { Icon } from "../../shared/Icon";
 import { AnchorQuote } from "./Locate";
 import { LookSelect } from "./LookSelect";
-import { type Candidate, type LookId, lookName, motifIndex, motifPeers, placeName } from "./plan";
+import { type Candidate, lookName, motifIndex, placeName } from "./plan";
 import type { DecisionProps } from "./SkipFigures";
+import { useLookChange } from "./useLookChange";
 import { usePicked } from "./usePicked";
 
 function DesignCandidate({
@@ -75,22 +76,15 @@ export function FigureDesign({
   onAction,
   onLocate,
 }: Omit<DecisionProps, "run"> & { figure: Figure; onLocate: (id: string) => void }) {
-  const candidates = figure.candidates.filter((candidate) =>
-    figure.selected.includes(candidate.id),
-  );
+  const candidates = useMemo(() => {
+    const selected = new Set(figure.selected);
+    return figure.candidates.filter((candidate) => selected.has(candidate.id));
+  }, [figure.candidates, figure.selected]);
   const { picked, toggle } = usePicked(candidates.map(({ id }) => id));
   const [feedback, setFeedback] = useState(figure.feedback ?? "");
-  const [look, setLook] = useState<LookId | "">("");
-  const [withPeers, setWithPeers] = useState(true);
+  const change = useLookChange(candidates, picked);
+  const { look, targets } = change;
   const text = feedback.trim();
-  // 고른 자리와 같은 대상이 나오는 자리 · 그림체만 바꿀 때 함께 바꿀지 묻는다(ADR-0022·0027)
-  const peerIds = new Set(picked.flatMap((id) => motifPeers(candidates, id).ids));
-  for (const id of picked) peerIds.delete(id);
-  const peers = {
-    ids: [...peerIds],
-    names: [...new Set(picked.flatMap((id) => motifPeers(candidates, id).names))],
-  };
-  const targets = look && withPeers ? [...picked, ...peers.ids] : picked;
   const send = (event: FormEvent) => {
     event.preventDefault();
     void onAction({
@@ -100,7 +94,6 @@ export function FigureDesign({
       ...(look ? { look } : {}),
     });
   };
-  const shared = new Set(picked.map((id) => candidates.find((c) => c.id === id)?.look ?? null));
   return (
     <section id="figure-design">
       <h2>그릴 내용 확인</h2>
@@ -151,20 +144,12 @@ export function FigureDesign({
             </label>
           ))}
         </fieldset>
-        <LookSelect
-          id="design-look"
-          current={shared.size === 1 ? [...shared][0] : null}
-          value={look}
-          onChange={setLook}
-          peers={peers}
-          withPeers={withPeers}
-          onWithPeers={setWithPeers}
-        />
+        <LookSelect id="design-look" change={change} />
         <div className="submit-row">
           <button
             id="revise-design-submit"
             type="submit"
-            disabled={disabled || !(text || look) || !picked.length}
+            disabled={disabled || !revisionReady({ feedback: text, look }) || !picked.length}
           >
             다시 구성
           </button>

@@ -21,15 +21,18 @@ export type LookId = keyof typeof FIGURE_LOOKS;
 // 그림체 이름 · 고르기·구성 확인·되돌리기가 같은 이름을 쓴다(ADR-0027)
 export const lookName = (look: string | null) =>
   (look && FIGURE_LOOKS[look as LookId]?.label) || null;
-// 같은 반복 대상이 나오는 다른 자리와 그 대상 이름 · 그림체를 바꿀 때 함께 바꿀 후보(ADR-0022·0027)
-export function motifPeers(candidates: Candidate[], id: string) {
-  const own = new Set(candidates.find((item) => item.id === id)?.motifs ?? []);
+// 고른 자리들과 같은 반복 대상이 나오는 다른 자리와 그 대상 이름 · 그림체를 바꿀 때 함께 바꿀 후보(ADR-0022·0027)
+// 한 번 훑기 O(후보 × 대상) · 고른 자리 대상은 집합으로 찾는다
+export function motifPeers(candidates: Candidate[], ids: readonly string[]) {
+  const picked = new Set(ids);
+  const own = new Set(candidates.flatMap((item) => (picked.has(item.id) ? item.motifs : [])));
   const names = new Set<string>();
-  const ids = candidates.flatMap((item) => {
-    if (item.id === id) return [];
+  const peers: string[] = [];
+  for (const item of candidates) {
+    if (picked.has(item.id)) continue;
     const shared = item.motifs.filter((name) => own.has(name));
     for (const name of shared) names.add(name);
-    return shared.length ? [item.id] : [];
-  });
-  return { ids, names: [...names] };
+    if (shared.length) peers.push(item.id);
+  }
+  return { ids: peers, names: [...names] };
 }

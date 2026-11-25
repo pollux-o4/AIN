@@ -1,24 +1,15 @@
 import { FIGURE_LOOKS } from "../../../../contracts/figure.mjs";
-import { type LookId, lookName, type motifPeers } from "./plan";
+import { type LookId, lookName } from "./plan";
+import type { LookChange } from "./useLookChange";
 
 // 그림체 바꾸기 · 지금 그림체를 보여 주고, 같은 대상이 나오는 자리는 함께 바꿀지 묻는다(ADR-0027)
 // 기본은 함께 바꾸기 · 같은 대상이 그림마다 다르게 그려지면 독자가 같은 것으로 알아보기 어렵다(ADR-0022)
 export function LookSelect({
   id,
-  current,
-  value,
-  onChange,
-  peers,
-  withPeers,
-  onWithPeers,
+  change: { current, look: value, setLook: onChange, peers, withPeers, setWithPeers: onWithPeers },
 }: {
   id: string;
-  current: string | null;
-  value: LookId | "";
-  onChange: (look: LookId | "") => void;
-  peers: ReturnType<typeof motifPeers>;
-  withPeers: boolean;
-  onWithPeers: (on: boolean) => void;
+  change: LookChange;
 }) {
   const changed = Boolean(value) && value !== current;
   return (

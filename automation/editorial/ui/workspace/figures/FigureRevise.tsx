@@ -1,9 +1,13 @@
-import { useState } from "react";
-import { FIGURE_LIMITS, FIGURE_REVISE_TARGETS } from "../../../../contracts/figure.mjs";
+import { useMemo, useState } from "react";
+import {
+  FIGURE_LIMITS,
+  FIGURE_REVISE_TARGETS,
+  revisionReady,
+} from "../../../../contracts/figure.mjs";
 import type { Figure } from "../../shared/api";
 import { LookSelect } from "./LookSelect";
-import { type LookId, motifPeers } from "./plan";
 import type { DecisionProps } from "./SkipFigures";
+import { useLookChange } from "./useLookChange";
 
 // 되돌릴 곳 · 무엇을 그릴지면 구성으로, 어떻게 그렸는지면 직전 그림에서 지적만 고친다 · ADR-0026
 const TARGETS: Record<
@@ -23,18 +27,18 @@ export function FigureRevise({
   onAction,
 }: Pick<DecisionProps, "disabled" | "onAction"> & { id: string; figure: Figure }) {
   const [feedback, setFeedback] = useState("");
-  const [look, setLook] = useState<LookId | "">("");
-  const [withPeers, setWithPeers] = useState(true);
+  const ids = useMemo(() => [id], [id]);
   const text = feedback.trim();
-  const made = new Set(figure.items.map((item) => item.id));
-  const peers = motifPeers(
-    figure.candidates.filter((c) => made.has(c.id)),
-    id,
-  );
-  const current = figure.candidates.find((c) => c.id === id)?.look ?? null;
-  const figures = look && withPeers ? [id, ...peers.ids] : [id];
-  // 부분 고치기는 그림체를 유지하므로 의견만으로 · 다시 구성은 의견이나 그림체 중 하나면 된다
-  const ready = { compose: Boolean(text || look), fix: Boolean(text) && !look };
+  // 만든 그림끼리만 함께 바꾼다 · 아직 없는 그림은 되돌릴 것이 없다
+  const made = useMemo(() => {
+    const ids = new Set(figure.items.map((item) => item.id));
+    return figure.candidates.filter((c) => ids.has(c.id));
+  }, [figure.candidates, figure.items]);
+  const change = useLookChange(made, ids);
+  const { look, targets: figures } = change;
+  // 요청 검사와 같은 규칙(revisionReady) · 부분 고치기는 그림체를 유지한다
+  const ready = (target: (typeof FIGURE_REVISE_TARGETS)[number]) =>
+    revisionReady({ target, feedback: text, look });
   return (
     <details className="figure-revise">
       <summary>되돌리기</summary>
@@ -46,15 +50,7 @@ export function FigureRevise({
         value={feedback}
         onChange={(event) => setFeedback(event.target.value)}
       />
-      <LookSelect
-        id={`revise-look-${id}`}
-        current={current}
-        value={look}
-        onChange={setLook}
-        peers={peers}
-        withPeers={withPeers}
-        onWithPeers={setWithPeers}
-      />
+      <LookSelect id={`revise-look-${id}`} change={change} />
       <div className="submit-row">
         {FIGURE_REVISE_TARGETS.map((target) => (
           <button
@@ -62,7 +58,7 @@ export function FigureRevise({
             type="button"
             id={`revise-${TARGETS[target].key}-${id}`}
             className={TARGETS[target].quiet ? "quiet" : undefined}
-            disabled={disabled || !ready[target]}
+            disabled={disabled || !ready(target)}
             aria-describedby={target === "fix" && look ? `revise-fix-note-${id}` : undefined}
             onClick={() =>
               void onAction({
