@@ -255,7 +255,7 @@ test("server owns model and limits; worker cannot bypass exhausted budget", asyn
   assert.equal(f.calls.length, 0);
   assert.equal(s.get(run.id).status, "failed");
   assert.equal(s.get(run.id).label, "실패");
-  assert.equal(record.ai.model, "gemini-4-hydrogen-medium");
+  assert.deepEqual([record.ai.model, record.ai.thinking], ["gemini-4-hydrogen", "medium"]);
 });
 
 test("코드가 거부한 결과의 다시 쓰기는 단계 예산을 쓰지 않는다 · 시간 한도는 그대로", async (t) => {
@@ -831,10 +831,21 @@ test("ADR-0006 agent edits within delegated rounds; final sign-off is human only
 
 test("aiFor: 첫 초안까지 기본, 검토·다시 쓰기·피드백 반영은 같은 제공자의 High", async () => {
   const { aiFor, DEFAULT_AI } = await import("../service/ai-policy.mjs");
-  const high = "gemini-4-hydrogen-high";
-  assert.equal(aiFor({ stage: "review" }, DEFAULT_AI).model, high);
-  assert.equal(aiFor({ stage: "draft", retry: { stage: "draft" } }, DEFAULT_AI).model, high);
-  assert.equal(aiFor({ stage: "outline", feedback: "더 짧게" }, DEFAULT_AI).model, high);
+  const thinking = (ai) => `${ai.model}:${ai.thinking}`;
+  const high = "gemini-4-hydrogen:high";
+  assert.equal(thinking(aiFor({ stage: "review" }, DEFAULT_AI)), high);
+  assert.equal(thinking(aiFor({ stage: "draft", retry: { stage: "draft" } }, DEFAULT_AI)), high);
+  assert.equal(thinking(aiFor({ stage: "outline", feedback: "더 짧게" }, DEFAULT_AI)), high);
+  // 사고 단계를 이름에 붙인 이전 식별자로 저장된 작업도 같은 짝으로 올린다
+  assert.equal(
+    thinking(
+      aiFor(
+        { stage: "review" },
+        { ...DEFAULT_AI, model: "gemini-4-hydrogen-medium", thinking: undefined },
+      ),
+    ),
+    high,
+  );
   assert.deepEqual(aiFor({ stage: "draft" }, DEFAULT_AI), {});
   // 그림 생성의 모든 층(국소 수정 포함)은 시각자료 담당 모델 · ADR-0026
   const generating = (pass) => ({
@@ -842,7 +853,7 @@ test("aiFor: 첫 초안까지 기본, 검토·다시 쓰기·피드백 반영은
     figure: { phase: "generate", selected: ["f1"], current: { ids: ["f1"], pass } },
   });
   for (const pass of ["draw", "fix"])
-    assert.equal(aiFor(generating(pass), DEFAULT_AI).model, high, pass);
+    assert.equal(thinking(aiFor(generating(pass), DEFAULT_AI)), high, pass);
   // 상향 짝이 없는 모델·제공자는 그대로
   assert.deepEqual(aiFor({ stage: "review" }, { provider: "fixture", model: "fixture-model" }), {});
 });

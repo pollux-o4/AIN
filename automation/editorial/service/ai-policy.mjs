@@ -6,6 +6,7 @@ import { figureStage } from "../domain/figures.mjs";
 export const DEFAULT_AI = Object.freeze({
   provider: AI_MODELS.standard.provider,
   model: AI_MODELS.standard.model,
+  thinking: AI_MODELS.standard.thinking,
   enabled: true,
   maxDurationMs: 300000,
 });
@@ -13,7 +14,7 @@ export const DEFAULT_AI = Object.freeze({
 // 시각자료 담당 모델: 위치 제안·구성과 생성 층(그리기)·국소 수정 · ADR-0011·ADR-0026 · 2026-11-17 사용자 결정으로 Hydrogen High 일원화(ADR-0017)
 // AIN_FIGURE_AI_<PLAN|DRAW|FIX>="provider/model:thinking@mode"로 층별 교체
 // mode를 안 주면 provider 기본 모드(Jobs가 Paseo defaultModeId로 채움)
-const HYDROGEN_HIGH = `${AI_MODELS.high.provider}/${AI_MODELS.high.model}`;
+const HYDROGEN_HIGH = `${AI_MODELS.high.provider}/${AI_MODELS.high.model}:${AI_MODELS.high.thinking}`;
 const FIGURE_AI_DEFAULTS = {
   plan: HYDROGEN_HIGH,
   draw: HYDROGEN_HIGH,

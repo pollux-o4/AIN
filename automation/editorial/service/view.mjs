@@ -139,7 +139,7 @@ export function runView(run, now, figureRoutesAvailable = ["svg"]) {
       !needsCompletion,
     updatedAt: run.updatedAt,
     archived: Boolean(run.archivedAt),
-    model: modelLabel(run.ai.model),
+    model: modelLabel(run.ai),
     callsUsed: run.callsUsed,
     maxCalls: run.maxCalls,
     appliedOperations: Object.keys(run.operations ?? {}),

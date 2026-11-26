@@ -54,6 +54,7 @@ async function setup(t) {
   const snapshot = (agent) => ({
     provider: agent.provider,
     model: agent.model,
+    thinkingOptionId: agent.thinking ?? null,
     status: agent.status,
     archivedAt: agent.archivedAt,
     activeTurn:
@@ -82,6 +83,10 @@ async function setup(t) {
       if (agents.get(agentId)?.modelError) throw new Error("Model change failed");
       modelChanges.push({ agentId, modelId });
       agents.get(agentId).model = modelId;
+    },
+    setAgentThinkingOption: async (agentId, thinkingOptionId) => {
+      modelChanges.push({ agentId, thinkingOptionId });
+      agents.get(agentId).thinking = thinkingOptionId;
     },
     providers: {
       waitForReady: async () => ({
@@ -318,6 +323,14 @@ test("workers: same-provider model change keeps the session and swaps only the m
   assert.equal(next.reusedWorker, true);
   assert.deepEqual(f.modelChanges, [{ agentId: first.job.agentId, modelId: "model-b" }]);
   assert.equal(f.agents.get(first.job.agentId).model, "model-b");
+});
+
+test("workers: same-model thinking change keeps the session and swaps only the thinking option", async (t) => {
+  const f = await setup(t);
+  const first = await f.complete(start());
+  const next = await f.jobs.create({ state: first.state, ai: { ...ai, thinking: "high" } });
+  assert.equal(next.agentId, first.job.agentId);
+  assert.deepEqual(f.modelChanges, [{ agentId: first.job.agentId, thinkingOptionId: "high" }]);
 });
 
 test("workers: model change failure, busy/archive, refresh/send/timeline failure fall back to full new sessions", async (t) => {

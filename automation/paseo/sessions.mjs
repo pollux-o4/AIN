@@ -63,6 +63,9 @@ export class RoleSessions {
       const current = agent.current();
       if (current?.provider !== provider) throw new Error("Worker provider changed");
       if (current.model !== model) await this.#client.setAgentModel(worker.agentId, model);
+      const thinking = job.ai?.thinking;
+      if (typeof thinking === "string" && current.thinkingOptionId !== thinking)
+        await this.#client.setAgentThinkingOption(worker.agentId, thinking);
       boundary = await turnBoundary(agent);
     } catch {
       await this.#workers.drop(job.state.articleId, job.role, worker.agentId);

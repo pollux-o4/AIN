@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { currentModel } from "../contracts/ai-models.mjs";
 import { FIGURE_LIMITS, FIGURE_STAGES } from "../contracts/figure.mjs";
 import { itemFields, outputFields } from "../contracts/output-fields.mjs";
 import {
@@ -252,7 +253,9 @@ export class Jobs {
         ...(typeof x.defaultModeId === "string" ? { defaultModeId: x.defaultModeId } : {}),
       }));
   }
-  async create({ state, ai }) {
+  async create({ state, ai: requested }) {
+    // 저장된 이전 식별자(사고 단계를 붙인 모델 이름)도 현재 제공자 목록과 대조할 수 있게 바꾼다
+    const ai = currentModel(requested);
     const action = nextAction(state);
     if (
       !Number.isSafeInteger(state.version) ||
