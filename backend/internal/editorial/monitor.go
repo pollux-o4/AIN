@@ -3,13 +3,14 @@ package editorial
 import "encoding/json"
 
 type activityEvent struct {
-	At       int64  `json:"at"`
-	Kind     string `json:"kind"`
-	Label    string `json:"label"`
-	Revision int64  `json:"revision"`
-	Stage    string `json:"stage,omitempty"`
-	Reason   string `json:"reason,omitempty"`
-	JobID    string `json:"jobId,omitempty"`
+	At          int64   `json:"at"`
+	Kind        string  `json:"kind"`
+	Label       string  `json:"label"`
+	Revision    int64   `json:"revision"`
+	Stage       string  `json:"stage,omitempty"`
+	Reason      string  `json:"reason,omitempty"`
+	JobID       string  `json:"jobId,omitempty"`
+	ExecutionID *string `json:"executionId,omitempty"`
 }
 
 type pipelineStep struct {
