@@ -4,7 +4,7 @@
 - 공통 원칙: `~/.codex/init-rules/`의 RULE-CORE·ADR·SPEC·TEST·OPS를 적용한다.
 - 탐색: `docs/`에서 관심사와 고정 ID를 검색한다. 현재 결정은 `rg --files docs/decisions | rg -- '--current\.md$'`로 조회한다.
 - 경계: 소비 제품의 코드·경로·DB·인증에 의존하지 않으며, 외부 입력과 TXT 인계 계약만 제공한다.
-- 책임 구분: `automation/editorial/`은 사용자 작업·저장·추적을, `automation/n8n/`은 전이·전달을, `automation/paseo/`는 AI 작업·결과 계약을 담당한다.
+- 책임 구분: `backend/`는 편집 실행·SQLite·Paseo 연결을, `automation/editorial/ui/`와 `automation/cli/`는 HTTP 클라이언트를 맡는다. 기본 실행은 `mise run editorial:start`이며, Node·n8n 환경은 레거시 기준 재현용으로 보존한다.
 - 글쓰기 대행: 사용자 대신 글쓰기를 의뢰·수정·삭제할 때에는 스킬 `ain-write`와 `mise run ain -- <명령>`을 사용한다. 화면 조작은 관찰과 E2E 확인에만 쓴다(AGENT-001).
 - 구성 위치: 실행 정의는 `mise.toml`, 의존성은 `package.json`과 잠금 파일, 비공개 데이터는 `.local/`에 둔다.
 - 보안 및 데이터 보호: 비밀값과 원문은 로그에 남기거나 커밋하지 않는다. 데이터를 이동하기 전에는 실행 중인 작업을 확인하여 정지하고 무결성을 검증한다.
