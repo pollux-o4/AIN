@@ -19,6 +19,7 @@ export const PHASES = [
       { task: "check:arch", seconds: 20 },
       { task: "secrets", seconds: 15 },
       { task: "test", seconds: 30 },
+      { task: "go:check", seconds: 30 },
     ],
   },
   { name: "격리 n8n", tasks: [{ task: "test:n8n:runtime", seconds: 45 }] },
