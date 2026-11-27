@@ -1,0 +1,352 @@
+[
+  {
+    "name": "start",
+    "before": null,
+    "event": {
+      "id": "request-1",
+      "actor": "user",
+      "type": "start",
+      "articleId": "migration-example",
+      "idea": "접속 장애에서 배운 점",
+      "source": "합성 원문"
+    },
+    "state": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "next": {
+      "type": "request_ai",
+      "stage": "diagnose",
+      "revision": 1,
+      "feedback": null
+    }
+  },
+  {
+    "name": "duplicate",
+    "before": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "event": {
+      "id": "request-1",
+      "actor": "user",
+      "type": "start",
+      "articleId": "migration-example",
+      "idea": "접속 장애에서 배운 점",
+      "source": "합성 원문"
+    },
+    "state": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "next": {
+      "type": "request_ai",
+      "stage": "diagnose",
+      "revision": 1,
+      "feedback": null
+    }
+  },
+  {
+    "name": "wrong stage",
+    "before": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "event": {
+      "id": "result-1",
+      "actor": "adapter",
+      "type": "complete",
+      "expectedVersion": 1,
+      "revision": 1,
+      "stage": "review",
+      "output": {
+        "purpose": "경험과 판단의 공유",
+        "audience": "동료 개발자",
+        "sectionModes": [
+          "experience",
+          "explanation"
+        ],
+        "preserveVoice": "일인칭",
+        "strategy": "경험에서 판단을 설명한다"
+      }
+    },
+    "error": "Unexpected or stale AI result"
+  },
+  {
+    "name": "stale version",
+    "before": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "event": {
+      "id": "result-1",
+      "actor": "adapter",
+      "type": "complete",
+      "expectedVersion": 0,
+      "revision": 1,
+      "stage": "diagnose",
+      "output": {
+        "purpose": "경험과 판단의 공유",
+        "audience": "동료 개발자",
+        "sectionModes": [
+          "experience",
+          "explanation"
+        ],
+        "preserveVoice": "일인칭",
+        "strategy": "경험에서 판단을 설명한다"
+      }
+    },
+    "error": "Stale state version"
+  },
+  {
+    "name": "first completion",
+    "before": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 1,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "diagnose",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {},
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": []
+    },
+    "event": {
+      "id": "result-1",
+      "actor": "adapter",
+      "type": "complete",
+      "expectedVersion": 1,
+      "revision": 1,
+      "stage": "diagnose",
+      "output": {
+        "purpose": "경험과 판단의 공유",
+        "audience": "동료 개발자",
+        "sectionModes": [
+          "experience",
+          "explanation"
+        ],
+        "preserveVoice": "일인칭",
+        "strategy": "경험에서 판단을 설명한다"
+      }
+    },
+    "state": {
+      "plan": [
+        "diagnose",
+        "topic",
+        "audience",
+        "value",
+        "research",
+        "outline",
+        "draft",
+        "review"
+      ],
+      "schemaVersion": 1,
+      "articleId": "migration-example",
+      "version": 2,
+      "revision": 1,
+      "status": "waiting_ai",
+      "stage": "topic",
+      "source": "합성 원문",
+      "idea": "접속 장애에서 배운 점",
+      "direction": {
+        "mode": "auto",
+        "readerLevel": "auto"
+      },
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "purpose": "경험과 판단의 공유",
+            "audience": "동료 개발자",
+            "sectionModes": [
+              "experience",
+              "explanation"
+            ],
+            "preserveVoice": "일인칭",
+            "strategy": "경험에서 판단을 설명한다"
+          }
+        }
+      },
+      "history": [],
+      "seen": {
+        "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}",
+        "result-1": "{\"id\":\"result-1\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":1,\"revision\":1,\"stage\":\"diagnose\",\"output\":{\"purpose\":\"경험과 판단의 공유\",\"audience\":\"동료 개발자\",\"sectionModes\":[\"experience\",\"explanation\"],\"preserveVoice\":\"일인칭\",\"strategy\":\"경험에서 판단을 설명한다\"}}"
+      },
+      "approval": null,
+      "satisfiedRevision": null,
+      "requirementLog": [],
+      "lastTransition": {
+        "event": "complete",
+        "from": "waiting_ai",
+        "to": "waiting_ai"
+      }
+    },
+    "next": {
+      "type": "request_ai",
+      "stage": "topic",
+      "revision": 1,
+      "feedback": null
+    }
+  }
+]
