@@ -87,3 +87,24 @@ func scanPages[T any](ctx context.Context, db *sql.DB, query string, read func(*
 		}
 	}
 }
+
+// PendingRun uses the active run index to locate a single observation target.
+func (s *SQLite) PendingRun(ctx context.Context, id string) (contract.Intent, error) {
+	var intent contract.Intent
+	var action, deadline string
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, run_id, agent_id, action, deadline,
+			remote_agent_id, remote_turn_id, remote_epoch, remote_after
+		FROM ain_intents WHERE run_id = ? AND completed = 0`, id).
+		Scan(&intent.ID, &intent.RunID, &intent.AgentID, &action, &deadline,
+			&intent.Remote.AgentID, &intent.Remote.TurnID, &intent.Remote.Epoch, &intent.Remote.After)
+	if err == sql.ErrNoRows {
+		return contract.Intent{}, contract.ErrNotFound
+	}
+	if err != nil {
+		return contract.Intent{}, err
+	}
+	intent.Action = json.RawMessage(action)
+	intent.Deadline, err = time.Parse(time.RFC3339Nano, deadline)
+	return intent, err
+}
