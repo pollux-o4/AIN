@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"slices"
 	"strconv"
-	"strings"
+		"strings"
+
+	"github.com/pollux-o4/AIN/backend/internal/promptframe"
 )
 
 //go:embed templates/prompts.json
@@ -23,9 +25,6 @@ type specification struct {
 var templates = func() (data struct {
 	Basic      map[string]specification
 	Fragments  map[string]string
-	Team       string
-	Roles      map[string]string
-	Guard      map[string]string
 	StoryRules map[string][]string
 	ModeRules  map[string]map[string][]string
 	LevelRules map[string][]string
@@ -45,53 +44,16 @@ var templates = func() (data struct {
 }()
 
 func frame(stage string, spec specification, data ordered, reused bool, omitted []string) string {
-	lines := []string{"[과업 ID: " + stage + "]"}
+	if reused && omitted == nil {
+		omitted = []string{}
+	}
 	if !reused {
-		lines = append(lines, "## 역할", templates.Team, templates.Roles[templates.StageRoles[stage]])
+		omitted = nil
 	}
-	lines = append(lines, "## 이번 일", spec.Task)
-	if len(spec.Steps) > 0 {
-		lines = append(lines, "## 순서")
-		for i, step := range spec.Steps {
-			lines = append(lines, strconv.Itoa(i+1)+". "+step)
-		}
-	}
-	addBullets := func(title string, items []string) {
-		if len(items) > 0 {
-			lines = append(lines, "## "+title)
-			for _, item := range items {
-				lines = append(lines, "- "+item)
-			}
-		}
-	}
-	addBullets("규칙", spec.Rules)
-	lines = append(lines, "## 통과 기준", "반환하기 전에 각 항목을 하나씩 확인한다. 하나라도 '아니오'이면 고친 뒤 반환한다.")
-	for _, criterion := range spec.Criteria {
-		lines = append(lines, "- "+criterion)
-	}
-	lines = append(lines, "## 출력")
-	if !reused {
-		lines = append(lines, templates.Guard["output"])
-	}
-	lines = append(lines, string(encode(spec.Example)))
-	for _, note := range spec.OutputNotes {
-		lines = append(lines, "- "+note)
-	}
-	if reused {
-		keys := strings.Join(omitted, ", ")
-		if keys == "" {
-			keys = "없음"
-		}
-		addBullets("지킬 것", []string{
-			"같은 대화의 이전 과업은 종료되었다. 이번 메시지의 지시와 출력 형식만 따른다. 첫 과업의 '역할', '지킬 것', 출력 규칙 및 이전에 전달받은 자료(키: " + keys + ")는 그대로 유효하며, 아래 <자료>에는 새로 생성되었거나 변경된 항목만 포함되어 있다.",
-			templates.Guard["trust"],
-		})
-	} else {
-		addBullets("지킬 것", []string{templates.Guard["trust"], templates.Guard["noTools"], templates.Guard["noFabrication"]})
-	}
-	lines = append(lines, "<자료>", strings.ReplaceAll(string(data.raw()), "</", `<\/`), "</자료>",
-		"위 자료를 바탕으로 '이번 일'을 마치고 '통과 기준'을 모두 확인한 뒤, '출력' 형식에 맞는 JSON 객체 하나만 반환한다.")
-	return strings.Join(lines, "\n")
+	return promptframe.Render(stage, promptframe.Spec{
+		Task: spec.Task, Steps: spec.Steps, Rules: spec.Rules, Criteria: spec.Criteria,
+		Example: encode(spec.Example), OutputNotes: spec.OutputNotes,
+	}, data.raw(), omitted)
 }
 
 func promptSpec(stage string, state map[string]json.RawMessage, input actionInput, requirements ordered) specification {

@@ -1,4 +1,5 @@
 // Capture the Node reference instructions for the native Go prompt assembler.
+// 공통 틀(역할·지킬 것)은 promptframe/generate.mjs가 추출한다.
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -7,7 +8,6 @@ const root = resolve(process.argv[2] ?? ".");
 const fromRoot = (path) => import(pathToFileURL(resolve(root, path)));
 const { stageSpec } = await fromRoot("automation/paseo/prompts/stages.mjs");
 const { routeSpec } = await fromRoot("automation/paseo/prompts/route.mjs");
-const { frame, GUARD } = await fromRoot("automation/paseo/prompts/frame.mjs");
 const { STAGE_ROLES } = await fromRoot("automation/paseo/roles.mjs");
 const { WRITING_MODES, READER_LEVELS } = await fromRoot("automation/contracts/writing-modes.mjs");
 const { MODE_RULES, LEVEL_RULES, reviewChecks, seasoningRules } = await fromRoot(
@@ -60,13 +60,6 @@ const fragments = {
   ),
 };
 
-const roles = {};
-let team;
-for (const role of new Set(Object.values(STAGE_ROLES))) {
-  if (role === "illustrator") continue;
-  const lines = frame({ id: "example", role, task: "task", example: {}, data: {} }).split("\n");
-  [, , team, roles[role]] = lines;
-}
 const storyRules = {};
 for (const stage of ["draft", "review"]) {
   const base = seasoningRules(stage, { modes: [] });
@@ -80,9 +73,6 @@ const checks = reviewChecks({ modes: ["explain"] });
 const payload = {
   basic,
   fragments,
-  team,
-  roles,
-  guard: GUARD,
   storyRules,
   modeRules: MODE_RULES,
   levelRules: LEVEL_RULES,
