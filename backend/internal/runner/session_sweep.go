@@ -47,13 +47,18 @@ func (r *Runner) sweep(ctx context.Context, all bool) {
 var matchingAgent = errors.New("matching durable active agent")
 
 func (r *Runner) activeAgent(ctx context.Context, agent string) (bool, error) {
-	err := r.store.ScanPending(ctx, func(intent contract.Intent) error {
+	return ActiveAgent(ctx, r.store, agent)
+}
+
+// ActiveAgent checks durable pending turns and unsettled batch children.
+func ActiveAgent(ctx context.Context, store contract.Store, agent string) (bool, error) {
+	err := store.ScanPending(ctx, func(intent contract.Intent) error {
 		if referencesAgent(intent, agent) {
 			return matchingAgent
 		}
 		if intent.AgentID == "" && intent.Remote.AgentID == "" {
-			if store, ok := r.store.(batchStore); ok {
-				children, err := store.BatchChildren(ctx, intent.ID)
+			if batches, ok := store.(batchStore); ok {
+				children, err := batches.BatchChildren(ctx, intent.ID)
 				if err != nil {
 					return err
 				}
