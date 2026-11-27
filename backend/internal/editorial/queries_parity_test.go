@@ -85,6 +85,10 @@ func TestMIG025NodeQueryParity(t *testing.T) {
 				}
 				delete(monitor, "now")
 			}
+			if _, exists := got.(map[string]any)["executionLinks"]; exists {
+				t.Fatal("Go detail reintroduced retired n8n execution links")
+			}
+			delete(want.(map[string]any), "executionLinks")
 			compareQueries(t, "detail", got, want)
 			history, err := q.HistoryView(ctx, saved.ID)
 			if err != nil {
