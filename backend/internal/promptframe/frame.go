@@ -25,7 +25,8 @@ var shared = func() (data struct {
 	return
 }()
 
-// Spec is one task's instructions. Guards replaces the default no-tools guard when set.
+// Spec is one task's instructions, decoded directly from each generator's prompts.json.
+// Guards replaces the default no-tools guard when set.
 type Spec struct {
 	Task        string
 	Steps       []string
@@ -34,6 +35,22 @@ type Spec struct {
 	Example     json.RawMessage
 	OutputNotes []string
 	Guards      []string
+}
+
+// Map returns a copy with fn applied to every instruction line (placeholders, variants).
+func (spec Spec) Map(fn func(string) string) Spec {
+	each := func(lines []string) []string {
+		if lines == nil {
+			return nil
+		}
+		out := make([]string, len(lines))
+		for i, line := range lines {
+			out[i] = fn(line)
+		}
+		return out
+	}
+	return Spec{Task: fn(spec.Task), Steps: each(spec.Steps), Rules: each(spec.Rules), Criteria: each(spec.Criteria),
+		Example: spec.Example, OutputNotes: each(spec.OutputNotes), Guards: each(spec.Guards)}
 }
 
 // Guard returns a shared guard sentence by its Node name (trust, noTools, noFabrication, output).
@@ -71,7 +88,7 @@ func Render(id string, spec Spec, data []byte, omitted []string) string {
 	if !reused {
 		lines = append(lines, shared.Guard["output"])
 	}
-	lines = append(lines, string(spec.Example))
+	lines = append(lines, string(Encode(spec.Example)))
 	for _, note := range spec.OutputNotes {
 		lines = append(lines, "- "+note)
 	}

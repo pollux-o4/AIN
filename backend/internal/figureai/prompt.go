@@ -14,20 +14,10 @@ import (
 //go:embed templates/prompts.json
 var promptJSON []byte
 
-type specification struct {
-	Task        string
-	Steps       []string
-	Rules       []string
-	Criteria    []string
-	Example     json.RawMessage
-	OutputNotes []string
-	Guards      []string
-}
-
 var templates = func() (data struct {
-	Plan        specification
-	Compose     specification
-	Figure      map[string]specification
+	Plan        promptframe.Spec
+	Compose     promptframe.Spec
+	Figure      map[string]promptframe.Spec
 	DefaultLook string
 	Baseline    LabPolicy
 }) {
@@ -37,7 +27,7 @@ var templates = func() (data struct {
 	return
 }()
 
-func (builder *Builder) specFor(input actionInput) specification {
+func (builder *Builder) specFor(input actionInput) promptframe.Spec {
 	switch input.Stage {
 	case "figure_plan":
 		return templates.Plan
@@ -64,16 +54,5 @@ func (builder *Builder) prompt(input actionInput, data []byte) string {
 		"{{policy.plan}}", policy.Plan, "{{policy.check}}", policy.Check, "{{policy.draw}}", policy.Draw,
 		"{{layoutCheck}}", builder.config.LayoutCheck, "{{kitIndex}}", builder.config.KitIndex,
 	).Replace
-	each := func(lines []string) []string {
-		out := make([]string, len(lines))
-		for i, line := range lines {
-			out[i] = fill(line)
-		}
-		return out
-	}
-	spec := builder.specFor(input)
-	return promptframe.Render(input.Stage, promptframe.Spec{
-		Task: fill(spec.Task), Steps: each(spec.Steps), Rules: each(spec.Rules), Criteria: each(spec.Criteria),
-		Example: promptframe.Encode(spec.Example), OutputNotes: each(spec.OutputNotes), Guards: each(spec.Guards),
-	}, data, nil)
+	return promptframe.Render(input.Stage, builder.specFor(input).Map(fill), data, nil)
 }

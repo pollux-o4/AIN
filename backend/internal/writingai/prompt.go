@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"slices"
 	"strconv"
-		"strings"
+	"strings"
 
 	"github.com/pollux-o4/AIN/backend/internal/promptframe"
 )
@@ -13,17 +13,8 @@ import (
 //go:embed templates/prompts.json
 var promptJSON []byte
 
-type specification struct {
-	Task        string
-	Steps       []string
-	Rules       []string
-	Criteria    []string
-	Example     json.RawMessage
-	OutputNotes []string
-}
-
 var templates = func() (data struct {
-	Basic      map[string]specification
+	Basic      map[string]promptframe.Spec
 	Fragments  map[string]string
 	StoryRules map[string][]string
 	ModeRules  map[string]map[string][]string
@@ -43,20 +34,17 @@ var templates = func() (data struct {
 	return
 }()
 
-func frame(stage string, spec specification, data ordered, reused bool, omitted []string) string {
-	if reused && omitted == nil {
-		omitted = []string{}
-	}
+// frame marks a reused turn with a non-nil omitted list, as promptframe.Render expects.
+func frame(stage string, spec promptframe.Spec, data ordered, reused bool, omitted []string) string {
 	if !reused {
 		omitted = nil
+	} else if omitted == nil {
+		omitted = []string{}
 	}
-	return promptframe.Render(stage, promptframe.Spec{
-		Task: spec.Task, Steps: spec.Steps, Rules: spec.Rules, Criteria: spec.Criteria,
-		Example: encode(spec.Example), OutputNotes: spec.OutputNotes,
-	}, data.raw(), omitted)
+	return promptframe.Render(stage, spec, data.raw(), omitted)
 }
 
-func promptSpec(stage string, state map[string]json.RawMessage, input actionInput, requirements ordered) specification {
+func promptSpec(stage string, state map[string]json.RawMessage, input actionInput, requirements ordered) promptframe.Spec {
 	key := stage
 	if stage == "draft" && input.Mode == "edit" {
 		key = "edit"
@@ -107,7 +95,7 @@ func promptSpec(stage string, state map[string]json.RawMessage, input actionInpu
 	return spec
 }
 
-func draftSpec(spec specification, input actionInput, editing bool) specification {
+func draftSpec(spec promptframe.Spec, input actionInput, editing bool) promptframe.Spec {
 	section := input.Section
 	rejected, retry := input.Rejected, input.RetryNote
 	if section != nil {

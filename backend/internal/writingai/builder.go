@@ -173,4 +173,3 @@ func truthy(raw json.RawMessage) bool {
 }
 
 func encode(value any) json.RawMessage { return promptframe.Encode(value) }
-
