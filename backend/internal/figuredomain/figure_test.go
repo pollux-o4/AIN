@@ -140,7 +140,7 @@ func TestADR0030AndSVG(t *testing.T) {
 			t.Fatalf("expected %s, got %s", sample.want, got)
 		}
 	}
-	if valid, err := normalizeSVG(drawing); err != nil || !strings.Contains(valid, svgNamespace) {
+	if valid, err := NormalizeSVG(drawing); err != nil || !strings.Contains(valid, svgNamespace) {
 		t.Fatalf("valid SVG rejected: %v", err)
 	}
 	for _, invalid := range []string{
@@ -153,7 +153,7 @@ func TestADR0030AndSVG(t *testing.T) {
 		`<svg><style><![CDATA[@im]]><![CDATA[port "https://example.test/style.css";]]></style></svg>`,
 		`<svg><rect></svg>`,
 	} {
-		if _, err := normalizeSVG(invalid); err == nil {
+		if _, err := NormalizeSVG(invalid); err == nil {
 			t.Fatalf("unsafe SVG accepted: %s", invalid)
 		}
 	}

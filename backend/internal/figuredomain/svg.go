@@ -14,7 +14,8 @@ const svgNamespace = "http://www.w3.org/2000/svg"
 var svgStart = regexp.MustCompile(`^<svg[\s>]`)
 var cssURL = regexp.MustCompile(`(?i)url\(\s*([^)]*)\)`)
 
-func normalizeSVG(raw string) (string, error) {
+// NormalizeSVG validates and normalizes an SVG before it can be stored or served.
+func NormalizeSVG(raw string) (string, error) {
 	malformed := errors.New("Unsafe or malformed SVG")
 	text := strings.TrimSpace(raw)
 	if units(raw) > 400000 || !svgStart.MatchString(text) || !strings.HasSuffix(text, "</svg>") {

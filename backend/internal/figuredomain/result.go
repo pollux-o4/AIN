@@ -357,7 +357,7 @@ func without(values, excluded []string) []string {
 }
 
 func acceptFigure(candidate, row object) (object, error) {
-	svg, err := normalizeSVG(str(row["svg"]))
+	svg, err := NormalizeSVG(str(row["svg"]))
 	if err != nil {
 		return nil, err
 	}
