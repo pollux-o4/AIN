@@ -10,10 +10,12 @@ import (
 type Action struct {
 	// StateVersion fences results against the user-visible editorial version.
 	StateVersion int64
-	Kind         string
-	Stage        string
-	FigureID     string
-	Input        json.RawMessage
+	// WorkID scopes local files to this durable execution intent.
+	WorkID   string
+	Kind     string
+	Stage    string
+	FigureID string
+	Input    json.RawMessage
 }
 
 type Event struct {

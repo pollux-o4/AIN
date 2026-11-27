@@ -46,6 +46,8 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	if err != nil || action.Kind == "" {
 		return false, err
 	}
+	id := contract.IntentID(run, action)
+	action.WorkID = id
 	spec, err := r.turns.BuildTurn(run, action)
 	if err != nil {
 		return false, err
@@ -57,7 +59,6 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	id := contract.IntentID(run, action)
 	agent := agentID(id)
 	planned := reservedAction{Action: action, Version: reserved.Version, MessageID: agent}
 	value, err := json.Marshal(planned)
