@@ -149,6 +149,8 @@ func TestADR0030AndSVG(t *testing.T) {
 		`<svg><rect fill="url(https://example.test/a.svg)"/></svg>`,
 		`<svg><animate attributeName="xlink:href"/></svg>`,
 		`<svg><rect onclick="alert(1)"/></svg>`,
+		`<svg xml:base="https://example.test/a.svg"><use href="#x"/></svg>`,
+		`<svg><style><![CDATA[@im]]><![CDATA[port "https://example.test/style.css";]]></style></svg>`,
 		`<svg><rect></svg>`,
 	} {
 		if _, err := normalizeSVG(invalid); err == nil {

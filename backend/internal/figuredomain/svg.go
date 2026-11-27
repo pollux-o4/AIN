@@ -12,7 +12,6 @@ import (
 const svgNamespace = "http://www.w3.org/2000/svg"
 
 var svgStart = regexp.MustCompile(`^<svg[\s>]`)
-var svgNSAttr = regexp.MustCompile(`^<svg[^>]*\sxmlns=`)
 var cssURL = regexp.MustCompile(`(?i)url\(\s*([^)]*)\)`)
 
 func normalizeSVG(raw string) (string, error) {
@@ -22,8 +21,9 @@ func normalizeSVG(raw string) (string, error) {
 		return "", malformed
 	}
 	parser := xml.NewDecoder(strings.NewReader(text))
-	depth := 0
-	style := false
+	depth, styleDepth := 0, 0
+	hasNamespace := false
+	var style strings.Builder
 	for {
 		token, err := parser.Token()
 		if err == io.EOF {
@@ -40,33 +40,43 @@ func normalizeSVG(raw string) (string, error) {
 				slices.Contains([]string{"script", "foreignobject", "iframe", "object", "embed", "image", "a"}, strings.ToLower(node.Name.Local)) {
 				return "", malformed
 			}
-			if strings.EqualFold(node.Name.Local, "style") {
-				style = true
+			depth++
+			if styleDepth == 0 && strings.EqualFold(node.Name.Local, "style") {
+				styleDepth = depth
 			}
 			for _, attr := range node.Attr {
+				if depth == 1 && attr.Name.Space == "" && attr.Name.Local == "xmlns" {
+					hasNamespace = true
+					if attr.Value != svgNamespace {
+						return "", malformed
+					}
+				}
 				if unsafeSVGAttribute(attr) {
 					return "", malformed
 				}
 			}
-			depth++
 		case xml.EndElement:
-			if strings.EqualFold(node.Name.Local, "style") {
-				style = false
+			if styleDepth == depth {
+				if unsafeCSS(style.String()) {
+					return "", malformed
+				}
+				styleDepth = 0
+				style.Reset()
 			}
 			depth--
 			if depth == 0 && parser.InputOffset() != int64(len(text)) {
 				return "", malformed
 			}
 		case xml.CharData:
-			if style && unsafeCSS(string(node)) {
-				return "", malformed
+			if styleDepth > 0 {
+				style.Write(node)
 			}
 		}
 	}
 	if depth != 0 {
 		return "", malformed
 	}
-	if !svgNSAttr.MatchString(text) {
+	if !hasNamespace {
 		text = `<svg xmlns="` + svgNamespace + `"` + text[4:]
 	}
 	return text, nil
@@ -75,7 +85,8 @@ func normalizeSVG(raw string) (string, error) {
 func unsafeSVGAttribute(attr xml.Attr) bool {
 	name := strings.ToLower(attr.Name.Local)
 	value := strings.TrimSpace(strings.ToLower(attr.Value))
-	if strings.HasPrefix(name, "on") || strings.Contains(value, "javascript:") {
+	if (name == "base" && attr.Name.Space == "http://www.w3.org/XML/1998/namespace") ||
+		strings.HasPrefix(name, "on") || strings.Contains(value, "javascript:") {
 		return true
 	}
 	if name == "href" || name == "src" {
@@ -93,7 +104,8 @@ func unsafeSVGAttribute(attr xml.Attr) bool {
 
 func unsafeCSS(value string) bool {
 	lower := strings.ToLower(value)
-	if strings.Contains(lower, "@import") || strings.ContainsRune(lower, '\\') {
+	if strings.Contains(lower, "@import") || strings.Contains(lower, "image-set(") ||
+		strings.Contains(lower, "src(") || strings.ContainsRune(lower, '\\') {
 		return true
 	}
 	matches := cssURL.FindAllStringSubmatch(lower, -1)
