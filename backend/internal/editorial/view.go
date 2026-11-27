@@ -124,7 +124,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	case pending:
 		kind = "queued"
 	}
-	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
+	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready" || s.Figure != nil && s.SatisfiedRevision == s.Revision
 	stageArtifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
 	saved := contract.Run{ID: id, Value: data}
 	rules := q.Rules
@@ -142,7 +142,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"source": s.Source, "status": s.Status, "stage": s.Stage, "label": label, "busy": kind == "queued" || kind == "working", "updatedAt": run.UpdatedAt, "issue": run.Issue, "text": text, "textRevision": textRevision,
 		"previous": previous, "findings": findings, "artifacts": stageArtifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
-		"canDownload": text != "" && presented, "canFeedback": presented,
+		"canDownload": text != "" && (presented || (textRevision != nil && *textRevision != s.Revision)), "canFeedback": presented && !pending && s.Status != "paused" && s.Status != "failed",
 		"figure": figures, "canRequestFigures": s.Status == "satisfied" && figures == nil && !held,
 		"canSelectFigures":  s.Status == "awaiting_figure_choice" && !held,
 		"canApproveDesign":  s.Status == "awaiting_figure_design" && !held,
