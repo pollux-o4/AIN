@@ -1,0 +1,8 @@
+Paseo wire protocol reference
+Copyright (c) 2025-present Mohamed Boudra
+
+AIN's Go wire implementation was written against the message schemas
+and observed client behavior of @getpaseo/protocol and @getpaseo/client
+0.17.5. AIN redistributes this upstream attribution and license with
+its Go implementation. The Paseo daemon and JavaScript packages are
+external and are installed separately.

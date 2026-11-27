@@ -107,6 +107,14 @@ export async function collectLicenses({ repo, destination, viteReport, binary, e
     const { version } = JSON.parse(await readFile(join(source, "package.json"), "utf8"));
     await copyNotices({ ...settings, name, version, kind: "editor-assets", source, sourceFiles });
   }
+  await copyNotices({
+    ...settings,
+    name: "paseo",
+    version: "0.17.5",
+    kind: "protocol-references",
+    source: join(repo, "backend/internal/paseowire/upstream"),
+    sourceFiles: ["LICENSE", "NOTICE"],
+  });
   entries.sort((a, b) => `${a.kind}/${a.name}`.localeCompare(`${b.kind}/${b.name}`, "en"));
   await writeFile(join(licenses, "index.json"), `${JSON.stringify(entries, null, 2)}\n`);
 }
