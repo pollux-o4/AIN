@@ -109,6 +109,25 @@ func TestFIGURE001Workflow(t *testing.T) {
 		t.Fatal("retry failed to keep the prepared first figure")
 	}
 	step("figure_result", "adapter", object{"revision": 1, "stage": "figure", "figureId": "f2", "output": object{"figures": []json.RawMessage{child("f2")}}})
+	// 여러 장을 그림마다 다른 지적으로 한 층에서 동시에 고친다 · 그림 의견이 공통 의견보다 우선 · ADR-0026
+	fixing := applyEvent(t, rules, run, "revise_figures", "user", object{"reviewedRevision": 1, "target": "fix",
+		"figures": []string{"f2", "f1"}, "feedback": "공통 지적", "notes": object{"f2": "라벨이 잘렸다"}})
+	fixState := obj(readState(t, fixing)["figure"])
+	fixCandidates := indexItems(fixState["candidates"])
+	if current := obj(fixState["current"]); !reflect.DeepEqual(ids(current["ids"]), []string{"f1", "f2"}) || current["pass"] != fixPass ||
+		fixCandidates["f1"]["fix"] != "공통 지적" || fixCandidates["f2"]["fix"] != "라벨이 잘렸다" {
+		t.Fatalf("multi-figure fix did not batch per-figure notes: %v", fixState["current"])
+	}
+	for _, bad := range []object{
+		{"target": "fix", "figures": []string{"f1", "f2"}, "notes": object{"f1": "선"}},
+		{"target": "fix", "figures": []string{"f1"}, "notes": object{"f1": "선", "f2": "라벨"}},
+		{"target": "compose", "figures": []string{"f1"}, "notes": object{"f1": "선"}},
+	} {
+		bad["reviewedRevision"], bad["expectedVersion"] = 1, readState(t, run)["version"]
+		if _, err := rules.Reduce(run, contract.Event{ID: "bad-fix", Kind: "revise_figures", Actor: "user", Body: raw(t, bad)}); err == nil {
+			t.Fatalf("invalid fix request accepted: %v", bad)
+		}
+	}
 	step("confirm_figures", "user", object{"reviewedRevision": 1, "figures": []string{"f2"}})
 	step("authorize_publication", "user", reviewed)
 	state = readState(t, run)

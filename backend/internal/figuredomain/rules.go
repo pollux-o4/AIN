@@ -19,6 +19,9 @@ const (
 	maxCandidates = 30
 	drawPass      = "draw"
 	fixPass       = "fix"
+	// FIGURE_LIMITS.feedback·fixes (automation/contracts/figure.mjs)
+	feedbackLimit = 600
+	fixLimit      = 3
 )
 
 var phases = map[string][]string{

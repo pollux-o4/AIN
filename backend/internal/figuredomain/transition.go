@@ -102,21 +102,15 @@ func apply(state, event object, kind string) error {
 			(target != "compose" && target != fixPass) || !subset(targets, prepared) {
 			return errors.New("Figure revision requires feedback on prepared figures")
 		}
-		targeted := targets[0]
-		candidates := indexItems(figure["candidates"])
-		fixes := count(candidates[targeted]["fixes"])
-		if target == fixPass && (len(targets) != 1 || fixes >= 3) {
-			return errors.New("Figure fix takes one figure within the fix limit")
-		}
 		items := withoutItems(figure["items"], targets)
 		if target == "compose" {
 			next := recompose(figure, event, ordered(targets, selected))
 			next["items"] = items
 			state["figure"] = next
+		} else if err := fixFigures(figure, revisionNotes(event), selected); err != nil {
+			return err
 		} else {
-			candidates[targeted]["fix"], candidates[targeted]["fixes"] = trimmed(event["feedback"]), fixes+1
-			figure["passDrafts"] = object{targeted: indexItems(figure["items"])[targeted]}
-			figure["items"], figure["phase"], figure["current"] = items, "generate", batch(targets, fixPass)
+			figure["items"] = items
 		}
 		state["status"] = waiting
 	case "retry_figures":
@@ -172,13 +166,74 @@ func withoutItems(items any, targets []string) []object {
 	return result
 }
 
+// 대상 그림별 의견 · 그림 의견(notes)이 공통 의견(feedback)보다 우선 · 빠진 그림이 있으면 nil · ADR-0026
+// 요청 검사와 상태 전이가 같은 규칙을 쓴다(automation/contracts/figure.mjs revisionNotes와 같은 규칙)
+func revisionNotes(event object) map[string]string {
+	targets, notes := ids(event["figures"]), obj(event["notes"])
+	if len(targets) == 0 {
+		return nil
+	}
+	for id := range notes {
+		if !slices.Contains(targets, id) {
+			return nil
+		}
+	}
+	result := make(map[string]string, len(targets))
+	for _, id := range targets {
+		note := noteText(notes[id])
+		if note == "" {
+			note = noteText(event["feedback"])
+		}
+		if note == "" {
+			return nil
+		}
+		result[id] = note
+	}
+	return result
+}
+
+func noteText(value any) string {
+	text := trimmed(value)
+	if text == "" || units(str(value)) > feedbackLimit {
+		return ""
+	}
+	return text
+}
+
+// 부분 고치기는 그림마다 의견, 다시 구성은 묶음 한 번이라 공통 의견이나 그림체 · ADR-0026·0027
 func revisionReady(event object) bool {
-	feedback := trimmed(event["feedback"]) != "" && units(str(event["feedback"])) <= 600
 	look := str(event["look"]) != ""
 	if event["target"] == fixPass {
-		return feedback && !look
+		return revisionNotes(event) != nil && !look
 	}
-	return feedback || look
+	return event["notes"] == nil && (noteText(event["feedback"]) != "" || look)
+}
+
+// 국소 수정: 직전 그림을 출발점으로 그림마다 남긴 지적만 고친다 · 고칠 그림 전부를 한 층에서 동시에 그린다 · ADR-0026
+func fixFigures(figure object, notes map[string]string, selected []string) error {
+	candidates := indexItems(figure["candidates"])
+	for id := range notes {
+		if count(candidates[id]["fixes"]) >= fixLimit {
+			return errors.New("Figure fix exceeds the fix limit")
+		}
+	}
+	targets := ordered(keysOf(notes), selected)
+	prepared := indexItems(figure["items"])
+	drafts := object{}
+	for _, id := range targets {
+		candidates[id]["fix"], candidates[id]["fixes"] = notes[id], count(candidates[id]["fixes"])+1
+		drafts[id] = prepared[id]
+	}
+	figure["passDrafts"], figure["phase"], figure["current"] = drafts, "generate", batch(targets, fixPass)
+	return nil
+}
+
+func keysOf(values map[string]string) []string {
+	result := make([]string, 0, len(values))
+	for id := range values {
+		result = append(result, id)
+	}
+	return result
 }
 
 func recompose(figure, event object, targets []string) object {
