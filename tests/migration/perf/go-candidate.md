@@ -3,7 +3,7 @@
 Node 기준선과 같은 실행기가 실제 Go 편집 HTTP·실행기·세션 관리자·SQLite를 사용한다. 외부 Paseo 대신 정해진 답변을 75ms 후에 내보내는 합성 포트를 주입한다. Go 실행 파일과 데이터베이스는 매 회 새 임시 폴더에 만들고, Node 제어 프로세스는 Go 메모리 소계에 넣지 않는다.
 
 ```sh
-mise exec -- node tests/migration/perf/measure.mjs --runs 2 --n8n-port 5748 > /tmp/ain-node-perf.json
+mise exec npm:n8n@2.44.6 -- node tests/migration/perf/measure.mjs --runs 2 --n8n-port 5748 > /tmp/ain-node-perf.json
 mise exec -- node tests/migration/perf/measure.mjs --runs 2 --n8n-port 5748 --adapter tests/migration/perf/go-runtime.mjs > /tmp/ain-go-perf.json
 node tests/migration/perf/compare.mjs /tmp/ain-node-perf.json /tmp/ain-go-perf.json
 ```
