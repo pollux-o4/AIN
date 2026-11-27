@@ -244,3 +244,84 @@ func (p *stoppingBatchTransport) Cancel(_ context.Context, ref contract.RemoteRe
 	p.cancels++
 	return nil
 }
+
+func TestMIG012BatchDispatchesWithinChildLimit(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	db, err := store.Open(ctx, filepath.Join(t.TempDir(), "private", "writing.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	run := contract.Run{ID: "batch", RequestID: "batch", Version: 1, Value: json.RawMessage(`{"state":{"version":7,"revision":3,"stage":"review"}}`)}
+	if err := db.CreateRun(ctx, run); err != nil {
+		t.Fatal(err)
+	}
+	action := testBatchAction()
+	transport := &gatedBatchTransport{starts: make(chan childDispatch, 3)}
+	r := fixtureBatchRunner(t, db, transport, action, time.Date(2026, 1, 1, 1, 0, 0, 0, time.UTC))
+	finished := make(chan error, 1)
+	go func() {
+		advanced, err := r.process(ctx, run.ID, nil, true)
+		if err == nil && !advanced {
+			err = errors.New("initial batch did not advance")
+		}
+		finished <- err
+	}()
+	next := func() childDispatch {
+		t.Helper()
+		select {
+		case event := <-transport.starts:
+			return event
+		case <-ctx.Done():
+			t.Fatal("expected a child dispatch")
+			return childDispatch{}
+		}
+	}
+	first, second := next(), next()
+	parentID := contract.IntentID(run, action)
+	children, err := db.BatchChildren(ctx, parentID)
+	if err != nil || len(children) != 3 || !children[0].Started || !children[1].Started || children[2].Started {
+		t.Fatalf("parent or child exceeded the durable execution cap: %v", err)
+	}
+	close(second.finish)
+	third := next()
+	if first.agent == third.agent || second.agent == third.agent {
+		t.Fatal("unexpected duplicate child")
+	}
+	close(first.finish)
+	close(third.finish)
+	select {
+	case err := <-finished:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-ctx.Done():
+		t.Fatal("batch did not settle after all children finished")
+	}
+}
+
+type childDispatch struct {
+	agent  string
+	finish chan struct{}
+}
+
+type gatedBatchTransport struct {
+	contract.Paseo
+	starts chan childDispatch
+}
+
+func (p *gatedBatchTransport) Create(ctx context.Context, id string, _ contract.SessionSpec) (contract.RemoteRef, error) {
+	start := childDispatch{agent: id, finish: make(chan struct{})}
+	p.starts <- start
+	select {
+	case <-ctx.Done():
+		return contract.RemoteRef{}, ctx.Err()
+	case <-start.finish:
+		return contract.RemoteRef{AgentID: id, TurnID: id}, nil
+	}
+}
+
+func (*gatedBatchTransport) Snapshot(_ context.Context, ref contract.RemoteRef) (contract.Snapshot, error) {
+	return contract.Snapshot{Ref: contract.RemoteRef{AgentID: ref.AgentID, TurnID: ref.TurnID, Epoch: "fixture", After: 4}, Status: "completed"}, nil
+}
