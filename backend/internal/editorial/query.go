@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 	"github.com/pollux-o4/AIN/backend/internal/writing"
@@ -17,6 +18,7 @@ type RunReader interface {
 type Queries struct {
 	Store RunReader
 	Rules *writing.Rules
+	Now   func() time.Time
 }
 
 func (q Queries) Run(ctx context.Context, id string) (json.RawMessage, error) {
@@ -40,4 +42,11 @@ func (q Queries) List(ctx context.Context) ([]contract.RunSummary, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (q Queries) now() time.Time {
+	if q.Now != nil {
+		return q.Now()
+	}
+	return time.Now()
 }

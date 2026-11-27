@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
@@ -52,7 +53,7 @@ func TestMIG025NodeQueryParity(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	q := Queries{Store: db, Rules: writing.NewWithFigures(figuredomain.New())}
+	q := Queries{Store: db, Rules: writing.NewWithFigures(figuredomain.New()), Now: func() time.Time { return time.UnixMilli(fixture.Now) }}
 	for _, c := range fixture.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			var saved struct {
