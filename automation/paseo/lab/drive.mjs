@@ -18,7 +18,7 @@ function delay(ms, signal) {
   });
 }
 
-export async function createHttpSession(baseUrl) {
+export async function createHttpSession(baseUrl, { expectedCookie } = {}) {
   const origin = new URL(baseUrl).origin;
   const health = await fetch(`${origin}/healthz`, { signal: AbortSignal.timeout(3000) });
   if (!health.ok) throw new Error(`편집 서버 상태 확인 실패 (${health.status})`);
@@ -29,7 +29,8 @@ export async function createHttpSession(baseUrl) {
   const session = await fetch(`${origin}/write/session`, { signal: AbortSignal.timeout(3000) });
   if (!session.ok) throw new Error(`글쓰기 세션 시작 실패 (${session.status})`);
   const cookie = session.headers.getSetCookie()[0]?.split(";")[0];
-  if (!cookie) throw new Error("세션 쿠키를 받지 못했습니다.");
+  if (!cookie || (expectedCookie && cookie !== expectedCookie))
+    throw new Error("연구소 서버 세션을 확인하지 못했습니다.");
 
   async function request(path, { body, raw = false } = {}) {
     const response = await fetch(`${origin}/write/api/${path}`, {

@@ -19,7 +19,15 @@ type Model struct {
 	Mode     string
 }
 
+// LabPolicy varies only the analogy planning, checking and drawing instructions.
+type LabPolicy struct {
+	Plan  string `json:"plan"`
+	Check string `json:"check"`
+	Draw  string `json:"draw"`
+}
+
 type Config struct {
+	LabPolicy   *LabPolicy
 	WorkRoot    string
 	Default     Model
 	StageModels map[string]Model
@@ -39,6 +47,15 @@ func New(config Config) (*Builder, error) {
 		if path != "" && !filepath.IsAbs(path) {
 			return nil, errors.New("figure tool path must be absolute")
 		}
+	}
+	if config.LabPolicy != nil {
+		policy := *config.LabPolicy
+		for _, instruction := range []string{policy.Plan, policy.Check, policy.Draw} {
+			if strings.TrimSpace(instruction) == "" || len(instruction) > 8192 {
+				return nil, errors.New("invalid figure lab policy")
+			}
+		}
+		config.LabPolicy = &policy
 	}
 	config.WorkRoot = filepath.Clean(config.WorkRoot)
 	models := make(map[string]Model, len(config.StageModels))

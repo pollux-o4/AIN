@@ -39,8 +39,8 @@ outputs = { auto = true }
 
 ["test:paseo"]
 description = "AI 실행 어댑터·프롬프트·지표"
-run = "node --test automation/paseo/tests/*.test.mjs"
-sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/paseo/tests/**"]
+run = "node --test automation/paseo/tests/*.test.mjs automation/paseo/lab/*.test.mjs"
+sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/paseo/tests/**", "automation/paseo/lab/*.test.mjs"]
 outputs = { auto = true }
 
 ["test:n8n"]

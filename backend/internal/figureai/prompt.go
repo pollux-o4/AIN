@@ -15,8 +15,10 @@ claim은 그림이 보여 줄 관계, without은 그림을 뺐을 때 놓치는 
 후보가 없는 단위는 skipped에 units의 이름을 그대로 써서 이유와 함께 기록한다. 장면과 비유는 후보 선택 뒤 정한다.
 결과 형식 {"candidates":[{"anchor":"본문 문장","claim":"보여 줄 주장","reason":"위치 근거","kind":"flow","without":"놓치는 점"}],"skipped":[{"unit":"단위명","reason":"건너뛴 이유"}]}`
 
+const defaultComposeAnalogy = "본문에 비유가 있으면 그대로 쓰고, 없으면 개념·관계가 각각 대응하는 현실 장면을 택한다. 대응되는 장면이 없을 때 analogy를 생략한다."
+
 const composeInstructions = `사람이 고른 자리 전부의 장면과 그림 사이 일관성 규칙을 정한다. 본문은 수정하지 않는다.
-각 자리의 앞뒤 문단과 claim·reason·without을 읽고, 장면에 꼭 필요한 요소와 관계 하나를 고른다. 본문에 비유가 있으면 그대로 쓰고, 없으면 개념·관계가 각각 대응하는 현실 장면을 택한다. 대응되는 장면이 없을 때 analogy를 생략한다.
+각 자리의 앞뒤 문단과 claim·reason·without을 읽고, 장면에 꼭 필요한 요소와 관계 하나를 고른다. ` + defaultComposeAnalogy + `
 scene은 라벨을 가려도 순서·조건·대비·인과가 읽히게 구성한다. mapping은 그림 요소와 본문 개념의 대응, 관계를 한 줄씩 기록한다. direction과 사람의 feedback을 반영한다.
 recompose가 있으면 그 자리의 design만 반환하고 나머지 장면·world·style·motifs를 지킨다. 처음 구성할 때는 공통 배경 한 줄과 강조색·기본색·라벨 규칙을 정한다.
 기본 look은 anatomy, sketchnote, tablet, stick, manual 가운데 적합한 것을 선택한다. 사람이 전체 또는 그림별로 고른 look은 그대로 쓰며, 같은 반복 대상은 같은 형태와 색으로 그린다.
@@ -49,10 +51,15 @@ func (builder *Builder) prompt(input actionInput, data object) (string, error) {
 		body = planInstructions
 	case "figure_compose":
 		body = composeInstructions
+		if policy := builder.config.LabPolicy; policy != nil {
+			body = strings.Replace(body, defaultComposeAnalogy, policy.Plan+"\n점검: "+policy.Check, 1)
+		}
 	case "figure":
 		body = drawInstructions
 		if input.Pass == "fix" {
 			body = fixInstructions
+		} else if policy := builder.config.LabPolicy; policy != nil {
+			body += "\n" + policy.Draw
 		}
 		look := looks[input.Style.Look]
 		if look == "" {
