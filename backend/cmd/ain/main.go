@@ -60,6 +60,10 @@ func run(ctx context.Context) error {
 		return err
 	}
 	defer lock.Close()
+	databasePath := filepath.Join(root, "editorial.sqlite")
+	if err := store.RequireRuntimeSchema(ctx, databasePath); err != nil {
+		return err
+	}
 	sessionKey, err := credential(root, "session-key", os.Getenv("AIN_SESSION_KEY"))
 	if err != nil {
 		return err
@@ -71,7 +75,7 @@ func run(ctx context.Context) error {
 	if sessionKey == agentToken {
 		return fmt.Errorf("UI and agent credentials must differ")
 	}
-	db, err := store.Open(ctx, filepath.Join(root, "editorial.sqlite"), store.WithLegacyPaseoRoot(filepath.Join(root, "jobs")))
+	db, err := store.Open(ctx, databasePath, store.WithLegacyPaseoRoot(filepath.Join(root, "jobs")))
 	if err != nil {
 		return err
 	}

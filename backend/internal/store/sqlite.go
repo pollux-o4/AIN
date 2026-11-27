@@ -90,6 +90,10 @@ func prepareDatabase(path string) error {
 	case !errors.Is(err, os.ErrExist):
 		return err
 	}
+	return validateDatabaseFiles(path)
+}
+
+func validateDatabaseFiles(path string) error {
 	for _, suffix := range []string{"", "-wal", "-shm", "-journal"} {
 		info, err := os.Lstat(path + suffix)
 		if suffix != "" && errors.Is(err, os.ErrNotExist) {
