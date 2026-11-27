@@ -1,5 +1,6 @@
 # ARCH-001 · 모듈러 모놀리스·의존 방향
 
+## Node 기준 환경과 클라이언트
 - 모듈 구성
   - `contracts`: 입출력 계약을 정의한다.
   - `editorial`: 편집 도메인, 애플리케이션, 저장, HTTP, 화면을 맡는다.
@@ -16,3 +17,9 @@
 - runtime: 모듈, 포트, 프로세스 생명주기를 조립하며 편집 정책은 구현하지 않는다.
 - cli: `/write/api` 호출과 출력 형식만 처리하며, `contracts` 외에는 의존하지 않는다(AGENT-001).
 - 검사: dependency-cruiser로 역방향 의존, 내부 참조, 순환 참조, 브라우저 Node 규칙을 검사하고, `architecture.test`로 실제 위반 주입을 검증한다. n8n workflow 검증으로는 Code 노드 사용과 도메인 복제를 막는다.
+
+## Go 실행 경계
+
+- C2와 C3는 ADR-0031 구성의 프로세스와 편집 모듈을 정의한다.
+- `contract`는 다른 내부 패키지에 의존하지 않는다. `writing`과 `figuredomain`은 순수 편집 규칙에만 의존하며 `paseowire`는 내부 계약만 참조한다.
+- `TestARCH001CorePackageBoundaries`에서 네 패키지의 내부 import를 검사한다. 기존 JS 경계 검사는 위 레거시와 클라이언트 모듈에 적용한다.
