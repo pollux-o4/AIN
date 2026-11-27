@@ -13,14 +13,8 @@ const pageSize = 32
 
 func (s *SQLite) ListSummaries(ctx context.Context, visit func(contract.RunSummary) error) error {
 	return scanPages(ctx, s.db, `
-		SELECT rowid, id,
-			COALESCE(CAST(json_extract(value, '$.state.status') AS TEXT), ''),
-			COALESCE(substr(json_extract(value, '$.state.idea'), 1, 101), ''),
-			COALESCE(json_extract(value, '$.state.revision'), 0),
-			COALESCE(CAST(json_extract(value, '$.updatedAt') AS TEXT), ''),
-			CASE WHEN json_type(value, '$.archivedAt') IN ('integer', 'real', 'text', 'true')
-				AND json_extract(value, '$.archivedAt') NOT IN (0, '') THEN 1 ELSE 0 END
-		FROM editorial_runs WHERE rowid > ? ORDER BY rowid LIMIT ?`,
+		SELECT sequence, id, status, idea, revision, updated_at, archived
+		FROM ain_run_summaries WHERE sequence > ? ORDER BY sequence LIMIT ?`,
 		func(rows *sql.Rows) (int64, contract.RunSummary, error) {
 			var sequence int64
 			var summary contract.RunSummary

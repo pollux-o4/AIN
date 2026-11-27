@@ -51,7 +51,7 @@ var migrations = []string{`
 		UNIQUE(parent_id, position)
 	);
 	CREATE INDEX IF NOT EXISTS ain_active_batch_children ON ain_batch_children(state) WHERE state = 1;
-`}
+`, summaryMigration}
 
 func (s *SQLite) migrate(ctx context.Context) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
