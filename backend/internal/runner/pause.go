@@ -57,6 +57,9 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 	if planned.Version != run.Version {
 		return contract.ErrConflict
 	}
+	if batchAction(planned.Action) {
+		return r.pauseBatch(ctx, run, *intent, planned)
+	}
 	snapshot, err := r.confirm(ctx, intent, planned.MessageID)
 	if err != nil {
 		return err

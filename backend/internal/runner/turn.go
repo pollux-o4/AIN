@@ -38,13 +38,23 @@ func (r *Runner) process(ctx context.Context, id string, intent *contract.Intent
 	if planned.Version != run.Version {
 		return false, contract.ErrConflict
 	}
+	if batchAction(planned.Action) {
+		return r.finishBatch(ctx, run, *intent, planned)
+	}
 	return r.finish(ctx, run, *intent, planned)
+}
+
+func batchAction(action contract.Action) bool {
+	return action.Kind == "request_figure" && action.Stage == "figure" && action.FigureID == ""
 }
 
 func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	action, err := r.rules.Next(run)
 	if err != nil || action.Kind == "" {
 		return false, err
+	}
+	if batchAction(action) {
+		return r.startBatch(ctx, run, action)
 	}
 	id := contract.IntentID(run, action)
 	action.WorkID = id
@@ -156,6 +166,13 @@ func (r *Runner) pendingFor(ctx context.Context, id string) (*contract.Intent, e
 var errAtCapacity = errors.New("durable turn limit reached")
 
 func (r *Runner) reserveTurn(ctx context.Context, version int64, run contract.Run, intent contract.Intent) error {
+	if store, ok := r.store.(limitedStore); ok {
+		reserved, err := store.ReserveWithinLimit(ctx, version, run, intent, r.cfg.Workers)
+		if err == nil && !reserved {
+			return errAtCapacity
+		}
+		return err
+	}
 	r.reserve.Lock()
 	defer r.reserve.Unlock()
 	count := 0

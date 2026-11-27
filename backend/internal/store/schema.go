@@ -31,6 +31,26 @@ var migrations = []string{`
 	);
 	CREATE UNIQUE INDEX IF NOT EXISTS ain_active_run_intent ON ain_intents(run_id) WHERE completed = 0;
 	CREATE INDEX IF NOT EXISTS ain_pending_sequence ON ain_intents(sequence) WHERE completed = 0;
+`, `
+	CREATE TABLE IF NOT EXISTS ain_batch_children (
+		position INTEGER NOT NULL,
+		id TEXT PRIMARY KEY NOT NULL,
+		parent_id TEXT NOT NULL REFERENCES ain_intents(id),
+		agent_id TEXT NOT NULL,
+		action TEXT NOT NULL,
+		deadline TEXT NOT NULL,
+		remote_agent_id TEXT NOT NULL DEFAULT '',
+		remote_turn_id TEXT NOT NULL DEFAULT '',
+		remote_epoch TEXT NOT NULL DEFAULT '',
+		remote_after INTEGER NOT NULL DEFAULT 0,
+		state INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2)),
+		result TEXT,
+		failure TEXT NOT NULL DEFAULT '',
+		CHECK ((state = 2 AND ((result IS NULL) <> (failure = ''))) OR
+			(state <> 2 AND result IS NULL AND failure = '')),
+		UNIQUE(parent_id, position)
+	);
+	CREATE INDEX IF NOT EXISTS ain_active_batch_children ON ain_batch_children(state) WHERE state = 1;
 `}
 
 func (s *SQLite) migrate(ctx context.Context) error {
