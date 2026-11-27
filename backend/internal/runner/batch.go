@@ -293,7 +293,11 @@ func collectBatch(id string, parent contract.Action, children []contract.BatchCh
 		}
 		results = append(results, result)
 	}
-	return figuredomain.Collect(parent, id, parent.StateVersion, results)
+	event, err := figuredomain.Collect(parent, id, parent.StateVersion, results)
+	if err == nil {
+		event.Usage = completeBatchUsage(children)
+	}
+	return event, err
 }
 
 func batchFailure(id string, run contract.Run, action contract.Action) (contract.Event, error) {

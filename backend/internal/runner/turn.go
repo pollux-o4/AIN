@@ -150,6 +150,9 @@ func (r *Runner) terminalEvent(id string, action contract.Action, snapshot contr
 		return contract.Event{}, err
 	}
 	event.ID = id
+	if snapshot.Status == "completed" && snapshot.Usage.Valid() {
+		event.Usage = snapshot.Usage
+	}
 	return event, nil
 }
 

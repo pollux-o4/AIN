@@ -27,6 +27,7 @@ type Snapshot struct {
 	Ref    RemoteRef
 	Status string
 	Body   json.RawMessage
+	Usage  *TurnUsage // present only when attributed to this confirmed terminal snapshot
 }
 
 // Paseo is the transport boundary. A successful cancellation request must be

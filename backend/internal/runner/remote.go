@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
@@ -26,9 +27,15 @@ func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent, mes
 	finished := make(chan struct{})
 	pulse := make(chan struct{}, 1)
 	ref := queryRef(intent, messageID)
+	var observedUsage atomic.Pointer[contract.Snapshot]
 	go func() {
 		defer close(finished)
-		r.paseo.Watch(watchCtx, ref, func(contract.Snapshot) error {
+		r.paseo.Watch(watchCtx, ref, func(snapshot contract.Snapshot) error {
+			if snapshot.Status == "completed" {
+				observedUsage.Store(&snapshot)
+			} else {
+				observedUsage.Store(nil)
+			}
 			select {
 			case pulse <- struct{}{}:
 			default:
@@ -60,6 +67,9 @@ func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent, mes
 			current, err = r.confirm(ctx, intent, messageID)
 		}
 		if err != nil || terminal(current.Status) {
+			if err == nil {
+				current.Usage = corroboratedUsage(current, observedUsage.Load())
+			}
 			return current, err
 		}
 		if timer != nil {

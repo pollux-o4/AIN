@@ -42,8 +42,8 @@ func (r ExecutionRules) Reduce(run contract.Run, event contract.Event) (contract
 		return run, err
 	}
 	now := r.Now().UnixMilli()
-	if err := appendActivity(record, activityEvent{At: now, Kind: kind, Label: label,
-		Revision: prior.State.Revision, Stage: payload.Stage, JobID: event.ID}); err != nil {
+	if err := appendStoredActivity(record, activityEvent{At: now, Kind: kind, Label: label,
+		Revision: prior.State.Revision, Stage: payload.Stage, JobID: event.ID}, event.Usage); err != nil {
 		return run, err
 	}
 	next.Value, err = json.Marshal(record)
@@ -51,13 +51,23 @@ func (r ExecutionRules) Reduce(run contract.Run, event contract.Event) (contract
 }
 
 func appendActivity(record map[string]json.RawMessage, activity activityEvent) error {
+	return appendStoredActivity(record, activity, nil)
+}
+
+func appendStoredActivity(record map[string]json.RawMessage, activity activityEvent, usage *contract.TurnUsage) error {
 	var events []json.RawMessage
 	if existing := record["events"]; existing != nil {
 		if err := json.Unmarshal(existing, &events); err != nil {
 			return err
 		}
 	}
-	event, err := json.Marshal(activity)
+	if activity.Kind != "ai_completed" || activity.JobID == "" || !usage.Valid() {
+		usage = nil
+	}
+	event, err := json.Marshal(struct {
+		activityEvent
+		Usage *contract.TurnUsage `json:"usage,omitempty"`
+	}{activityEvent: activity, Usage: usage})
 	if err != nil {
 		return err
 	}

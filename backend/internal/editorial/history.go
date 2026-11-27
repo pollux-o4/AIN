@@ -52,6 +52,7 @@ type historyEvent struct {
 	JobID       *string
 	Reason      *string
 	ExecutionID *string
+	Usage       json.RawMessage
 }
 
 type historyRecord struct {

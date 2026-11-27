@@ -3,6 +3,8 @@ package editorial
 import (
 	"fmt"
 	"slices"
+
+	"github.com/pollux-o4/AIN/backend/internal/contract"
 )
 
 type historyTotals struct {
@@ -125,6 +127,12 @@ func attemptsForHistory(events []historyEvent, jobs map[string]*historyJob, now 
 				}
 				if job.Figure != nil {
 					location.figure = *job.Figure
+				}
+			}
+			if done, ok := completions[id]; ok && id != "" && events[done].Revision == event.Revision {
+				if usage := contract.DecodeTurnUsage(events[done].Usage); usage != nil {
+					total := usage.InputTokens + usage.OutputTokens
+					attempt.Tokens = &total
 				}
 			}
 			if later[location] && attempt.Outcome == "accepted" {

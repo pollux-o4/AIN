@@ -65,10 +65,12 @@ func (s *socket) checkAbsent(ctx context.Context, agentID string) error {
 }
 
 type observeState struct {
-	agentID        string
-	subscriptionID string
-	cursor         contract.RemoteRef
-	dirty          bool
+	agentID          string
+	subscriptionID   string
+	cursor           contract.RemoteRef
+	dirty            bool
+	observedSnapshot bool
+	usage            observedTurnUsage
 }
 
 func (o *observeState) event(kind string, body json.RawMessage) {
@@ -76,14 +78,21 @@ func (o *observeState) event(kind string, body json.RawMessage) {
 		return
 	}
 	var event struct {
-		AgentID        string `json:"agentId"`
-		SubscriptionID string `json:"subscriptionId"`
-		Epoch          string `json:"epoch"`
-		Seq            *int64 `json:"seq"`
+		AgentID        string          `json:"agentId"`
+		SubscriptionID string          `json:"subscriptionId"`
+		Epoch          string          `json:"epoch"`
+		Seq            *int64          `json:"seq"`
+		Event          json.RawMessage `json:"event"`
 	}
 	if json.Unmarshal(body, &event) != nil || event.AgentID != o.agentID ||
 		(o.subscriptionID != "" && event.SubscriptionID != o.subscriptionID) {
 		return
+	}
+	if kind == "agent.timeline.replacement" {
+		o.usage = observedTurnUsage{}
+		o.observedSnapshot = false
+	} else {
+		o.observeUsage(event.Event, event.Epoch)
 	}
 	if event.Seq == nil || event.Epoch != o.cursor.Epoch || *event.Seq > o.cursor.After {
 		o.dirty = true
@@ -129,6 +138,8 @@ func (c *Client) watchOnce(ctx context.Context, ref contract.RemoteRef, observe 
 	defer s.close()
 	observe.subscriptionID = ""
 	observe.dirty = false
+	observe.usage = observedTurnUsage{}
+	observe.observedSnapshot = false
 	s.onEvent = observe.event
 	args := map[string]any{"agentIds": []string{ref.AgentID}}
 	if observe.cursor.Epoch != "" {
@@ -166,7 +177,9 @@ func (c *Client) watchOnce(ctx context.Context, ref contract.RemoteRef, observe 
 		if err != nil {
 			return false, err
 		}
+		snapshot.Usage = observe.matchedUsage(snapshot)
 		observe.cursor = snapshot.Ref
+		observe.observedSnapshot = true
 		if err := emit(snapshot); err != nil {
 			return true, err
 		}

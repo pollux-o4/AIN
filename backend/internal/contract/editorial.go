@@ -23,6 +23,7 @@ type Event struct {
 	Actor string
 	Kind  string
 	Body  json.RawMessage
+	Usage *TurnUsage `json:",omitempty"`
 }
 
 // EditorialRules computes transitions without performing external I/O.
