@@ -40,7 +40,9 @@ func (t Turns) SessionRole(action contract.Action) (string, bool) {
 
 func (t Turns) BuildTrackedTurn(run contract.Run, action contract.Action) (contract.SessionSpec, map[string]string, error) {
 	if _, reuse := t.SessionRole(action); reuse {
-		return t.Writing.(trackedWriting).BuildTrackedTurn(run, action)
+		spec, deliveredNext, err := t.Writing.(trackedWriting).BuildTrackedTurn(run, action)
+		spec, err = t.scopeWriting(run, action, spec, err)
+		return spec, deliveredNext, err
 	}
 	spec, err := t.BuildTurn(run, action)
 	return spec, nil, err
@@ -50,5 +52,7 @@ func (t Turns) BuildReuseTurn(run contract.Run, action contract.Action, delivere
 	if _, reuse := t.SessionRole(action); !reuse {
 		return contract.SessionSpec{}, nil, errors.New("editorial action does not reuse a working session")
 	}
-	return t.Writing.(trackedWriting).BuildReuseTurn(run, action, delivered)
+	spec, deliveredNext, err := t.Writing.(trackedWriting).BuildReuseTurn(run, action, delivered)
+	spec, err = t.scopeWriting(run, action, spec, err)
+	return spec, deliveredNext, err
 }

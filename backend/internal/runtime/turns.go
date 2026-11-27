@@ -8,8 +8,9 @@ import (
 
 // Turns dispatches actions to the writing or figure prompt and result adapter.
 type Turns struct {
-	Writing contract.TurnBuilder
-	Figures contract.TurnBuilder
+	Writing     contract.TurnBuilder
+	Figures     contract.TurnBuilder
+	WritingRoot string
 }
 
 func (t Turns) builder(action contract.Action) (contract.TurnBuilder, error) {
@@ -31,7 +32,8 @@ func (t Turns) BuildTurn(run contract.Run, action contract.Action) (contract.Ses
 	if err != nil {
 		return contract.SessionSpec{}, err
 	}
-	return builder.BuildTurn(run, action)
+	spec, err := builder.BuildTurn(run, action)
+	return t.scopeWriting(run, action, spec, err)
 }
 
 func (t Turns) ValidateResult(action contract.Action, result contract.Snapshot) (contract.Event, error) {
