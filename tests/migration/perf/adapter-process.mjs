@@ -1,9 +1,11 @@
 let adapter;
+let starting;
+let stopping;
 const options = {
   start: async ({ path, config }) => {
-    if (adapter) throw new Error("Adapter already started");
-    const { start } = await import(path);
-    adapter = await start(config);
+    if (starting || stopping) throw new Error("Adapter already started or stopping");
+    starting = import(path).then(({ start }) => start(config));
+    adapter = await starting;
     const { url, pid, runtime, diagnostics, extraRoots } = adapter;
     return { url, pid, runtime, diagnostics, extraRoots };
   },
@@ -11,18 +13,25 @@ const options = {
   traces: () => adapter.traces(),
   clean: () => adapter.clean(),
   seedAndRecover: (id) => adapter.seedAndRecover(id),
-  stop: () => adapter?.stop(),
+  stop: () => {
+    stopping ??= (async () => {
+      const active = adapter ?? (await starting?.catch(() => null));
+      await active?.stop();
+    })();
+    return stopping;
+  },
 };
 process.once("disconnect", () => {
-  void options.stop();
+  void options.stop().catch(() => {});
 });
 process.on("message", async ({ id, operation, argument }) => {
   try {
     const value = await options[operation](argument);
+    if (!process.connected) return;
     process.send({ id, value }, () => {
-      if (operation === "stop") process.disconnect();
+      if (operation === "stop" && process.connected) process.disconnect();
     });
   } catch (error) {
-    process.send({ id, error: error.message });
+    if (process.connected) process.send({ id, error: error.message });
   }
 });

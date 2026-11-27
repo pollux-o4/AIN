@@ -84,8 +84,8 @@ function connectAdapter() {
     const force = setTimeout(() => child.kill("SIGKILL"), 16000);
     try {
       if (child.connected) await call("stop");
-      await closed;
     } finally {
+      await closed;
       clearTimeout(deadline);
       clearTimeout(force);
     }
@@ -241,9 +241,9 @@ async function trial(root, iteration) {
       }
       return view;
     });
-    const afterSingle = await sample();
     if (values.browser)
       return { runtime: backend.runtime, diagnostics: backend.diagnostics, browserRenderMs };
+    const afterSingle = await sample();
     await phase("concurrent", async (name) => {
       const drafts = Promise.all(
         Array.from({ length: groupConcurrency }, async (_, index) => {
@@ -303,7 +303,6 @@ async function trial(root, iteration) {
       });
     }
     return {
-      browserRenderMs,
       runtime: backend.runtime,
       diagnostics: backend.diagnostics,
       idle,
@@ -391,9 +390,7 @@ try {
             warmList: percentiles(results.flatMap((result) => result.history.listMs.slice(1))),
             restartDispatch: percentiles(results.map((result) => result.history.recoveryMs)),
           },
-          browserRenderMs: values.browser
-            ? percentiles(results.map((result) => result.browserRenderMs))
-            : null,
+          browserRenderMs: null,
           trials: results.map(({ samples, ...rest }) => rest),
         },
         null,

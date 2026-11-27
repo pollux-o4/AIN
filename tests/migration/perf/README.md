@@ -5,6 +5,7 @@ Linux에서 프로젝트 도구와 의존성을 준비한 뒤 실행한다. 실�
 ```sh
 mise exec -- node tests/migration/perf/measure.mjs --runs 3 > /tmp/ain-node-perf.json
 mise exec -- node tests/migration/perf/measure.mjs --runs 3 --adapter /absolute/path/go-perf-adapter.mjs > /tmp/ain-go-perf.json
+node tests/migration/perf/compare.mjs /tmp/ain-node-perf.json /tmp/ain-go-perf.json
 ```
 
 같은 호스트에서 순차 실행하고, CPU·커널·로그 수준·반복 횟수·이력 크기가 같은 보고서를 비교한다. 기본 부하는 매 회 새 글 하나, 동시 글 네 개와 앞 글의 SVG 두 장 묶음, 전체 세션 정리, 이력 250건(건당 128 KiB 규모)을 채운 뒤 대기 글 네 개 복구다. 목록 캐시를 비운 첫 조회와 다음 다섯 조회를 구분한다. 재시작 지연은 SQLite 재개방부터 네 대기 글의 시작 시 재전달까지다.
