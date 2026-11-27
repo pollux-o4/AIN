@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/yuin/goldmark v1.8.7
 	modernc.org/sqlite v1.39.1
 )
 
