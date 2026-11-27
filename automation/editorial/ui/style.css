@@ -2317,6 +2317,21 @@ header {
 body:has(#work-dock:not([hidden])) main {
   padding-bottom: 96px;
 }
+/* 넓은 화면: 펼친 도크 자리만큼 본문을 왼쪽으로 비켜 본문 속 그림 자리를 가리지 않는다
+   본문 최소 640px(도크 560px + 여백)이 남는 폭부터 · 더 좁으면 도크가 본문 위에 뜬다 */
+@media (min-width: 1240px) {
+  main {
+    transition: margin-right var(--slow) var(--ease);
+  }
+  body:has(#work-dock[data-open="true"]) main {
+    margin-right: calc(440px + 32px);
+    max-width: min(920px, 100vw - 440px - 48px);
+  }
+  body:has(#work-dock[data-open="true"] .dock-decide) main {
+    margin-right: calc(560px + 32px);
+    max-width: min(920px, 100vw - 560px - 48px);
+  }
+}
 #work-dock {
   --step: calc(var(--px) * 2);
   position: fixed;
@@ -2945,6 +2960,16 @@ fieldset.figure-list {
   padding-block: 10px;
   background: var(--surface);
   box-shadow: 0 calc(var(--px) * -1) 0 var(--line);
+}
+/* 확인 줄: 보조 동작(없이 진행·부분 고치기)은 왼쪽에 모으고 확인은 오른쪽 · 단추 글자는 줄바꿈하지 않는다 */
+#work-dock .submit-row:has(#confirm-figures) {
+  gap: 8px;
+}
+#work-dock .submit-row:has(#confirm-figures) button {
+  white-space: nowrap;
+}
+#work-dock #confirm-figures {
+  margin-left: auto;
 }
 /* 시각자료 위치 직접 지정(선택) · 기본은 접힘 · ADR-0011 */
 .figure-placement {
