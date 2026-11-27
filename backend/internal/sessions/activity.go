@@ -141,10 +141,20 @@ func ProjectActivity(snapshot contract.Snapshot, assignment Assignment) (Activit
 }
 
 func looksStructured(value string) bool {
-	if rest, ok := strings.CutPrefix(value, "```"); ok {
-		value = strings.TrimSpace(strings.TrimPrefix(rest, "json"))
+	for line := range strings.SplitSeq(value, "\n") {
+		line = strings.TrimSpace(line)
+		if rest, fenced := strings.CutPrefix(line, "```"); fenced {
+			rest = strings.TrimSpace(rest)
+			if strings.HasPrefix(strings.ToLower(rest), "json") {
+				return true
+			}
+			line = rest
+		}
+		if strings.HasPrefix(line, "{") || strings.HasPrefix(line, "[") {
+			return true
+		}
 	}
-	return strings.HasPrefix(value, "{") || strings.HasPrefix(value, "[")
+	return false
 }
 
 func toolLabel(raw json.RawMessage) string {

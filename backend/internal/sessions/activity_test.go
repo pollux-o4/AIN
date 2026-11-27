@@ -15,7 +15,7 @@ func TestLIVE001ReadOnlyScopedAndBoundedActivity(t *testing.T) {
 		activityEntry(10, "old", "assistant_message", "OLD_PRIVATE"),
 		activityEntry(11, "new", "user_message", "PROMPT_PRIVATE"),
 		activityEntry(12, "new", "reasoning", "REASONING_PRIVATE"),
-		activityEntry(13, "new", "assistant_message", `{"draft":"RESULT_PRIVATE"}`),
+		activityEntry(13, "new", "assistant_message", "진행 중\n```json\n{\"draft\":\"RESULT_PRIVATE\"}\n```"),
 		activityEntry(14, "foreign", "assistant_message", "FOREIGN_PRIVATE"),
 	}
 	for i := range ActivityStepLimit + 1 {
