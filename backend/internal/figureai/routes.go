@@ -2,6 +2,7 @@ package figureai
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"image/png"
@@ -10,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
+	"golang.org/x/image/webp"
 )
 
 var ErrRouteUnavailable = errors.New("the figure render route is unavailable")
@@ -36,26 +38,34 @@ var routeFilename = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 const rasterBytes = 4000000
 const rasterPixels = 16000000
 
+func knownRoute(route string) bool { return route == "svg" || route == "image" }
+
 // ValidateRouteFiles validates output in the named workspace. This is the
 // renderer boundary for raster artifacts as well as SVG. Raster results need
 // a separate domain storage contract before they can complete an editorial turn.
 func ValidateRouteFiles(workRoot, workID, route string, files []RouteFile) ([]RouteFile, error) {
-	if route != "svg" && route != "image" {
+	if !knownRoute(route) {
 		return nil, ErrRouteUnavailable
-	}
-	if len(files) == 0 || len(files) > 3 {
-		return nil, errors.New("invalid figure route file count")
 	}
 	room, err := openWorkspace(workRoot, workID, false)
 	if err != nil {
 		return nil, err
 	}
 	defer room.close()
+	validated, _, err := validateRouteFiles(room, route, files)
+	return validated, err
+}
+
+func validateRouteFiles(room *workspace, route string, files []RouteFile) ([]RouteFile, [][sha256.Size]byte, error) {
+	if len(files) == 0 || len(files) > 3 {
+		return nil, nil, errors.New("invalid figure route file count")
+	}
+	digests := make([][sha256.Size]byte, 0, len(files))
 	result := make([]RouteFile, 0, len(files))
 	seen := map[string]bool{}
 	for _, file := range files {
 		if !routeFilename.MatchString(file.Path) || slices.Contains([]string{".", ".."}, file.Path) || seen[file.Path] {
-			return nil, errors.New("figure route file name is invalid")
+			return nil, nil, errors.New("figure route file name is invalid")
 		}
 		seen[file.Path] = true
 		limit := int64(rasterBytes)
@@ -64,19 +74,20 @@ func ValidateRouteFiles(workRoot, workID, route string, files []RouteFile) ([]Ro
 			limit = svgLimit
 		case route == "image" && (file.MIME == "image/png" || file.MIME == "image/webp"):
 		default:
-			return nil, errors.New("figure route file MIME is unsupported")
+			return nil, nil, errors.New("figure route file MIME is unsupported")
 		}
 		data, err := readRegular(room.root, file.Path, limit)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := validateMIME(file.MIME, data); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		file.Bytes = len(data)
 		result = append(result, file)
+		digests = append(digests, sha256.Sum256(data))
 	}
-	return result, nil
+	return result, digests, nil
 }
 
 func validateMIME(mime string, data []byte) error {
@@ -95,7 +106,13 @@ func validateMIME(mime string, data []byte) error {
 		}
 	case "image/webp":
 		if validWebP(data) {
-			return nil
+			config, err := webp.DecodeConfig(bytes.NewReader(data))
+			if err == nil && rasterSize(config.Width, config.Height) {
+				if decoded, err := webp.Decode(bytes.NewReader(data)); err == nil &&
+					decoded.Bounds().Dx() == config.Width && decoded.Bounds().Dy() == config.Height {
+					return nil
+				}
+			}
 		}
 	}
 	return errors.New("figure route file is malformed or exceeds its dimensions")

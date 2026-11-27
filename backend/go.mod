@@ -6,6 +6,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/yuin/goldmark v1.8.7
+	golang.org/x/image v0.31.0
 	golang.org/x/sys v0.36.0
 	modernc.org/sqlite v1.39.1
 )
