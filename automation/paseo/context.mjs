@@ -6,6 +6,7 @@ const standingRequirements = (state) =>
     Object.entries(standing(state)).map(([kind, { value, quote }]) => [kind, { value, quote }]),
   );
 
+import { closingLine } from "../contracts/article-structure.mjs";
 import { draftMetrics } from "./metrics.mjs";
 
 // 시각자료: 확정된 초안과 글 설계(독자·가치·구성) · 생성은 사람이 고른 후보와 그 위치의 이유 · FIGURE-001
@@ -80,6 +81,11 @@ export function promptContext(state, action) {
           ? previousPart(previous?.draft?.output?.text, section.index, section.total)
           : previous?.[stage]?.output;
   const lastPart = section ? state.draftParts?.at(-1)?.text : undefined;
+  // 끝 정리는 본문이 원본 · 마지막 구간에 앞 구간들의 마무리 문장(구간 끝 문단)을 쓴 그대로 넘긴다
+  const closings =
+    section && section.index === section.total - 1
+      ? (state.draftParts ?? []).map((part) => closingLine(part.text)).filter(Boolean)
+      : [];
   return {
     source: state.source,
     idea: state.idea,
@@ -105,6 +111,7 @@ export function promptContext(state, action) {
       ? { retryNote: state.retry.note }
       : {}),
     ...(lastPart ? { previousSection: lastPart } : {}),
+    ...(closings.length ? { previousClosings: closings } : {}),
     feedback: state.feedback ?? undefined,
   };
 }

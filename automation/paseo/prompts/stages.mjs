@@ -189,7 +189,7 @@ const STAGE_SPECS = {
         `구간 카드에 subsections가 있으면 순서대로 쓴다. 하위 소제목 줄은 title을 그대로 써서 한 단계씩 낮추어 적되, 구간 바로 아래는 "${subsectionHeading("title", 1)}", 그 아래는 "${subsectionHeading("title", 2)}" 형식으로 적고 단계를 건너뛰지 않는다.`,
         ...(!section || section.index === section.total - 1
           ? [
-              `글의 마지막에는 '${summaryHeading}' 아래에 모든 구간의 principleLine을 순서대로 글자 그대로 목록으로 묶어 정리한다(principleLine이 없는 구간은 keyPoint를 쓴다). 이 끝 정리는 본문 소제목 계층 바깥에 따로 둔다.`,
+              `글의 마지막에는 '${summaryHeading}' 아래에 모든 구간의 마무리 문장(구간 맨 끝 문단)을 본문에 쓴 글자 그대로 순서대로 목록으로 묶는다. previousClosings가 있으면 앞 구간들의 마무리 문장이므로 그대로 쓰고, 그 뒤에 이 구간의 마무리 문장을 더한다. 이 끝 정리는 본문 소제목 계층 바깥에 따로 둔다.`,
             ]
           : []),
       ],
@@ -220,7 +220,7 @@ const STAGE_SPECS = {
         `checks에는 아래 기준마다 id·pass·note를 하나씩 적는다. note에는 판정의 근거가 된 본문 표현이나 측정값을 적는다.\n${checks.map(({ id, ask }) => `   - ${id}: ${ask}`).join("\n")}`,
         "통과하지 못한 기준과 그 밖의 문제점은 findings에 한 항목씩 적는다.",
         "분량은 draftCharacterCount(공백·줄바꿈 포함 유니코드 문자 수)로만 판단하며 추정 수치를 쓰지 않는다. 문장·문단·구간 길이와 소제목·구간 카드 반영 여부는 시스템이 세거나 글자를 대조하여 계산한 draftMetrics 값만 인용한다. 그 밖의 기준은 본문을 직접 읽고 판단하되 근거가 되는 표현을 인용한다.",
-        "verdict는 다음 가운데 하나라도 해당하면 revise로, 모두 해당하지 않으면 pass로 판정한다. (가) brief(수정 해석)가 있고 acceptance.criteria·priorities를 채우지 못한 경우 (나) draftMetrics.cardTransfer의 missing·notInSummary 목록에 구간이 남았거나 titleMatches가 false인 경우 (다) S10이나 R 기준을 통과하지 못한 경우. 다만 단순 문체 취향이나 분량 수치는 revise 사유로 삼지 않는다(분량은 시스템이 따로 검사한다).",
+        "verdict는 다음 가운데 하나라도 해당하면 revise로, 모두 해당하지 않으면 pass로 판정한다. (가) brief(수정 해석)가 있고 acceptance.criteria·priorities를 채우지 못한 경우 (나) draftMetrics.cardTransfer의 summaryNotInBody 목록이 비어 있지 않거나 summaryCount의 expected와 actual이 다르거나 titleMatches가 false인 경우 (다) S10이나 R 기준을 통과하지 못한 경우. 다만 단순 문체 취향이나 분량 수치는 revise 사유로 삼지 않는다(분량은 시스템이 따로 검사한다).",
         "verdict가 revise이면 unmetCriteria에 못 채운 사유를 적고, reviseFrom에 다시 시작할 단계를 적되 구간 카드 자체에 결함이 있으면 outline을, 그 밖의 경우에는 draft를 적는다.",
       ],
       rules: seasoningRules("review", direction),

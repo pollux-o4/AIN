@@ -93,7 +93,7 @@ test("FIGURE-001 프롬프트: 확정 본문만 주고 본문 수정 금지 · �
   assert.equal(roleOf(action), "illustrator");
   prompt = buildPrompt(state, action);
   assert.match(prompt, /"designs":\[\{"id"/);
-  assert.match(prompt, /world에는 모든 그림이 함께 놓일 장면 세계/);
+  assert.match(prompt, /world에는 모든 그림이 한 글에 속해 보이게 하는 공통 배경/);
   const composed = resultEvent(
     { id: "job-compose", state, action },
     JSON.stringify({ world: "한 가게", designs: [{ id: "f1", scene: "장면", analogy: "가게" }] }),

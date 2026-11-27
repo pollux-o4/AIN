@@ -13,10 +13,8 @@ const good = {
     missingHeadings: [],
     cardTransfer: {
       titleMatches: true,
-      missingHooks: [],
-      missingUnderlines: [],
-      missingPrincipleLines: [],
-      notInSummary: [],
+      summaryNotInBody: [],
+      summaryCount: { expected: 2, actual: 2 },
     },
   },
   verdict: "pass",
@@ -35,7 +33,7 @@ test("필수 기준을 하나라도 어기면 불합격, 검토 점검표는 추
     transfer: {
       metrics: {
         ...good.metrics,
-        cardTransfer: { ...good.metrics.cardTransfer, missingHooks: ["앞"] },
+        cardTransfer: { ...good.metrics.cardTransfer, summaryNotInBody: ["앞"] },
       },
     },
     headings: { metrics: { ...good.metrics, missingHeadings: ["앞"] } },

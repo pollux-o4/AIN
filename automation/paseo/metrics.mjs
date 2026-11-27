@@ -5,6 +5,7 @@ import {
   headingNodes,
   sectionHeading,
   splitArticle,
+  splitSummary,
   subsectionHeading,
 } from "../contracts/article-structure.mjs";
 import {
@@ -62,28 +63,21 @@ function sectionShape(part) {
   };
 }
 
-// 구성 카드의 항목이 초고에 글자 그대로 옮겨졌는지 · 항목이 있는 카드 구간만 · ADR-0013
+// 제목과 끝 정리 목록만 글자 대조 · 본문의 여는 문장·강조·마무리 문장은 문맥에 맞게 고쳐 쓰므로 뜻은 검토가 판단 · ADR-0013·ADR-0029
 function cardTransfer(text, outline) {
   const cards = (outline?.sections ?? []).filter(
     (section) => usesStoryCard(sectionMode(section)) && STORY_SLOTS.some((name) => section[name]),
   );
   if (!cards.length && !outline?.title) return undefined;
-  const body = plain(text);
-  const missing = (name) =>
-    cards
-      .filter((card) => typeof card[name] === "string" && !body.includes(plain(card[name])))
-      .map((card) => card.title);
+  // 끝 정리는 본문이 원본: 항목마다 본문에 글자 그대로 있어야 하고, 구간 카드 수만큼 있어야 함
+  const { body: main, summary } = splitSummary(text);
+  const mainText = plain(main);
   return {
     ...(outline?.title
       ? { titleMatches: plain(text.match(/^#\s+(.+)$/m)?.[1] ?? "") === plain(outline.title) }
       : {}),
-    missingHooks: missing("hook"),
-    missingUnderlines: missing("underline"),
-    missingPrincipleLines: missing("principleLine"),
-    // 끝 요약: 한 줄 원칙이 구간과 요약에 한 번씩(2회 이상) 나와야 함
-    notInSummary: cards
-      .filter((c) => typeof c.principleLine === "string" && count(body, plain(c.principleLine)) < 2)
-      .map((card) => card.title),
+    summaryNotInBody: summary.filter((item) => !mainText.includes(plain(item))),
+    summaryCount: { expected: cards.length, actual: summary.length },
   };
 }
 

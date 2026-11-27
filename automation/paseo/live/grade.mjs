@@ -38,15 +38,14 @@ export const GRADERS = [
     id: "transfer",
     basis: "exact",
     hard: true,
-    ask: "제목과 구간 카드 항목이 초고에 그대로 옮겨졌는가",
+    ask: "제목이 구성과 같고 끝 정리 목록이 본문 마무리 문장을 그대로 모았는가",
     pass: (q) => {
       const t = q.metrics.cardTransfer;
       return (
         !t ||
         (t.titleMatches !== false &&
-          [t.missingHooks, t.missingUnderlines, t.missingPrincipleLines, t.notInSummary].every(
-            empty,
-          ))
+          empty(t.summaryNotInBody) &&
+          t.summaryCount.expected === t.summaryCount.actual)
       );
     },
   },

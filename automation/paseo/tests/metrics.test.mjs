@@ -52,7 +52,7 @@ const story = `# 장보기 목록 만드는 법
 
 가기 전에 적으세요.
 
-### 한눈에 정리
+## 한눈에 정리
 
 - 가기 전에 적으세요.`;
 
@@ -62,22 +62,18 @@ test("S7: 질문·굵게·긴 문단을 구간별로 센다", () => {
   assert.equal(m.cardTransfer, undefined, "구간 카드가 없으면 대조하지 않음");
 });
 
-test("ADR-0013: 구간 카드의 항목이 초고에 글자 그대로 옮겨졌는지 대조한다", () => {
+test("ADR-0013·ADR-0029: 제목은 구성과, 끝 정리 목록은 본문 마무리 문장과 글자 대조한다", () => {
   const outline = { title: "장보기 목록 만드는 법", sections: [card] };
   assert.deepEqual(draftMetrics(story, { outline }).cardTransfer, {
     titleMatches: true,
-    missingHooks: [],
-    missingUnderlines: [],
-    missingPrincipleLines: [],
-    notInSummary: [],
+    summaryNotInBody: [],
+    summaryCount: { expected: 1, actual: 1 },
   });
   const loose = story.replace("- 가기 전에 적으세요.", "- 미리 적자.").replace("# 장보기", "# 장");
   assert.deepEqual(draftMetrics(loose, { outline }).cardTransfer, {
     titleMatches: false,
-    missingHooks: [],
-    missingUnderlines: [],
-    missingPrincipleLines: [],
-    notInSummary: [card.title],
+    summaryNotInBody: ["미리 적자."],
+    summaryCount: { expected: 1, actual: 1 },
   });
   // 약속 문장은 뜻을 살려 고쳐 쓸 수 있으므로 글자 대조하지 않는다(ADR-0021)
   assert.equal("promiseInLead" in draftMetrics(story, { outline }).cardTransfer, false);
@@ -141,4 +137,13 @@ test("ADR-0014: 하위 항목 소제목을 같은 단계로 대조하고 나무 
   );
   assert.equal(bad.headingTree.singleChildren, 2);
   assert.equal(draftMetrics("# t\n\n## a\n\n#### b").headingTree.skippedLevels, 1);
+});
+
+test("ADR-0029: 구간의 마무리 문장은 구간 맨 끝 문단이고, 끝 정리는 본문과 나뉜다", async () => {
+  const { closingLine, splitSummary } = await import("../../contracts/article-structure.mjs");
+  const part = "## 구간\n\n첫 문단입니다.\n\n### 하위\n\n풀이입니다.\n\n마무리합니다.\n";
+  assert.equal(closingLine(part), "마무리합니다.");
+  const { body, summary } = splitSummary(`${part}\n## 한눈에 정리\n\n- 마무리합니다.\n- 둘째\n`);
+  assert.equal(body.trim(), part.trim());
+  assert.deepEqual(summary, ["마무리합니다.", "둘째"]);
 });

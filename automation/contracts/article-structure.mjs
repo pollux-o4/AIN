@@ -55,3 +55,33 @@ export function headingNodes(text) {
   }
   return nodes;
 }
+
+/**
+ * 글을 본문과 끝 정리 목록으로 나눈다 · 끝 정리가 없으면 summary는 빈 목록
+ * @param {string} text
+ * @returns {{ body: string, summary: string[] }} summary: 끝 정리 목록의 항목 글(앞의 '- ' 제외)
+ */
+export function splitSummary(text) {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => line.trim() === summaryHeading);
+  if (at < 0) return { body: text, summary: [] };
+  return {
+    body: lines.slice(0, at).join("\n"),
+    summary: lines
+      .slice(at + 1)
+      .map((line) => line.match(/^\s*[-*]\s+(.+?)\s*$/)?.[1])
+      .filter((item) => typeof item === "string"),
+  };
+}
+
+/**
+ * 구간의 마무리 문장 · 구간 맨 끝의 문단(끝 정리 제외) · 끝 정리 목록이 이 문장을 그대로 모은다(ADR-0029)
+ * @param {string} part 소제목으로 시작하는 구간 하나
+ */
+export function closingLine(part) {
+  const paragraphs = splitSummary(part)
+    .body.split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p && !p.startsWith("#"));
+  return paragraphs.at(-1) ?? "";
+}

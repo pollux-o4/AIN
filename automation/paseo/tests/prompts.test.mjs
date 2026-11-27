@@ -563,7 +563,7 @@ test("RES-007 구간 카드: 구성은 항목을 채우게 하고, 초고·검�
     if (stage !== "review") continue;
     for (const { id, ask } of CHECKS) assert.ok(story.includes(`${id}: ${ask}`));
     for (const { id } of storyChecks) assert.ok(!procedure.includes(`- ${id}:`));
-    assert.match(story, /draftMetrics\.cardTransfer의 missing·notInSummary 목록에 구간이 남았거나/);
+    assert.match(story, /draftMetrics\.cardTransfer의 summaryNotInBody 목록이 비어 있지 않거나/);
   }
   const whole = buildPrompt(withModes("narrate"), {
     type: "request_ai",
@@ -573,7 +573,10 @@ test("RES-007 구간 카드: 구성은 항목을 채우게 하고, 초고·검�
     whole.includes(LEAD.draft),
     "도입부는 형식 대신 LEAD(역할과 여는 방식)를 받는다(ADR-0021)",
   );
-  assert.match(whole, /'## 한눈에 정리' 아래에 모든 구간의 principleLine/);
+  assert.match(
+    whole,
+    /'## 한눈에 정리' 아래에 모든 구간의 마무리 문장\(구간 맨 끝 문단\)을 본문에 쓴 글자 그대로/,
+  );
 });
 
 test("선택 항목의 빈 문자열·null은 없는 항목으로 읽고, 필수 항목의 빈 값은 거부한다", () => {

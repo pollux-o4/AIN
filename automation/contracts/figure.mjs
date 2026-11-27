@@ -246,7 +246,8 @@ export const figureOutputExamples = {
     designs: [
       {
         id: "f1",
-        analogy: "그릴 대상의 이름을 짧게 적고, 없으면 생략한다.",
+        analogy:
+          "그릴 대상(본문의 비유 또는 관계가 같은 현실 장면)의 이름을 짧게 적는다. 맞는 장면이 없을 때에만 생략한다.",
         scene: "그 핵심을 보여 줄 원인 → 결과 장면을 적는다.",
         mapping: [
           {
