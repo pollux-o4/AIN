@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 	"github.com/pollux-o4/AIN/backend/internal/writing"
@@ -94,20 +95,24 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 	if err != nil {
 		return contract.Run{}, err
 	}
-	next.Value, err = recordCommand(next.Value, operation, string(signature), kind, actor)
+	action, nextErr := c.Rules.Next(next)
+	if nextErr != nil {
+		return contract.Run{}, nextErr
+	}
+	next.Value, err = recordCommand(next.Value, operation, string(signature), kind, actor, action)
 	if err != nil {
 		return contract.Run{}, err
 	}
 	if err := c.Store.UpdateRun(ctx, run.Version, next); err != nil {
 		return contract.Run{}, err
 	}
-	if action, err := c.Rules.Next(next); err == nil && action.Kind != "" {
+	if action.Kind != "" {
 		c.Scheduler.Wake(id)
 	}
 	return next, nil
 }
 
-func recordCommand(value json.RawMessage, operation, signature, kind, actor string) (json.RawMessage, error) {
+func recordCommand(value json.RawMessage, operation, signature, kind, actor string, action contract.Action) (json.RawMessage, error) {
 	var record map[string]json.RawMessage
 	if err := json.Unmarshal(value, &record); err != nil {
 		return nil, err
@@ -132,5 +137,22 @@ func recordCommand(value json.RawMessage, operation, signature, kind, actor stri
 	}
 	event, _ := json.Marshal(map[string]string{"kind": kind, "by": actor})
 	record["events"], _ = json.Marshal(append(events, event))
+	if action.Kind != "" {
+		var limit int
+		switch {
+		case action.Kind == "request_figure":
+			limit = 1
+		case kind == "complete_requirements":
+			limit = initialCalls
+		case kind == "feedback" || kind == "resume":
+			limit = followupCalls
+		}
+		if limit > 0 {
+			record["callsUsed"] = json.RawMessage("0")
+			record["maxCalls"], _ = json.Marshal(limit)
+			record["startedAt"], _ = json.Marshal(time.Now().UnixMilli())
+		}
+	}
+
 	return json.Marshal(record)
 }

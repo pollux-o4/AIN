@@ -10,6 +10,8 @@ import (
 
 const initialCalls = 8
 const initialLimit = 30 * time.Minute
+const followupCalls = initialCalls + 1
+const figureLimit = time.Hour
 
 var ErrBudget = errors.New("이번 요청의 실행 한도에 도달했습니다.")
 
@@ -24,27 +26,27 @@ func ReserveTurn(now time.Time, run contract.Run, action contract.Action) (contr
 		StartedAt int64
 		CallsUsed int
 		MaxCalls  int
-		LastCall  struct {
-			Stage    string
-			Revision int
+		State     struct {
+			DraftParts []json.RawMessage
+			Retry      struct{ Stage string }
 		}
 	}
 	if err := json.Unmarshal(run.Value, &budget); err != nil {
 		return run, err
 	}
-	var input struct{ Revision int }
-	if err := json.Unmarshal(action.Input, &input); err != nil {
-		return run, err
-	}
-	revision := input.Revision
 	if budget.MaxCalls == 0 {
 		budget.MaxCalls = initialCalls
 	}
 	if budget.StartedAt == 0 {
 		budget.StartedAt = now.UnixMilli()
 	}
-	sameStage := action.Stage == budget.LastCall.Stage && revision == budget.LastCall.Revision && action.Stage == "draft"
-	if now.UnixMilli()-budget.StartedAt > initialLimit.Milliseconds() || (!sameStage && budget.CallsUsed >= budget.MaxCalls) {
+	sameStage := action.Stage == "draft" && len(budget.State.DraftParts) != 0 ||
+		action.Stage != "" && action.Stage == budget.State.Retry.Stage
+	limit := initialLimit
+	if action.Kind == "request_figure" && action.Stage == "figure" {
+		limit = figureLimit
+	}
+	if now.UnixMilli()-budget.StartedAt > limit.Milliseconds() || (!sameStage && budget.CallsUsed >= budget.MaxCalls) {
 		return run, ErrBudget
 	}
 	if !sameStage {
@@ -53,7 +55,6 @@ func ReserveTurn(now time.Time, run contract.Run, action contract.Action) (contr
 	record["callsUsed"], _ = json.Marshal(budget.CallsUsed)
 	record["maxCalls"], _ = json.Marshal(budget.MaxCalls)
 	record["startedAt"], _ = json.Marshal(budget.StartedAt)
-	record["lastCall"], _ = json.Marshal(map[string]any{"stage": action.Stage, "revision": revision})
 	value, err := json.Marshal(record)
 	if err != nil {
 		return run, err
