@@ -9,6 +9,8 @@ node backend/tools/release/smoke.mjs --package .local/release/ain --browser
 
 Linux 호스트용 정적 Go 서버와 React 자산을 묶는다. 시험은 임시 경로로 패키지를 옮기고 비어 있는 서버 PATH, 합성 인증, 새 DB를 사용한다. 상태·세션·목록 API와 자산 해시를 확인한다. `--browser`를 사용하면 빌드 호스트의 Playwright Chromium으로 실제 화면을 확인한다. 별도 Node CLI에서 같은 Go API의 목록을 조회한다.
 
+linux/amd64 검증에서 패키지를 임시 디렉터리로 옮긴 뒤 서버 PATH를 비워 기동했다. Chromium 화면과 별도 Node CLI의 목록 조회가 통과했다. 고지 목록에는 JS 4개, 추가 편집 자산 3개, Go 모듈 11개, 표준 라이브러리 벤더 4개와 Go 도구 체인이 기록됐다.
+
 ## 재배포 고지
 
 패키지의 `share/licenses/index.json`은 Go 바이너리의 의존 모듈, 사용한 Go 표준 라이브러리의 벤더 구성, Vite가 찾은 번들 내 JS 모듈, 추가 자산을 해당 배포본의 고지와 연결한다.
