@@ -1,9 +1,11 @@
 package runtime
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -66,7 +68,7 @@ func (s observedStore) Commit(ctx context.Context, version int64, intent string,
 	return nil
 }
 
-func TestFLOW001HTTPToReview(t *testing.T) {
+func TestFLOW001HTTPToHandoff(t *testing.T) {
 	raw, err := os.ReadFile("../../../tests/migration/reference/flow-001.json")
 	if err != nil {
 		t.Fatal(err)
@@ -97,8 +99,9 @@ func TestFLOW001HTTPToReview(t *testing.T) {
 	defer db.Close()
 	stored := observedStore{Store: db, complete: make(chan struct{})}
 	token := strings.Repeat("t", 32)
+	outbox := filepath.Join(t.TempDir(), "outbox")
 	handler, scheduler, err := Editorial(stored, immediatePaseo{}, turns, EditorialConfig{
-		Assets: fstest.MapFS{}, SessionKey: strings.Repeat("k", 32), AgentToken: token,
+		Assets: fstest.MapFS{}, SessionKey: strings.Repeat("k", 32), AgentToken: token, Outbox: outbox,
 		Runner: runner.Config{Workers: 1, Queue: 4, TurnLimit: time.Minute, RecheckInterval: time.Second, MaxRechecks: 1,
 			OnError: func(_ string, err error) { t.Error(err) }},
 	})
@@ -137,9 +140,69 @@ func TestFLOW001HTTPToReview(t *testing.T) {
 	var view struct {
 		Status, HTML string
 		Artifacts    []json.RawMessage
+		Version      int64
 	}
 	if err := json.Unmarshal(res.Body.Bytes(), &view); err != nil || res.Code != 200 ||
 		view.Status != "awaiting_user" || view.HTML == "" || len(view.Artifacts) != 8 {
 		t.Fatalf("unexpected completed view: status=%d state=%q artifacts=%d error=%v", res.Code, view.Status, len(view.Artifacts), err)
 	}
+	verifyApprovedHandoff(t, handler, run.ID, view.Version, token, outbox)
+}
+
+func verifyApprovedHandoff(t *testing.T, handler http.Handler, id string, version int64, token, outbox string) {
+	t.Helper()
+	session := httptest.NewRecorder()
+	handler.ServeHTTP(session, httptest.NewRequest("GET", "http://localhost/write/session", nil))
+	cookies := session.Result().Cookies()
+	if session.Code != http.StatusNoContent || len(cookies) != 1 {
+		t.Fatal("editorial UI session unavailable")
+	}
+	request := func(method, suffix, body string, human bool, want int) *httptest.ResponseRecorder {
+		t.Helper()
+		route := "http://localhost/write/api/runs/" + id + suffix
+		req := httptest.NewRequest(method, route, strings.NewReader(body))
+		if human {
+			req.AddCookie(cookies[0])
+			req.Header.Set("Origin", "http://localhost")
+		} else {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		if body != "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		result := httptest.NewRecorder()
+		handler.ServeHTTP(result, req)
+		if result.Code != want {
+			t.Fatalf("%s %s: got %d, want %d: %s", method, suffix, result.Code, want, result.Body)
+		}
+		return result
+	}
+	request("POST", "/handoff", "", false, http.StatusConflict)
+	satisfy := fmt.Sprintf(`{"type":"satisfy","operationId":"satisfy","expectedVersion":%d}`, version)
+	request("POST", "/actions", satisfy, false, http.StatusForbidden)
+	request("POST", "/actions", satisfy, true, http.StatusOK)
+	request("POST", "/handoff", "", false, http.StatusConflict)
+	authorize := fmt.Sprintf(`{"type":"authorize_publication","operationId":"approve","expectedVersion":%d}`, version+1)
+	request("POST", "/actions", authorize, true, http.StatusOK)
+	txt := request("GET", "/download", "", false, http.StatusOK)
+	if txt.Body.Len() == 0 {
+		t.Fatal("TXT is empty")
+	}
+	delivery := request("POST", "/handoff", "", false, http.StatusOK)
+	var bundle struct{ Path, Request string }
+	if err := json.Unmarshal(delivery.Body.Bytes(), &bundle); err != nil ||
+		filepath.Dir(bundle.Path) != outbox || !strings.Contains(bundle.Request, id) {
+		t.Fatalf("invalid handoff: %v", err)
+	}
+	archive, err := zip.OpenReader(bundle.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	manifest, err := archive.Open("manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer manifest.Close()
+
 }
