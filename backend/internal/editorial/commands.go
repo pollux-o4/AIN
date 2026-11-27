@@ -19,7 +19,7 @@ type Commands struct {
 
 var commandSignatureFields = []string{
 	"figure", "quote", "claim", "expectedVersion", "type", "feedback", "edit",
-	"figures", "directions", "routes", "look", "target",
+	"figures", "directions", "routes", "look", "target", "notes", "delegated",
 }
 
 func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMessage) (contract.Run, error) {
@@ -74,7 +74,9 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 		expected != journal.State.Version {
 		return contract.Run{}, contract.ErrConflict
 	}
-	if err := writing.CheckCommand(run, kind, actor); err != nil {
+	// 사용자가 맡긴 요청 표시는 에이전트가 보낸 경우에만 의미가 있다 · ADR-0006
+	delegated := actor == "agent" && string(fields["delegated"]) == "true"
+	if err := writing.CheckCommand(run, kind, actor, delegated); err != nil {
 		return contract.Run{}, err
 	}
 	if kind == "pause" {
@@ -85,7 +87,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 			return contract.Run{}, contract.ErrDeliveryUncertain
 		}
 		err := pauser.PauseCommand(ctx, id, run.Version, func(next contract.Run) (contract.Run, error) {
-			value, err := recordCommand(next.Value, operation, string(signature), kind, actor, contract.Action{})
+			value, err := recordCommand(next.Value, operation, string(signature), kind, actor, delegated, contract.Action{})
 			next.Value = value
 			return next, err
 		})
@@ -109,6 +111,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 		eventKind = "retry"
 	}
 	delete(body, "type")
+	delete(body, "delegated")
 	eventBody, err := json.Marshal(body)
 	if err != nil {
 		return contract.Run{}, err
@@ -121,7 +124,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 	if nextErr != nil {
 		return contract.Run{}, nextErr
 	}
-	next.Value, err = recordCommand(next.Value, operation, string(signature), kind, actor, action)
+	next.Value, err = recordCommand(next.Value, operation, string(signature), kind, actor, delegated, action)
 	if err != nil {
 		return contract.Run{}, err
 	}
@@ -134,7 +137,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 	return next, nil
 }
 
-func recordCommand(value json.RawMessage, operation, signature, kind, actor string, action contract.Action) (json.RawMessage, error) {
+func recordCommand(value json.RawMessage, operation, signature, kind, actor string, delegated bool, action contract.Action) (json.RawMessage, error) {
 	var record map[string]json.RawMessage
 	if err := json.Unmarshal(value, &record); err != nil {
 		return nil, err
@@ -161,7 +164,7 @@ func recordCommand(value json.RawMessage, operation, signature, kind, actor stri
 	now := time.Now().UnixMilli()
 	if err := appendActivity(record, activityEvent{
 		At: now, Revision: state.Revision, Stage: state.Stage,
-		By: actor, Kind: kind, Label: commandLabel(kind),
+		By: actor, Delegated: delegated, Kind: kind, Label: commandLabel(kind),
 	}); err != nil {
 		return nil, err
 	}

@@ -43,7 +43,9 @@ var commands = map[string]commandPolicy{
 // CheckCommand applies the authority and consecutive feedback budget for a
 // trusted caller identity. The service records the caller in events and applies
 // the command under the same optimistic write to enforce the budget.
-func CheckCommand(run contract.Run, kind, actor string) error {
+// A delegated agent command (the user asked for it in conversation) keeps the
+// human-only authority check but neither counts toward nor resets the budget · ADR-0006
+func CheckCommand(run contract.Run, kind, actor string, delegated bool) error {
 	var identity struct{ IssueKind json.RawMessage }
 	if err := json.Unmarshal(run.Value, &identity); err == nil && OnMigrationHold(identity.IssueKind) {
 		return contract.ErrDeliveryUncertain
@@ -62,13 +64,14 @@ func CheckCommand(run contract.Run, kind, actor string) error {
 	default:
 		return errors.New("unknown editorial command actor")
 	}
-	if !policy.round {
+	if !policy.round || delegated {
 		return nil
 	}
 	var record struct {
 		Events []struct {
-			Kind string `json:"kind"`
-			By   string `json:"by"`
+			Kind      string `json:"kind"`
+			By        string `json:"by"`
+			Delegated bool   `json:"delegated"`
 		} `json:"events"`
 	}
 	if json.Unmarshal(run.Value, &record) != nil {
@@ -78,7 +81,7 @@ func CheckCommand(run contract.Run, kind, actor string) error {
 	for i := len(record.Events) - 1; i >= 0; i-- {
 		event := record.Events[i]
 		if event.By == "agent" {
-			if commands[event.Kind].round {
+			if commands[event.Kind].round && !event.Delegated {
 				rounds++
 			}
 		} else if isOneOf(event.Kind, "feedback", "complete_requirements", "satisfy", "authorize_publication", "approve_brief", "requested") {
