@@ -34,6 +34,8 @@ type Intent struct {
 type RunSummary struct {
 	ID        string
 	Status    string
+	Idea      string
+	Revision  int64
 	UpdatedAt string
 	Archived  bool
 }

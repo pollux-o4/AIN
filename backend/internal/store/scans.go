@@ -15,6 +15,8 @@ func (s *SQLite) ListSummaries(ctx context.Context, visit func(contract.RunSumma
 	return scanPages(ctx, s.db, `
 		SELECT rowid, id,
 			COALESCE(CAST(json_extract(value, '$.state.status') AS TEXT), ''),
+			COALESCE(substr(json_extract(value, '$.state.idea'), 1, 101), ''),
+			COALESCE(json_extract(value, '$.state.revision'), 0),
 			COALESCE(CAST(json_extract(value, '$.updatedAt') AS TEXT), ''),
 			CASE WHEN json_type(value, '$.archivedAt') IN ('integer', 'real', 'text', 'true')
 				AND json_extract(value, '$.archivedAt') NOT IN (0, '') THEN 1 ELSE 0 END
@@ -22,7 +24,7 @@ func (s *SQLite) ListSummaries(ctx context.Context, visit func(contract.RunSumma
 		func(rows *sql.Rows) (int64, contract.RunSummary, error) {
 			var sequence int64
 			var summary contract.RunSummary
-			err := rows.Scan(&sequence, &summary.ID, &summary.Status, &summary.UpdatedAt, &summary.Archived)
+			err := rows.Scan(&sequence, &summary.ID, &summary.Status, &summary.Idea, &summary.Revision, &summary.UpdatedAt, &summary.Archived)
 			return sequence, summary, err
 		},
 		visit,

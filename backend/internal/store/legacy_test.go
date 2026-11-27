@@ -83,7 +83,7 @@ func TestHISTORY001LegacyDataRoundTrip(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	want := contract.RunSummary{ID: "archived", Status: "completed", UpdatedAt: "1760000000000", Archived: true}
+	want := contract.RunSummary{ID: "archived", Status: "completed", Revision: 7, UpdatedAt: "1760000000000", Archived: true}
 	if len(summaries) != 3 || summaries[0] != want || summaries[1] != (contract.RunSummary{ID: "previous"}) {
 		t.Fatal("legacy run summaries differ")
 	}
