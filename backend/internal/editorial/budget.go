@@ -27,6 +27,7 @@ func ReserveTurn(now time.Time, run contract.Run, action contract.Action) (contr
 		CallsUsed int
 		MaxCalls  int
 		State     struct {
+			Revision   int64
 			DraftParts []json.RawMessage
 			Retry      struct{ Stage string }
 		}
@@ -55,6 +56,12 @@ func ReserveTurn(now time.Time, run contract.Run, action contract.Action) (contr
 	record["callsUsed"], _ = json.Marshal(budget.CallsUsed)
 	record["maxCalls"], _ = json.Marshal(budget.MaxCalls)
 	record["startedAt"], _ = json.Marshal(budget.StartedAt)
+	if err := appendActivity(record, activityEvent{
+		At: now.UnixMilli(), Kind: "ai_requested", Label: "AI 작업 예약",
+		Revision: budget.State.Revision, Stage: action.Stage, JobID: action.WorkID,
+	}); err != nil {
+		return run, err
+	}
 	value, err := json.Marshal(record)
 	if err != nil {
 		return run, err

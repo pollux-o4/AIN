@@ -36,7 +36,7 @@ func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBu
 	if cfg.Runner.Paused == nil {
 		cfg.Runner.Paused = editorial.PauseTransition(rules)
 	}
-	scheduler, err := runner.New(store, paseo, rules, turns, cfg.Runner)
+	scheduler, err := runner.New(store, paseo, editorial.ExecutionRules{EditorialRules: rules, Now: time.Now}, turns, cfg.Runner)
 	if err != nil {
 		return nil, nil, err
 	}
