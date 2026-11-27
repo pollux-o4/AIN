@@ -9,6 +9,7 @@ import (
 
 	"github.com/pollux-o4/AIN/backend/internal/artifacts"
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
 type draftArtifact struct {
@@ -91,7 +92,13 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	pending := s.Status == "waiting_ai" || s.Status == "waiting_route" || s.Status == "waiting_figure"
 	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
 	stageArtifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
-	html, err := artifacts.PreviewRun(contract.Run{ID: id, Value: data})
+	saved := contract.Run{ID: id, Value: data}
+	rules := q.Rules
+	if rules == nil {
+		rules = writing.New()
+	}
+	approvals := rules.Approvals(saved)
+	html, err := artifacts.PreviewRun(saved)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +108,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"previous": previous, "findings": findings, "artifacts": stageArtifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
 		"canDownload": text != "" && presented, "canFeedback": presented,
-		"canSatisfy": false, "canAuthorizePublication": false,
+		"canSatisfy": approvals.Satisfy, "canAuthorizePublication": approvals.Authorize,
 		"callsUsed": run.CallsUsed, "maxCalls": run.MaxCalls, "appliedOperations": operations,
 		"archived": len(run.ArchivedAt) > 0 && string(run.ArchivedAt) != "null",
 		"html":     html,

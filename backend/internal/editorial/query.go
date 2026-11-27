@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
 type RunReader interface {
@@ -15,6 +16,7 @@ type RunReader interface {
 
 type Queries struct {
 	Store RunReader
+	Rules *writing.Rules
 }
 
 func (q Queries) Run(ctx context.Context, id string) (json.RawMessage, error) {

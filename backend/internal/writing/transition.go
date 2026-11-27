@@ -104,14 +104,12 @@ func (rules *Rules) apply(state, event object, issue string) error {
 		if status != "awaiting_user" || !reviewed {
 			return errors.New("Satisfaction requires current presented revision")
 		}
-		for _, item := range array(state["unmet"]) {
-			if obj(item)["kind"] != "review" {
-				return errors.New("Satisfaction blocked by unmet requirements")
-			}
+		if hasBlockingUnmet(state) {
+			return errors.New("Satisfaction blocked by unmet requirements")
 		}
 		state["satisfiedRevision"], state["status"] = num(revision), "satisfied"
 	case "authorize_publication":
-		if status != "satisfied" || intValue(state["satisfiedRevision"]) != revision || !reviewed {
+		if !canAuthorize(state) || !reviewed {
 			return errors.New("Separate approval for current satisfied revision required")
 		}
 		figures := []any{}
