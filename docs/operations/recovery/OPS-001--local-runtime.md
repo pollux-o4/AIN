@@ -1,18 +1,13 @@
 # OPS-001 · 설치·기동·복구
 
-- 사전 조건: Node·pnpm·n8n은 mise를 기준으로 설치하며, 공통 Paseo의 설치와 인증을 완료해 둔다.
-- 최초 설정: `mise run ai:setup`과 `mise run n8n`을 순서대로 실행하고, 브라우저에서 소유자 계정을 생성한 뒤 종료한다.
-- 계정 전달: `.local/n8n/dev-account.json`에 email과 password를 비공개로 저장하고 파일 권한을 600으로 설정한다. 토큰과 계정 정보는 커밋하거나 출력하지 않는다.
-- 브라우저 검증 준비: `pnpm exec playwright install chromium`을 실행하여 잠금 파일에 지정된 버전을 설치한다.
-- 기동: 백그라운드 기동에는 `mise run editorial:start`를 쓰고(실행기 `launch.sh`도 이 명령을 사용한다), 서비스가 현재 코드보다 오래된 경우에는 재시작한다. 포그라운드 실행에는 `mise run editorial`을 사용하며, n8n 관리 워크플로를 변경하기 전에는 비공개로 백업한다.
-- 상태 확인과 재시작: 상태 확인은 `mise run editorial:status`, 재시작은 `editorial:restart`로 실행한다. 소유 판정 대상은 저장소 경로에서 실행한 supervisor·bridge·n8n 프로세스이며, 공통 Paseo 데몬은 제외한다.
-- 기동 확인: 출력된 `/write/` 주소로 접속하여 준비된 작업을 조회한다. 다만 새 요청을 실행하면 실제 제공자 비용이 발생한다.
-- 종료: `mise run editorial:stop`으로 종료한다. 다만 `waiting_ai` 또는 `waiting_route` 상태의 작업이 있으면 종료를 거부하며, `--force` 옵션은 사용자 확인 후에만 사용한다. 포그라운드 실행은 Ctrl+C로 종료한다.
-- 백업·이동: 활성 AI 작업이 없음을 확인한 뒤 소유 서비스와 n8n을 종료하고, `.local/ai-runtime/`과 `.local/n8n/` 전체를 SQLite WAL·암호화 키·자격증명을 포함하여 보존한다.
-- 복구: 종료 상태에서 전체 데이터를 복원하고 권한을 확인한 뒤 기동하여 기존 회차와 작업 ID를 조회한다. 상태가 불확실한 작업은 기존 실행 여부를 확인한 뒤에 재연결한다.
-- 이관 검증: `.local/migration/moved-files.json`에 기록된 파일별 해시로 이동 시점의 원본 보존 여부를 확인하며, 이동 이후 정상 변경된 파일과 구분한다.
-- 과거 실행 증거: 비공개 `.local` 증거를 보존하되, 실행 환경의 과거 절대 경로는 이력 값으로만 남기고 현재 런타임 입력으로 사용하지 않는다.
-- 새 코드 적용: bridge 시작 시각이 `automation/` 코드의 최종 수정 시각보다 이전이면 이전 코드로 실행 중인 것으로 판단하며, 진행 중인 작업이 없을 때 `editorial:start`가 서비스를 재시작한다.
+- 개발 설치: Go·Node·pnpm은 mise 설정을 사용한다. `mise run setup`으로 프런트엔드와 Go 실행 파일을 빌드한다. 배포본의 기동 방법은 MIG-054 패키지 안내를 참조한다.
+- 공통 AI 환경: 제공자 인증과 Paseo 기동은 OPS-003을 따른다. AIN은 공통 Paseo를 종료하지 않는다.
+- 기동: `mise run editorial:start`는 백그라운드로 시작한다. 포그라운드에서 사용할 때는 `mise run editorial`을 실행한다. 기본 브라우저 주소는 `http://127.0.0.1:3230/write/`이다.
+- 확인: `mise run editorial:status`와 `GET /healthz`로 상태를 확인한다. 새 버전 적용은 `editorial:restart`를 사용한다.
+- 종료: `mise run editorial:stop`은 같은 데이터 디렉터리를 사용하는 소유 Go 프로세스만 정상 종료한다. 영속 AI 작업이 있으면 거부한다. `--force`는 사용자 확인 후 사용하며 기존 작업의 원격 연결은 보존한다.
+- 설정: `AIN_DATA_DIR`은 편집 DB와 실행 기록, `AIN_OUTBOX`는 승인된 인계, `AIN_GO_CONTROL_DIR`은 로컬 프로세스 기록과 로그를 지정한다. `AIN_LISTEN`으로 루프백 포트를 바꿀 수 있다. 운영 DB와 자격증명은 비공개 권한을 유지한다.
+- 브라우저 검증 준비: `pnpm exec playwright install chromium`으로 잠금 파일의 Chromium 버전을 설치한다.
+- 레거시: 이관 전 기존 쓰기 프로세스는 `editorial:legacy:status`와 `editorial:legacy:stop`으로 확인·정지한다. n8n 기록 보존은 OPS-002를 따른다.
 
 ## Go 후보 이관과 복구
 
