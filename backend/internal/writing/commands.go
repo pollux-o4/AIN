@@ -44,6 +44,10 @@ var commands = map[string]commandPolicy{
 // trusted caller identity. The service records the caller in events and applies
 // the command under the same optimistic write to enforce the budget.
 func CheckCommand(run contract.Run, kind, actor string) error {
+	var identity struct{ IssueKind json.RawMessage }
+	if err := json.Unmarshal(run.Value, &identity); err == nil && OnMigrationHold(identity.IssueKind) {
+		return contract.ErrDeliveryUncertain
+	}
 	policy, supported := commands[kind]
 	if !supported {
 		return errors.New("unsupported editorial command")
@@ -85,4 +89,10 @@ func CheckCommand(run contract.Run, kind, actor string) error {
 		return ErrAgentFeedbackLimit
 	}
 	return nil
+}
+
+// OnMigrationHold prevents dispatch until the saved legacy job is reconciled.
+func OnMigrationHold(issueKind json.RawMessage) bool {
+	var kind string
+	return json.Unmarshal(issueKind, &kind) == nil && kind == "legacy_reconcile"
 }

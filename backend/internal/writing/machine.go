@@ -135,9 +135,12 @@ func eventRecord(event contract.Event) (object, string, error) {
 }
 
 func (rules *Rules) Next(run contract.Run) (contract.Action, error) {
-	_, state, err := decodeRecord(run)
+	record, state, err := decodeRecord(run)
 	if err != nil {
 		return contract.Action{}, err
+	}
+	if OnMigrationHold(record["issueKind"]) {
+		return contract.Action{}, nil
 	}
 	body := rules.action(state)
 	input, err := json.Marshal(body)

@@ -33,6 +33,8 @@ func ActionRoute(mux *http.ServeMux, commander RunCommander, views RunViews) {
 			writeError(w, http.StatusForbidden, "사람의 확인이 필요한 작업입니다.")
 		case errors.Is(err, writing.ErrAgentFeedbackLimit):
 			writeError(w, http.StatusConflict, "사람의 확인 후 다시 수정해 주세요.")
+		case errors.Is(err, contract.ErrDeliveryUncertain):
+			writeError(w, http.StatusConflict, "이전 AI 작업의 상태를 먼저 확인해 주세요.")
 		case errors.Is(err, contract.ErrConflict):
 			writeError(w, http.StatusConflict, "다른 화면에서 작업이 변경됐습니다. 최신 내용을 확인해 주세요.")
 		case errors.Is(err, editorial.ErrInvalidInput):
