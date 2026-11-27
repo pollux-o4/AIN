@@ -38,7 +38,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 		return contract.Run{}, err
 	}
 	var journal struct {
-		State      struct{ Version int64 }
+		State      struct{ Version, Revision int64 }
 		Operations map[string]string
 	}
 	if err := json.Unmarshal(run.Value, &journal); err != nil {
@@ -76,7 +76,21 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 	if kind == "pause" {
 		return contract.Run{}, errors.New("pause requires remote confirmation")
 	}
-	next, err := c.Rules.Reduce(run, contract.Event{ID: operation, Actor: "user", Kind: kind, Body: signature})
+	body["reviewedRevision"], _ = json.Marshal(journal.State.Revision)
+	if kind == "feedback" && actor == "agent" {
+		body["briefPreapproved"] = json.RawMessage("true")
+	}
+	if kind == "revise_brief" {
+		body["note"] = body["feedback"]
+		if body["note"] == nil {
+			delete(body, "note")
+		}
+	}
+	eventBody, err := json.Marshal(body)
+	if err != nil {
+		return contract.Run{}, err
+	}
+	next, err := c.Rules.Reduce(run, contract.Event{ID: operation, Actor: "user", Kind: kind, Body: eventBody})
 	if err != nil {
 		return contract.Run{}, err
 	}
