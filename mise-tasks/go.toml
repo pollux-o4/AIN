@@ -1,0 +1,7 @@
+["go:check"]
+description = "Go 편집 런타임 정적 검사와 단위·경합 검증"
+run = ["go -C backend vet ./...", "go -C backend test -race ./..."]
+
+["go:build"]
+description = "Go 편집 런타임 실행 파일 빌드"
+run = "CGO_ENABLED=0 go -C backend build -trimpath -o ../.local/ain-go ./cmd/ain"
