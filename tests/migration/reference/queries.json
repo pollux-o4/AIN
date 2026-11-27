@@ -12,10 +12,7 @@
             "output": {
               "purpose": "経験と判断の共有",
               "audience": "同じ課題の開発者",
-              "sectionModes": [
-                "experience",
-                "explanation"
-              ],
+              "sectionModes": ["experience", "explanation"],
               "preserveVoice": "一人称の迷いを保持",
               "strategy": "経験→判断→結果; 分類表を強制しない"
             }
@@ -30,9 +27,7 @@
       "inputSummary": {
         "source": true,
         "feedback": false,
-        "stages": [
-          "diagnose"
-        ],
+        "stages": ["diagnose"],
         "baseline": false
       },
       "event": {
@@ -66,10 +61,7 @@
           "review": {
             "revision": 1,
             "output": {
-              "findings": [
-                "출처 다시 확인",
-                "검토에서만 확인"
-              ],
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
               "preservationCheck": "条件・語り口を保持"
             }
           }
@@ -926,10 +918,7 @@
               "output": {
                 "purpose": "経験と判断の共有",
                 "audience": "同じ課題の開発者",
-                "sectionModes": [
-                  "experience",
-                  "explanation"
-                ],
+                "sectionModes": ["experience", "explanation"],
                 "preserveVoice": "一人称の迷いを保持",
                 "strategy": "経験→判断→結果; 分類表を強制しない"
               },
@@ -953,18 +942,14 @@
               "revision": 2,
               "output": {
                 "outcome": "判断を再現",
-                "preserve": [
-                  "失敗条件"
-                ]
+                "preserve": ["失敗条件"]
               }
             },
             "research": {
               "revision": 2,
               "output": {
                 "evidence": [],
-                "uncertainties": [
-                  "출처 다시 확인"
-                ]
+                "uncertainties": ["출처 다시 확인"]
               }
             },
             "outline": {
@@ -1001,10 +986,7 @@
             "review": {
               "revision": 2,
               "output": {
-                "findings": [
-                  "출처 다시 확인",
-                  "검토에서만 확인"
-                ],
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
                 "preservationCheck": "条件・語り口を保持"
               }
             }
@@ -1018,10 +1000,7 @@
                   "output": {
                     "purpose": "経験と判断の共有",
                     "audience": "同じ課題の開発者",
-                    "sectionModes": [
-                      "experience",
-                      "explanation"
-                    ],
+                    "sectionModes": ["experience", "explanation"],
                     "preserveVoice": "一人称の迷いを保持",
                     "strategy": "経験→判断→結果; 分類表を強制しない"
                   }
@@ -1044,28 +1023,20 @@
                   "revision": 1,
                   "output": {
                     "outcome": "判断を再現",
-                    "preserve": [
-                      "失敗条件"
-                    ]
+                    "preserve": ["失敗条件"]
                   }
                 },
                 "research": {
                   "revision": 1,
                   "output": {
                     "evidence": [],
-                    "uncertainties": [
-                      "출처 다시 확인"
-                    ]
+                    "uncertainties": ["출처 다시 확인"]
                   }
                 },
                 "outline": {
                   "revision": 1,
                   "output": {
-                    "sections": [
-                      "体験",
-                      "判断",
-                      "結果"
-                    ],
+                    "sections": ["体験", "判断", "結果"],
                     "rationale": "時間順で因果を説明"
                   }
                 },
@@ -1079,10 +1050,7 @@
                 "review": {
                   "revision": 1,
                   "output": {
-                    "findings": [
-                      "출처 다시 확인",
-                      "검토에서만 확인"
-                    ],
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
                     "preservationCheck": "条件・語り口を保持"
                   }
                 }
@@ -1141,12 +1109,8 @@
             "intent": "간결하게 정리",
             "target": "draft",
             "level": "line",
-            "priorities": [
-              "첫 문단 정리"
-            ],
-            "preserve": [
-              "원문"
-            ],
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
             "requirementChanges": [
               {
                 "kind": "length",
@@ -1491,10 +1455,7 @@
             "output": {
               "purpose": "経験と判断の共有",
               "audience": "同じ課題の開発者",
-              "sectionModes": [
-                "experience",
-                "explanation"
-              ],
+              "sectionModes": ["experience", "explanation"],
               "preserveVoice": "一人称の迷いを保持",
               "strategy": "経験→判断→結果; 分類表を強制しない"
             },
@@ -1524,9 +1485,7 @@
             "revision": 2,
             "output": {
               "outcome": "判断を再現",
-              "preserve": [
-                "失敗条件"
-              ]
+              "preserve": ["失敗条件"]
             }
           },
           {
@@ -1535,9 +1494,7 @@
             "revision": 2,
             "output": {
               "evidence": [],
-              "uncertainties": [
-                "출처 다시 확인"
-              ]
+              "uncertainties": ["출처 다시 확인"]
             }
           },
           {
@@ -1580,38 +1537,22 @@
             "name": "검토",
             "revision": 2,
             "output": {
-              "findings": [
-                "출처 다시 확인",
-                "검토에서만 확인"
-              ],
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
               "preservationCheck": "条件・語り口を保持"
             }
           }
         ],
-        "findings": [
-          "출처 다시 확인",
-          "검토에서만 확인"
-        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
         "unmetRequirements": [],
         "brief": {
           "intent": "간결하게 정리",
           "target": "draft",
           "level": "line",
-          "priorities": [
-            "첫 문단 정리"
-          ],
-          "preserve": [
-            "원문"
-          ],
-          "requirementChanges": [
-            "분량: 제한 해제"
-          ]
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
         },
-        "requirements": [
-          "서술 방식: procedure",
-          "독자 수준: beginner",
-          "tone: 차분하게"
-        ],
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
         "changes": [
           {
             "find": "이전 회차",
@@ -1645,10 +1586,7 @@
         "model": "Hydrogen 4 Medium",
         "callsUsed": 3,
         "maxCalls": 8,
-        "appliedOperations": [
-          "z-first",
-          "a-second"
-        ],
+        "appliedOperations": ["z-first", "a-second"],
         "html": "<p>새 회차 본문입니다.</p>\n",
         "executionLinks": [
           {
@@ -1668,11 +1606,7 @@
             "stage": "topic",
             "name": "주제 정리",
             "goal": "다룰 문제와 주제의 범위를 정합니다.",
-            "inputs": [
-              "글감",
-              "참고 자료",
-              "진단 결과"
-            ],
+            "inputs": ["글감", "참고 자료", "진단 결과"],
             "inputsSource": "recorded",
             "model": "fixture/model",
             "executionId": "legacy/42",
@@ -1692,11 +1626,7 @@
             "stage": "topic",
             "name": "주제 정리",
             "goal": "다룰 문제와 주제의 범위를 정합니다.",
-            "inputs": [
-              "글감",
-              "참고 자료",
-              "진단 결과"
-            ],
+            "inputs": ["글감", "참고 자료", "진단 결과"],
             "inputsSource": "recorded",
             "model": "fixture/model",
             "executionId": "legacy/42",
@@ -1788,11 +1718,7 @@
             "stage": "route",
             "name": "수정 위치 확인",
             "goal": "수정 의견을 반영할 시작 단계를 선택합니다.",
-            "inputs": [
-              "글감",
-              "수정 의견",
-              "검토 결과"
-            ],
+            "inputs": ["글감", "수정 의견", "검토 결과"],
             "inputsSource": "reconstructed",
             "model": "fixture/model",
             "executionId": null,
@@ -1812,11 +1738,7 @@
             "stage": "route",
             "name": "수정 위치 확인",
             "goal": "수정 의견을 반영할 시작 단계를 선택합니다.",
-            "inputs": [
-              "글감",
-              "수정 의견",
-              "검토 결과"
-            ],
+            "inputs": ["글감", "수정 의견", "검토 결과"],
             "inputsSource": "reconstructed",
             "model": "fixture/model",
             "executionId": null,
@@ -1836,9 +1758,7 @@
             "stage": "draft",
             "name": "초고 작성",
             "goal": "앞 단계의 결과와 사용자 요구를 반영해 본문을 작성합니다.",
-            "inputs": [
-              "글감"
-            ],
+            "inputs": ["글감"],
             "inputsSource": "recorded",
             "model": "fixture/model",
             "executionId": null,
@@ -1968,10 +1888,7 @@
               }
             ],
             "summary": "첫 회차 요약",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           },
           {
@@ -1990,10 +1907,7 @@
               }
             ],
             "summary": "순서를 짧게 정리",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           }
         ],
@@ -2180,10 +2094,7 @@
               "output": {
                 "purpose": "経験と判断の共有",
                 "audience": "同じ課題の開発者",
-                "sectionModes": [
-                  "experience",
-                  "explanation"
-                ],
+                "sectionModes": ["experience", "explanation"],
                 "preserveVoice": "一人称の迷いを保持",
                 "strategy": "経験→判断→結果; 分類表を強制しない"
               },
@@ -2207,18 +2118,14 @@
               "revision": 2,
               "output": {
                 "outcome": "判断を再現",
-                "preserve": [
-                  "失敗条件"
-                ]
+                "preserve": ["失敗条件"]
               }
             },
             "research": {
               "revision": 2,
               "output": {
                 "evidence": [],
-                "uncertainties": [
-                  "출처 다시 확인"
-                ]
+                "uncertainties": ["출처 다시 확인"]
               }
             },
             "outline": {
@@ -2255,10 +2162,7 @@
             "review": {
               "revision": 2,
               "output": {
-                "findings": [
-                  "출처 다시 확인",
-                  "검토에서만 확인"
-                ],
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
                 "preservationCheck": "条件・語り口を保持"
               }
             }
@@ -2272,10 +2176,7 @@
                   "output": {
                     "purpose": "経験と判断の共有",
                     "audience": "同じ課題の開発者",
-                    "sectionModes": [
-                      "experience",
-                      "explanation"
-                    ],
+                    "sectionModes": ["experience", "explanation"],
                     "preserveVoice": "一人称の迷いを保持",
                     "strategy": "経験→判断→結果; 分類表を強制しない"
                   }
@@ -2298,28 +2199,20 @@
                   "revision": 1,
                   "output": {
                     "outcome": "判断を再現",
-                    "preserve": [
-                      "失敗条件"
-                    ]
+                    "preserve": ["失敗条件"]
                   }
                 },
                 "research": {
                   "revision": 1,
                   "output": {
                     "evidence": [],
-                    "uncertainties": [
-                      "출처 다시 확인"
-                    ]
+                    "uncertainties": ["출처 다시 확인"]
                   }
                 },
                 "outline": {
                   "revision": 1,
                   "output": {
-                    "sections": [
-                      "体験",
-                      "判断",
-                      "結果"
-                    ],
+                    "sections": ["体験", "判断", "結果"],
                     "rationale": "時間順で因果を説明"
                   }
                 },
@@ -2333,10 +2226,7 @@
                 "review": {
                   "revision": 1,
                   "output": {
-                    "findings": [
-                      "출처 다시 확인",
-                      "검토에서만 확인"
-                    ],
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
                     "preservationCheck": "条件・語り口を保持"
                   }
                 }
@@ -2398,12 +2288,8 @@
             "intent": "간결하게 정리",
             "target": "draft",
             "level": "line",
-            "priorities": [
-              "첫 문단 정리"
-            ],
-            "preserve": [
-              "원문"
-            ],
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
             "requirementChanges": [
               {
                 "kind": "length",
@@ -2569,10 +2455,7 @@
             "output": {
               "purpose": "経験と判断の共有",
               "audience": "同じ課題の開発者",
-              "sectionModes": [
-                "experience",
-                "explanation"
-              ],
+              "sectionModes": ["experience", "explanation"],
               "preserveVoice": "一人称の迷いを保持",
               "strategy": "経験→判断→結果; 分類表を強制しない"
             },
@@ -2602,9 +2485,7 @@
             "revision": 2,
             "output": {
               "outcome": "判断を再現",
-              "preserve": [
-                "失敗条件"
-              ]
+              "preserve": ["失敗条件"]
             }
           },
           {
@@ -2613,9 +2494,7 @@
             "revision": 2,
             "output": {
               "evidence": [],
-              "uncertainties": [
-                "출처 다시 확인"
-              ]
+              "uncertainties": ["출처 다시 확인"]
             }
           },
           {
@@ -2658,38 +2537,22 @@
             "name": "검토",
             "revision": 2,
             "output": {
-              "findings": [
-                "출처 다시 확인",
-                "검토에서만 확인"
-              ],
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
               "preservationCheck": "条件・語り口を保持"
             }
           }
         ],
-        "findings": [
-          "출처 다시 확인",
-          "검토에서만 확인"
-        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
         "unmetRequirements": [],
         "brief": {
           "intent": "간결하게 정리",
           "target": "draft",
           "level": "line",
-          "priorities": [
-            "첫 문단 정리"
-          ],
-          "preserve": [
-            "원문"
-          ],
-          "requirementChanges": [
-            "분량: 제한 해제"
-          ]
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
         },
-        "requirements": [
-          "서술 방식: procedure",
-          "독자 수준: beginner",
-          "tone: 차분하게"
-        ],
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
         "changes": [
           {
             "find": "이전 회차",
@@ -2713,9 +2576,7 @@
         "figure": {
           "phase": "choose",
           "note": "새 회차에 그림 하나",
-          "routesAvailable": [
-            "svg"
-          ],
+          "routesAvailable": ["svg"],
           "candidates": [
             {
               "id": "f1",
@@ -2796,10 +2657,7 @@
               }
             ],
             "summary": "첫 회차 요약",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           },
           {
@@ -2818,10 +2676,7 @@
               }
             ],
             "summary": "순서를 짧게 정리",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           }
         ],
@@ -3069,10 +2924,7 @@
               "output": {
                 "purpose": "経験と判断の共有",
                 "audience": "同じ課題の開発者",
-                "sectionModes": [
-                  "experience",
-                  "explanation"
-                ],
+                "sectionModes": ["experience", "explanation"],
                 "preserveVoice": "一人称の迷いを保持",
                 "strategy": "経験→判断→結果; 分類表を強制しない"
               },
@@ -3096,18 +2948,14 @@
               "revision": 2,
               "output": {
                 "outcome": "判断を再現",
-                "preserve": [
-                  "失敗条件"
-                ]
+                "preserve": ["失敗条件"]
               }
             },
             "research": {
               "revision": 2,
               "output": {
                 "evidence": [],
-                "uncertainties": [
-                  "출처 다시 확인"
-                ]
+                "uncertainties": ["출처 다시 확인"]
               }
             },
             "outline": {
@@ -3144,10 +2992,7 @@
             "review": {
               "revision": 2,
               "output": {
-                "findings": [
-                  "출처 다시 확인",
-                  "검토에서만 확인"
-                ],
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
                 "preservationCheck": "条件・語り口を保持"
               }
             }
@@ -3161,10 +3006,7 @@
                   "output": {
                     "purpose": "経験と判断の共有",
                     "audience": "同じ課題の開発者",
-                    "sectionModes": [
-                      "experience",
-                      "explanation"
-                    ],
+                    "sectionModes": ["experience", "explanation"],
                     "preserveVoice": "一人称の迷いを保持",
                     "strategy": "経験→判断→結果; 分類表を強制しない"
                   }
@@ -3187,28 +3029,20 @@
                   "revision": 1,
                   "output": {
                     "outcome": "判断を再現",
-                    "preserve": [
-                      "失敗条件"
-                    ]
+                    "preserve": ["失敗条件"]
                   }
                 },
                 "research": {
                   "revision": 1,
                   "output": {
                     "evidence": [],
-                    "uncertainties": [
-                      "출처 다시 확인"
-                    ]
+                    "uncertainties": ["출처 다시 확인"]
                   }
                 },
                 "outline": {
                   "revision": 1,
                   "output": {
-                    "sections": [
-                      "体験",
-                      "判断",
-                      "結果"
-                    ],
+                    "sections": ["体験", "判断", "結果"],
                     "rationale": "時間順で因果を説明"
                   }
                 },
@@ -3222,10 +3056,7 @@
                 "review": {
                   "revision": 1,
                   "output": {
-                    "findings": [
-                      "출처 다시 확인",
-                      "검토에서만 확인"
-                    ],
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
                     "preservationCheck": "条件・語り口を保持"
                   }
                 }
@@ -3285,12 +3116,8 @@
             "intent": "간결하게 정리",
             "target": "draft",
             "level": "line",
-            "priorities": [
-              "첫 문단 정리"
-            ],
-            "preserve": [
-              "원문"
-            ],
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
             "requirementChanges": [
               {
                 "kind": "length",
@@ -3415,10 +3242,7 @@
             "output": {
               "purpose": "経験と判断の共有",
               "audience": "同じ課題の開発者",
-              "sectionModes": [
-                "experience",
-                "explanation"
-              ],
+              "sectionModes": ["experience", "explanation"],
               "preserveVoice": "一人称の迷いを保持",
               "strategy": "経験→判断→結果; 分類表を強制しない"
             },
@@ -3448,9 +3272,7 @@
             "revision": 2,
             "output": {
               "outcome": "判断を再現",
-              "preserve": [
-                "失敗条件"
-              ]
+              "preserve": ["失敗条件"]
             }
           },
           {
@@ -3459,9 +3281,7 @@
             "revision": 2,
             "output": {
               "evidence": [],
-              "uncertainties": [
-                "출처 다시 확인"
-              ]
+              "uncertainties": ["출처 다시 확인"]
             }
           },
           {
@@ -3504,38 +3324,22 @@
             "name": "검토",
             "revision": 2,
             "output": {
-              "findings": [
-                "출처 다시 확인",
-                "검토에서만 확인"
-              ],
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
               "preservationCheck": "条件・語り口を保持"
             }
           }
         ],
-        "findings": [
-          "출처 다시 확인",
-          "검토에서만 확인"
-        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
         "unmetRequirements": [],
         "brief": {
           "intent": "간결하게 정리",
           "target": "draft",
           "level": "line",
-          "priorities": [
-            "첫 문단 정리"
-          ],
-          "preserve": [
-            "원문"
-          ],
-          "requirementChanges": [
-            "분량: 제한 해제"
-          ]
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
         },
-        "requirements": [
-          "서술 방식: procedure",
-          "독자 수준: beginner",
-          "tone: 차분하게"
-        ],
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
         "changes": [
           {
             "find": "이전 회차",
@@ -3597,10 +3401,7 @@
               }
             ],
             "summary": "첫 회차 요약",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           },
           {
@@ -3619,10 +3420,7 @@
               }
             ],
             "summary": "순서를 짧게 정리",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           }
         ],
@@ -3682,10 +3480,7 @@
                   "output": {
                     "purpose": "経験と判断の共有",
                     "audience": "同じ課題の開発者",
-                    "sectionModes": [
-                      "experience",
-                      "explanation"
-                    ],
+                    "sectionModes": ["experience", "explanation"],
                     "preserveVoice": "一人称の迷いを保持",
                     "strategy": "経験→判断→結果; 分類表を強制しない"
                   }
@@ -3708,28 +3503,20 @@
                   "revision": 1,
                   "output": {
                     "outcome": "判断を再現",
-                    "preserve": [
-                      "失敗条件"
-                    ]
+                    "preserve": ["失敗条件"]
                   }
                 },
                 "research": {
                   "revision": 1,
                   "output": {
                     "evidence": [],
-                    "uncertainties": [
-                      "출처 다시 확인"
-                    ]
+                    "uncertainties": ["출처 다시 확인"]
                   }
                 },
                 "outline": {
                   "revision": 1,
                   "output": {
-                    "sections": [
-                      "体験",
-                      "判断",
-                      "結果"
-                    ],
+                    "sections": ["体験", "判断", "結果"],
                     "rationale": "時間順で因果を説明"
                   }
                 },
@@ -3743,10 +3530,7 @@
                 "review": {
                   "revision": 1,
                   "output": {
-                    "findings": [
-                      "출처 다시 확인",
-                      "검토에서만 확인"
-                    ],
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
                     "preservationCheck": "条件・語り口を保持"
                   }
                 }
@@ -3764,10 +3548,7 @@
                   "output": {
                     "purpose": "経験と判断の共有",
                     "audience": "同じ課題の開発者",
-                    "sectionModes": [
-                      "experience",
-                      "explanation"
-                    ],
+                    "sectionModes": ["experience", "explanation"],
                     "preserveVoice": "一人称の迷いを保持",
                     "strategy": "経験→判断→結果; 分類表を強制しない"
                   },
@@ -3791,18 +3572,14 @@
                   "revision": 2,
                   "output": {
                     "outcome": "判断を再現",
-                    "preserve": [
-                      "失敗条件"
-                    ]
+                    "preserve": ["失敗条件"]
                   }
                 },
                 "research": {
                   "revision": 2,
                   "output": {
                     "evidence": [],
-                    "uncertainties": [
-                      "출처 다시 확인"
-                    ]
+                    "uncertainties": ["출처 다시 확인"]
                   }
                 },
                 "outline": {
@@ -3839,10 +3616,7 @@
                 "review": {
                   "revision": 2,
                   "output": {
-                    "findings": [
-                      "출처 다시 확인",
-                      "검토에서만 확인"
-                    ],
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
                     "preservationCheck": "条件・語り口を保持"
                   }
                 }
@@ -3897,12 +3671,8 @@
             "intent": "간결하게 정리",
             "target": "draft",
             "level": "line",
-            "priorities": [
-              "첫 문단 정리"
-            ],
-            "preserve": [
-              "원문"
-            ],
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
             "requirementChanges": [
               {
                 "kind": "length",
@@ -4016,21 +3786,11 @@
           "intent": "간결하게 정리",
           "target": "draft",
           "level": "line",
-          "priorities": [
-            "첫 문단 정리"
-          ],
-          "preserve": [
-            "원문"
-          ],
-          "requirementChanges": [
-            "분량: 제한 해제"
-          ]
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
         },
-        "requirements": [
-          "서술 방식: procedure",
-          "독자 수준: beginner",
-          "tone: 차분하게"
-        ],
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
         "changes": [],
         "previous": [
           {
@@ -4095,10 +3855,7 @@
               }
             ],
             "summary": "첫 회차 요약",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           },
           {
@@ -4117,10 +3874,7 @@
               }
             ],
             "summary": "순서를 짧게 정리",
-            "findings": [
-              "출처 다시 확인",
-              "검토에서만 확인"
-            ],
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
             "hasDraft": true
           },
           {

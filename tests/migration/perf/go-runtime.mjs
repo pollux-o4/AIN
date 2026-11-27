@@ -12,7 +12,13 @@ const go = promisify(execFile);
 
 function reply(stage, ids = []) {
   return fixtureReply(
-    frame({ id: stage, role: "illustrator", task: "합성 시험", example: {}, data: { candidates: ids.map((id) => ({ id })) } }),
+    frame({
+      id: stage,
+      role: "illustrator",
+      task: "합성 시험",
+      example: {},
+      data: { candidates: ids.map((id) => ({ id })) },
+    }),
   );
 }
 
@@ -71,7 +77,7 @@ export async function start(config) {
     if (child.exitCode !== null || child.killed) throw new Error("Go fixture is not running");
     const id = ++sequence;
     const answer = new Promise((resolve, reject) => calls.set(id, { resolve, reject }));
-    child.stdin.write(JSON.stringify({ id, operation, argument }) + "\n");
+    child.stdin.write(`${JSON.stringify({ id, operation, argument })}\n`);
     return answer;
   }
 
@@ -94,12 +100,12 @@ export async function start(config) {
   try {
     const ready = new Promise((resolve, reject) => calls.set(0, { resolve, reject }));
     child.stdin.write(
-      JSON.stringify({
+      `${JSON.stringify({
         ...config,
         idea,
         assets: join(repo, ".local", "editorial-web"),
         replies: seedReplies(),
-      }) + "\n",
+      })}\n`,
     );
     const { url } = await ready;
     return {

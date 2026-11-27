@@ -19,9 +19,7 @@
           "revision": 1,
           "output": {
             "problem": "문제",
-            "titleCandidates": [
-              "제목"
-            ]
+            "titleCandidates": ["제목"]
           }
         },
         "audience": {
@@ -34,9 +32,7 @@
         "value": {
           "revision": 1,
           "output": {
-            "preserve": [
-              "조건"
-            ],
+            "preserve": ["조건"],
             "promise": "약속"
           }
         },
@@ -104,9 +100,7 @@
               "revision": 1,
               "output": {
                 "problem": "문제",
-                "titleCandidates": [
-                  "제목"
-                ]
+                "titleCandidates": ["제목"]
               }
             },
             "audience": {
@@ -119,9 +113,7 @@
             "value": {
               "revision": 1,
               "output": {
-                "preserve": [
-                  "조건"
-                ],
+                "preserve": ["조건"],
                 "promise": "약속"
               }
             },
@@ -220,9 +212,7 @@
           "revision": 1,
           "output": {
             "problem": "문제",
-            "titleCandidates": [
-              "제목"
-            ]
+            "titleCandidates": ["제목"]
           }
         },
         "audience": {
@@ -235,9 +225,7 @@
         "value": {
           "revision": 1,
           "output": {
-            "preserve": [
-              "조건"
-            ],
+            "preserve": ["조건"],
             "promise": "약속"
           }
         },
@@ -305,9 +293,7 @@
               "revision": 1,
               "output": {
                 "problem": "문제",
-                "titleCandidates": [
-                  "제목"
-                ]
+                "titleCandidates": ["제목"]
               }
             },
             "audience": {
@@ -320,9 +306,7 @@
             "value": {
               "revision": 1,
               "output": {
-                "preserve": [
-                  "조건"
-                ],
+                "preserve": ["조건"],
                 "promise": "약속"
               }
             },
@@ -404,9 +388,7 @@
       "feedback": "이 부분을 다듬으세요.",
       "routeTarget": "draft",
       "brief": {
-        "priorities": [
-          "다듬기"
-        ]
+        "priorities": ["다듬기"]
       }
     },
     {
@@ -428,9 +410,7 @@
           "revision": 1,
           "output": {
             "problem": "문제",
-            "titleCandidates": [
-              "제목"
-            ]
+            "titleCandidates": ["제목"]
           }
         },
         "audience": {
@@ -443,9 +423,7 @@
         "value": {
           "revision": 1,
           "output": {
-            "preserve": [
-              "조건"
-            ],
+            "preserve": ["조건"],
             "promise": "약속"
           }
         },
@@ -513,9 +491,7 @@
               "revision": 1,
               "output": {
                 "problem": "문제",
-                "titleCandidates": [
-                  "제목"
-                ]
+                "titleCandidates": ["제목"]
               }
             },
             "audience": {
@@ -528,9 +504,7 @@
             "value": {
               "revision": 1,
               "output": {
-                "preserve": [
-                  "조건"
-                ],
+                "preserve": ["조건"],
                 "promise": "약속"
               }
             },
@@ -633,9 +607,7 @@
           "revision": 1,
           "output": {
             "problem": "문제",
-            "titleCandidates": [
-              "제목"
-            ]
+            "titleCandidates": ["제목"]
           }
         },
         "audience": {
@@ -648,9 +620,7 @@
         "value": {
           "revision": 1,
           "output": {
-            "preserve": [
-              "조건"
-            ],
+            "preserve": ["조건"],
             "promise": "약속"
           }
         },
@@ -718,9 +688,7 @@
               "revision": 1,
               "output": {
                 "problem": "문제",
-                "titleCandidates": [
-                  "제목"
-                ]
+                "titleCandidates": ["제목"]
               }
             },
             "audience": {
@@ -733,9 +701,7 @@
             "value": {
               "revision": 1,
               "output": {
-                "preserve": [
-                  "조건"
-                ],
+                "preserve": ["조건"],
                 "promise": "약속"
               }
             },
@@ -817,9 +783,7 @@
       "feedback": "이 부분을 다듬으세요.",
       "routeTarget": "draft",
       "brief": {
-        "priorities": [
-          "다듬기"
-        ]
+        "priorities": ["다듬기"]
       },
       "draftParts": [
         {
@@ -846,9 +810,7 @@
           "revision": 1,
           "output": {
             "problem": "문제",
-            "titleCandidates": [
-              "제목"
-            ]
+            "titleCandidates": ["제목"]
           }
         },
         "audience": {
@@ -861,9 +823,7 @@
         "value": {
           "revision": 1,
           "output": {
-            "preserve": [
-              "조건"
-            ],
+            "preserve": ["조건"],
             "promise": "약속"
           }
         },
@@ -931,9 +891,7 @@
               "revision": 1,
               "output": {
                 "problem": "문제",
-                "titleCandidates": [
-                  "제목"
-                ]
+                "titleCandidates": ["제목"]
               }
             },
             "audience": {
@@ -946,9 +904,7 @@
             "value": {
               "revision": 1,
               "output": {
-                "preserve": [
-                  "조건"
-                ],
+                "preserve": ["조건"],
                 "promise": "약속"
               }
             },
@@ -1220,9 +1176,7 @@
         "output": {
           "purpose": "돕는다",
           "audience": "독자",
-          "sectionModes": [
-            "explain"
-          ],
+          "sectionModes": ["explain"],
           "preserveVoice": "합니다체",
           "strategy": "정리",
           "requirementChanges": [
@@ -1432,9 +1386,7 @@
             }
           ],
           "verdict": "revise",
-          "unmetCriteria": [
-            "요구 미충족"
-          ]
+          "unmetCriteria": ["요구 미충족"]
         }
       }
     },
@@ -1454,9 +1406,7 @@
         "reason": "정리",
         "brief": {
           "level": "copy",
-          "priorities": [
-            "문장"
-          ],
+          "priorities": ["문장"],
           "acceptance": {},
           "requirementChanges": [
             {

@@ -1,1 +1,1218 @@
-[{"event":{"id":"fixture-1","actor":"user","type":"satisfy","expectedVersion":9,"reviewedRevision":1},"figure":null,"status":"satisfied","next":{"type":"wait_for_user","status":"satisfied","revision":1}},{"event":{"id":"fixture-2","actor":"user","type":"request_figures","expectedVersion":10,"reviewedRevision":1,"note":"요약"},"figure":{"phase":"propose","revision":1,"note":"요약"},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure_plan","revision":1,"units":["도입부","결제"],"note":"요약"}},{"event":{"id":"fixture-3","actor":"adapter","type":"figure_result","expectedVersion":11,"revision":1,"stage":"figure_plan","output":{"candidates":[{"anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름"}],"skipped":[{"unit":"미등록","reason":"예시"}]}},"figure":{"phase":"choose","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름"}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2}},"status":"awaiting_figure_choice","next":{"type":"wait_for_user","status":"awaiting_figure_choice","revision":1}},{"event":{"id":"fixture-4","actor":"user","type":"place_figure","expectedVersion":12,"reviewedRevision":1,"quote":{"exact":"그래서 둘을 나눕니다."},"claim":"경계"},"figure":{"phase":"choose","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"id":"f3","anchor":"그래서 둘을 나눕니다.","claim":"경계","reason":"경계","origin":"human"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름"}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":3}},"status":"awaiting_figure_choice","next":{"type":"wait_for_user","status":"awaiting_figure_choice","revision":1}},{"event":{"id":"fixture-5","actor":"user","type":"remove_figure","expectedVersion":13,"reviewedRevision":1,"figure":"f3"},"figure":{"phase":"choose","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름"}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2}},"status":"awaiting_figure_choice","next":{"type":"wait_for_user","status":"awaiting_figure_choice","revision":1}},{"event":{"id":"fixture-6","actor":"user","type":"select_figures","expectedVersion":14,"reviewedRevision":1,"figures":["f2","f1"],"look":"manual","directions":{"f2":"결제 우선"},"routes":{"f2":"svg"}},"figure":{"phase":"compose","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg"}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"]},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure_compose","revision":1,"candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg"}],"note":"요약","look":"manual"}},{"event":{"id":"fixture-7","actor":"adapter","type":"figure_result","expectedVersion":15,"revision":1,"stage":"figure_compose","output":{"world":"정비실","style":{"accent":"노랑","base":"검정","labels":"크게","look":"anatomy"},"motifs":[{"name":"표시등","look":"원형"},{"name":"별","look":"노랑"}],"designs":[{"id":"f1","scene":"주문 장면","motifs":["표시등","별"],"look":"stick","mapping":[{"element":"문","concept":"경계"}]},{"id":"f2","scene":"결제 장면","motifs":["표시등","미등록"]}]}},"figure":{"phase":"design","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실"},"status":"awaiting_figure_design","next":{"type":"wait_for_user","status":"awaiting_figure_design","revision":1}},{"event":{"id":"fixture-8","actor":"user","type":"approve_design","expectedVersion":16,"reviewedRevision":1},"figure":{"phase":"generate","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","current":{"ids":["f1","f2"],"pass":"draw"}},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure","revision":1,"pass":"draw","figureIds":["f1","f2"],"parts":[{"figureId":"f1","progress":{"index":1,"total":2},"candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]}],"style":{"look":"stick","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}]},{"figureId":"f2","progress":{"index":2,"total":2},"candidates":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}]}],"world":"정비실","note":"요약"}},{"event":{"id":"fixture-9","actor":"adapter","type":"figure_result","expectedVersion":17,"revision":1,"stage":"figure","output":{"figures":[{"id":"f1","svg":"<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1","notes":"인계만"}]},"figureIds":["f1","f2"],"failed":[{"id":"f2","error":"합성 오류"}]},"figure":{"phase":"review","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","failed":{"f2":"합성 오류"},"items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}]},"status":"awaiting_figure_review","next":{"type":"wait_for_user","status":"awaiting_figure_review","revision":1}},{"event":{"id":"fixture-10","actor":"user","type":"retry_figures","expectedVersion":18,"reviewedRevision":1,"figures":["f2"]},"figure":{"phase":"generate","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}],"current":{"ids":["f2"],"pass":"draw"}},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure","revision":1,"pass":"draw","figureIds":["f2"],"parts":[{"figureId":"f2","progress":{"index":2,"total":2},"candidates":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}]}],"world":"정비실","note":"요약"}},{"event":{"id":"fixture-11","actor":"adapter","type":"figure_result","expectedVersion":19,"revision":1,"stage":"figure","output":{"figures":[{"id":"f2","svg":"<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2","notes":"인계만"}]},"figureId":"f2"},"figure":{"phase":"review","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"]},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}]},"status":"awaiting_figure_review","next":{"type":"wait_for_user","status":"awaiting_figure_review","revision":1}},{"event":{"id":"fixture-12","actor":"user","type":"revise_figures","expectedVersion":20,"reviewedRevision":1,"target":"fix","figures":["f1"],"feedback":"라벨 간격"},"figure":{"phase":"generate","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}],"current":{"ids":["f1"],"pass":"fix"},"passDrafts":{"f1":{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}}},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure","revision":1,"pass":"fix","figureIds":["f1"],"parts":[{"figureId":"f1","progress":{"index":1,"total":2},"candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1}],"style":{"look":"stick","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}],"previous":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}]}],"world":"정비실","note":"요약"}},{"event":{"id":"fixture-13","actor":"adapter","type":"figure_result","expectedVersion":21,"revision":1,"stage":"figure","output":{"figures":[{"id":"f1","svg":"<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1","notes":"인계만"}]},"figureId":"f1","pass":"fix"},"figure":{"phase":"review","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}]},"status":"awaiting_figure_review","next":{"type":"wait_for_user","status":"awaiting_figure_review","revision":1}},{"event":{"id":"fixture-14","actor":"user","type":"revise_figures","expectedVersion":22,"reviewedRevision":1,"target":"compose","figures":["f2"],"look":"sketchnote"},"figure":{"phase":"compose","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","scene":"결제 장면","motifs":["표시등"],"look":"sketchnote","lookBy":"user"}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}],"recompose":["f2"]},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure_compose","revision":1,"candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user"}],"recompose":["f2"],"world":"정비실","style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}],"note":"요약","look":"manual"}},{"event":{"id":"fixture-15","actor":"adapter","type":"figure_result","expectedVersion":23,"revision":1,"stage":"figure_compose","output":{"designs":[{"id":"f2","scene":"새 결제 장면","motifs":["표시등","미등록"]}]}},"figure":{"phase":"design","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}]},"status":"awaiting_figure_design","next":{"type":"wait_for_user","status":"awaiting_figure_design","revision":1}},{"event":{"id":"fixture-16","actor":"user","type":"approve_design","expectedVersion":24,"reviewedRevision":1},"figure":{"phase":"generate","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"}],"current":{"ids":["f2"],"pass":"draw"}},"status":"waiting_figure","next":{"type":"request_figure","stage":"figure","revision":1,"pass":"draw","figureIds":["f2"],"parts":[{"figureId":"f2","progress":{"index":2,"total":2},"candidates":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"style":{"look":"sketchnote","accent":"노랑","base":"검정","labels":"크게"},"motifs":[{"name":"표시등","look":"원형"}]}],"world":"정비실","note":"요약"}},{"event":{"id":"fixture-17","actor":"adapter","type":"figure_result","expectedVersion":25,"revision":1,"stage":"figure","output":{"figures":[{"id":"f2","svg":"<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2","notes":"인계만"}]},"figureId":"f2"},"figure":{"phase":"review","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f1"},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}]},"status":"awaiting_figure_review","next":{"type":"wait_for_user","status":"awaiting_figure_review","revision":1}},{"event":{"id":"fixture-18","actor":"user","type":"confirm_figures","expectedVersion":26,"reviewedRevision":1,"figures":["f2"]},"figure":{"phase":"confirmed","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}],"confirmedEventId":"fixture-18"},"status":"satisfied","next":{"type":"wait_for_user","status":"satisfied","revision":1}},{"event":{"id":"fixture-19","actor":"user","type":"authorize_publication","expectedVersion":27,"reviewedRevision":1},"figure":{"phase":"confirmed","revision":1,"note":"요약","candidates":[{"id":"f1","anchor":"주문과 결제는 책임이 다릅니다.","claim":"책임 경계","reason":"관계","look":"stick","scene":"주문 장면","mapping":[{"element":"문","concept":"경계"}],"motifs":["표시등","별"],"fix":"라벨 간격","fixes":1},{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","reason":"흐름","direction":"결제 우선","route":"svg","look":"sketchnote","lookBy":"user","scene":"새 결제 장면","motifs":["표시등"]}],"skipped":[{"unit":"미등록","reason":"예시"}],"coverage":{"units":2,"withFigure":2,"skipped":0,"missing":[],"candidates":2},"look":"manual","selected":["f1","f2"],"motifs":[{"name":"표시등","look":"원형"}],"style":{"look":"manual","accent":"노랑","base":"검정","labels":"크게"},"world":"정비실","items":[{"id":"f2","anchor":"결제는 요청과 확인 순서로 진행됩니다.","claim":"결제 순서","svg":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>","alt":"f2"}],"confirmedEventId":"fixture-18"},"status":"publication_ready","next":{"type":"publication_adapter_required","revision":1,"executed":false}}]
+[
+  {
+    "event": {
+      "id": "fixture-1",
+      "actor": "user",
+      "type": "satisfy",
+      "expectedVersion": 9,
+      "reviewedRevision": 1
+    },
+    "figure": null,
+    "status": "satisfied",
+    "next": { "type": "wait_for_user", "status": "satisfied", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-2",
+      "actor": "user",
+      "type": "request_figures",
+      "expectedVersion": 10,
+      "reviewedRevision": 1,
+      "note": "요약"
+    },
+    "figure": { "phase": "propose", "revision": 1, "note": "요약" },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure_plan",
+      "revision": 1,
+      "units": ["도입부", "결제"],
+      "note": "요약"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-3",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 11,
+      "revision": 1,
+      "stage": "figure_plan",
+      "output": {
+        "candidates": [
+          { "anchor": "주문과 결제는 책임이 다릅니다.", "claim": "책임 경계", "reason": "관계" },
+          {
+            "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+            "claim": "결제 순서",
+            "reason": "흐름"
+          }
+        ],
+        "skipped": [{ "unit": "미등록", "reason": "예시" }]
+      }
+    },
+    "figure": {
+      "phase": "choose",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름"
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 }
+    },
+    "status": "awaiting_figure_choice",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_choice", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-4",
+      "actor": "user",
+      "type": "place_figure",
+      "expectedVersion": 12,
+      "reviewedRevision": 1,
+      "quote": { "exact": "그래서 둘을 나눕니다." },
+      "claim": "경계"
+    },
+    "figure": {
+      "phase": "choose",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계"
+        },
+        {
+          "id": "f3",
+          "anchor": "그래서 둘을 나눕니다.",
+          "claim": "경계",
+          "reason": "경계",
+          "origin": "human"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름"
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 3 }
+    },
+    "status": "awaiting_figure_choice",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_choice", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-5",
+      "actor": "user",
+      "type": "remove_figure",
+      "expectedVersion": 13,
+      "reviewedRevision": 1,
+      "figure": "f3"
+    },
+    "figure": {
+      "phase": "choose",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름"
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 }
+    },
+    "status": "awaiting_figure_choice",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_choice", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-6",
+      "actor": "user",
+      "type": "select_figures",
+      "expectedVersion": 14,
+      "reviewedRevision": 1,
+      "figures": ["f2", "f1"],
+      "look": "manual",
+      "directions": { "f2": "결제 우선" },
+      "routes": { "f2": "svg" }
+    },
+    "figure": {
+      "phase": "compose",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg"
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"]
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure_compose",
+      "revision": 1,
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg"
+        }
+      ],
+      "note": "요약",
+      "look": "manual"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-7",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 15,
+      "revision": 1,
+      "stage": "figure_compose",
+      "output": {
+        "world": "정비실",
+        "style": { "accent": "노랑", "base": "검정", "labels": "크게", "look": "anatomy" },
+        "motifs": [{ "name": "표시등", "look": "원형" }, { "name": "별", "look": "노랑" }],
+        "designs": [
+          {
+            "id": "f1",
+            "scene": "주문 장면",
+            "motifs": ["표시등", "별"],
+            "look": "stick",
+            "mapping": [{ "element": "문", "concept": "경계" }]
+          },
+          { "id": "f2", "scene": "결제 장면", "motifs": ["표시등", "미등록"] }
+        ]
+      }
+    },
+    "figure": {
+      "phase": "design",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"]
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실"
+    },
+    "status": "awaiting_figure_design",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_design", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-8",
+      "actor": "user",
+      "type": "approve_design",
+      "expectedVersion": 16,
+      "reviewedRevision": 1
+    },
+    "figure": {
+      "phase": "generate",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"]
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "current": { "ids": ["f1", "f2"], "pass": "draw" }
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure",
+      "revision": 1,
+      "pass": "draw",
+      "figureIds": ["f1", "f2"],
+      "parts": [
+        {
+          "figureId": "f1",
+          "progress": { "index": 1, "total": 2 },
+          "candidates": [
+            {
+              "id": "f1",
+              "anchor": "주문과 결제는 책임이 다릅니다.",
+              "claim": "책임 경계",
+              "reason": "관계",
+              "look": "stick",
+              "scene": "주문 장면",
+              "mapping": [{ "element": "문", "concept": "경계" }],
+              "motifs": ["표시등", "별"]
+            }
+          ],
+          "style": { "look": "stick", "accent": "노랑", "base": "검정", "labels": "크게" },
+          "motifs": [{ "name": "표시등", "look": "원형" }]
+        },
+        {
+          "figureId": "f2",
+          "progress": { "index": 2, "total": 2 },
+          "candidates": [
+            {
+              "id": "f2",
+              "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+              "claim": "결제 순서",
+              "reason": "흐름",
+              "direction": "결제 우선",
+              "route": "svg",
+              "scene": "결제 장면",
+              "motifs": ["표시등"]
+            }
+          ],
+          "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+          "motifs": [{ "name": "표시등", "look": "원형" }]
+        }
+      ],
+      "world": "정비실",
+      "note": "요약"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-9",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 17,
+      "revision": 1,
+      "stage": "figure",
+      "output": {
+        "figures": [
+          {
+            "id": "f1",
+            "svg": "<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+            "alt": "f1",
+            "notes": "인계만"
+          }
+        ]
+      },
+      "figureIds": ["f1", "f2"],
+      "failed": [{ "id": "f2", "error": "합성 오류" }]
+    },
+    "figure": {
+      "phase": "review",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"]
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "failed": { "f2": "합성 오류" },
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      ]
+    },
+    "status": "awaiting_figure_review",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_review", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-10",
+      "actor": "user",
+      "type": "retry_figures",
+      "expectedVersion": 18,
+      "reviewedRevision": 1,
+      "figures": ["f2"]
+    },
+    "figure": {
+      "phase": "generate",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"]
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      ],
+      "current": { "ids": ["f2"], "pass": "draw" }
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure",
+      "revision": 1,
+      "pass": "draw",
+      "figureIds": ["f2"],
+      "parts": [
+        {
+          "figureId": "f2",
+          "progress": { "index": 2, "total": 2 },
+          "candidates": [
+            {
+              "id": "f2",
+              "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+              "claim": "결제 순서",
+              "reason": "흐름",
+              "direction": "결제 우선",
+              "route": "svg",
+              "scene": "결제 장면",
+              "motifs": ["표시등"]
+            }
+          ],
+          "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+          "motifs": [{ "name": "표시등", "look": "원형" }]
+        }
+      ],
+      "world": "정비실",
+      "note": "요약"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-11",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 19,
+      "revision": 1,
+      "stage": "figure",
+      "output": {
+        "figures": [
+          {
+            "id": "f2",
+            "svg": "<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+            "alt": "f2",
+            "notes": "인계만"
+          }
+        ]
+      },
+      "figureId": "f2"
+    },
+    "figure": {
+      "phase": "review",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"]
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ]
+    },
+    "status": "awaiting_figure_review",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_review", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-12",
+      "actor": "user",
+      "type": "revise_figures",
+      "expectedVersion": 20,
+      "reviewedRevision": 1,
+      "target": "fix",
+      "figures": ["f1"],
+      "feedback": "라벨 간격"
+    },
+    "figure": {
+      "phase": "generate",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ],
+      "current": { "ids": ["f1"], "pass": "fix" },
+      "passDrafts": {
+        "f1": {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      }
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure",
+      "revision": 1,
+      "pass": "fix",
+      "figureIds": ["f1"],
+      "parts": [
+        {
+          "figureId": "f1",
+          "progress": { "index": 1, "total": 2 },
+          "candidates": [
+            {
+              "id": "f1",
+              "anchor": "주문과 결제는 책임이 다릅니다.",
+              "claim": "책임 경계",
+              "reason": "관계",
+              "look": "stick",
+              "scene": "주문 장면",
+              "mapping": [{ "element": "문", "concept": "경계" }],
+              "motifs": ["표시등", "별"],
+              "fix": "라벨 간격",
+              "fixes": 1
+            }
+          ],
+          "style": { "look": "stick", "accent": "노랑", "base": "검정", "labels": "크게" },
+          "motifs": [{ "name": "표시등", "look": "원형" }],
+          "previous": [
+            {
+              "id": "f1",
+              "anchor": "주문과 결제는 책임이 다릅니다.",
+              "claim": "책임 경계",
+              "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+              "alt": "f1"
+            }
+          ]
+        }
+      ],
+      "world": "정비실",
+      "note": "요약"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-13",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 21,
+      "revision": 1,
+      "stage": "figure",
+      "output": {
+        "figures": [
+          {
+            "id": "f1",
+            "svg": "<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+            "alt": "f1",
+            "notes": "인계만"
+          }
+        ]
+      },
+      "figureId": "f1",
+      "pass": "fix"
+    },
+    "figure": {
+      "phase": "review",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ]
+    },
+    "status": "awaiting_figure_review",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_review", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-14",
+      "actor": "user",
+      "type": "revise_figures",
+      "expectedVersion": 22,
+      "reviewedRevision": 1,
+      "target": "compose",
+      "figures": ["f2"],
+      "look": "sketchnote"
+    },
+    "figure": {
+      "phase": "compose",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "scene": "결제 장면",
+          "motifs": ["표시등"],
+          "look": "sketchnote",
+          "lookBy": "user"
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      ],
+      "recompose": ["f2"]
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure_compose",
+      "revision": 1,
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user"
+        }
+      ],
+      "recompose": ["f2"],
+      "world": "정비실",
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "note": "요약",
+      "look": "manual"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-15",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 23,
+      "revision": 1,
+      "stage": "figure_compose",
+      "output": {
+        "designs": [{ "id": "f2", "scene": "새 결제 장면", "motifs": ["표시등", "미등록"] }]
+      }
+    },
+    "figure": {
+      "phase": "design",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user",
+          "scene": "새 결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      ]
+    },
+    "status": "awaiting_figure_design",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_design", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-16",
+      "actor": "user",
+      "type": "approve_design",
+      "expectedVersion": 24,
+      "reviewedRevision": 1
+    },
+    "figure": {
+      "phase": "generate",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user",
+          "scene": "새 결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        }
+      ],
+      "current": { "ids": ["f2"], "pass": "draw" }
+    },
+    "status": "waiting_figure",
+    "next": {
+      "type": "request_figure",
+      "stage": "figure",
+      "revision": 1,
+      "pass": "draw",
+      "figureIds": ["f2"],
+      "parts": [
+        {
+          "figureId": "f2",
+          "progress": { "index": 2, "total": 2 },
+          "candidates": [
+            {
+              "id": "f2",
+              "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+              "claim": "결제 순서",
+              "reason": "흐름",
+              "direction": "결제 우선",
+              "route": "svg",
+              "look": "sketchnote",
+              "lookBy": "user",
+              "scene": "새 결제 장면",
+              "motifs": ["표시등"]
+            }
+          ],
+          "style": { "look": "sketchnote", "accent": "노랑", "base": "검정", "labels": "크게" },
+          "motifs": [{ "name": "표시등", "look": "원형" }]
+        }
+      ],
+      "world": "정비실",
+      "note": "요약"
+    }
+  },
+  {
+    "event": {
+      "id": "fixture-17",
+      "actor": "adapter",
+      "type": "figure_result",
+      "expectedVersion": 25,
+      "revision": 1,
+      "stage": "figure",
+      "output": {
+        "figures": [
+          {
+            "id": "f2",
+            "svg": "<svg viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+            "alt": "f2",
+            "notes": "인계만"
+          }
+        ]
+      },
+      "figureId": "f2"
+    },
+    "figure": {
+      "phase": "review",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user",
+          "scene": "새 결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f1"
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ]
+    },
+    "status": "awaiting_figure_review",
+    "next": { "type": "wait_for_user", "status": "awaiting_figure_review", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-18",
+      "actor": "user",
+      "type": "confirm_figures",
+      "expectedVersion": 26,
+      "reviewedRevision": 1,
+      "figures": ["f2"]
+    },
+    "figure": {
+      "phase": "confirmed",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user",
+          "scene": "새 결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ],
+      "confirmedEventId": "fixture-18"
+    },
+    "status": "satisfied",
+    "next": { "type": "wait_for_user", "status": "satisfied", "revision": 1 }
+  },
+  {
+    "event": {
+      "id": "fixture-19",
+      "actor": "user",
+      "type": "authorize_publication",
+      "expectedVersion": 27,
+      "reviewedRevision": 1
+    },
+    "figure": {
+      "phase": "confirmed",
+      "revision": 1,
+      "note": "요약",
+      "candidates": [
+        {
+          "id": "f1",
+          "anchor": "주문과 결제는 책임이 다릅니다.",
+          "claim": "책임 경계",
+          "reason": "관계",
+          "look": "stick",
+          "scene": "주문 장면",
+          "mapping": [{ "element": "문", "concept": "경계" }],
+          "motifs": ["표시등", "별"],
+          "fix": "라벨 간격",
+          "fixes": 1
+        },
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "reason": "흐름",
+          "direction": "결제 우선",
+          "route": "svg",
+          "look": "sketchnote",
+          "lookBy": "user",
+          "scene": "새 결제 장면",
+          "motifs": ["표시등"]
+        }
+      ],
+      "skipped": [{ "unit": "미등록", "reason": "예시" }],
+      "coverage": { "units": 2, "withFigure": 2, "skipped": 0, "missing": [], "candidates": 2 },
+      "look": "manual",
+      "selected": ["f1", "f2"],
+      "motifs": [{ "name": "표시등", "look": "원형" }],
+      "style": { "look": "manual", "accent": "노랑", "base": "검정", "labels": "크게" },
+      "world": "정비실",
+      "items": [
+        {
+          "id": "f2",
+          "anchor": "결제는 요청과 확인 순서로 진행됩니다.",
+          "claim": "결제 순서",
+          "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><rect width=\"10\" height=\"10\" fill=\"#fff\"/></svg>",
+          "alt": "f2"
+        }
+      ],
+      "confirmedEventId": "fixture-18"
+    },
+    "status": "publication_ready",
+    "next": { "type": "publication_adapter_required", "revision": 1, "executed": false }
+  }
+]

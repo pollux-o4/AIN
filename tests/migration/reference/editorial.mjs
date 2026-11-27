@@ -67,5 +67,5 @@ while (state?.status === "waiting_ai") {
     output: outputs[state.stage],
   });
 }
-if (!state || state.status !== "awaiting_user") throw new Error("Reference writing flow failed");
-process.stdout.write(JSON.stringify(cases, null, 2) + "\n");
+if (state?.status !== "awaiting_user") throw new Error("Reference writing flow failed");
+process.stdout.write(`${JSON.stringify(cases, null, 2)}\n`);

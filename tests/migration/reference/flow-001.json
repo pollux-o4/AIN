@@ -11,16 +11,7 @@
       "source": "합성 원문"
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -52,16 +43,7 @@
   {
     "name": "duplicate",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -92,16 +74,7 @@
       "source": "합성 원문"
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -133,16 +106,7 @@
   {
     "name": "wrong stage",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -174,10 +138,7 @@
       "output": {
         "purpose": "経験と判断の共有",
         "audience": "同じ課題の開発者",
-        "sectionModes": [
-          "experience",
-          "explanation"
-        ],
+        "sectionModes": ["experience", "explanation"],
         "preserveVoice": "一人称の迷いを保持",
         "strategy": "経験→判断→結果; 分類表を強制しない"
       }
@@ -187,16 +148,7 @@
   {
     "name": "stale version",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -228,10 +180,7 @@
       "output": {
         "purpose": "経験と判断の共有",
         "audience": "同じ課題の開発者",
-        "sectionModes": [
-          "experience",
-          "explanation"
-        ],
+        "sectionModes": ["experience", "explanation"],
         "preserveVoice": "一人称の迷いを保持",
         "strategy": "経験→判断→結果; 分類表を強制しない"
       }
@@ -241,16 +190,7 @@
   {
     "name": "first completion",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 1,
@@ -282,25 +222,13 @@
       "output": {
         "purpose": "経験と判断の共有",
         "audience": "同じ課題の開発者",
-        "sectionModes": [
-          "experience",
-          "explanation"
-        ],
+        "sectionModes": ["experience", "explanation"],
         "preserveVoice": "一人称の迷いを保持",
         "strategy": "経験→判断→結果; 分類表を強制しない"
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 2,
@@ -319,10 +247,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -352,16 +277,7 @@
   {
     "name": "complete topic",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 2,
@@ -380,10 +296,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -416,16 +329,7 @@
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 3,
@@ -444,10 +348,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -485,16 +386,7 @@
   {
     "name": "complete audience",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 3,
@@ -513,10 +405,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -557,16 +446,7 @@
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 4,
@@ -585,10 +465,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -634,16 +511,7 @@
   {
     "name": "complete value",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 4,
@@ -662,10 +530,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -710,22 +575,11 @@
       "stage": "value",
       "output": {
         "outcome": "判断を再現",
-        "preserve": [
-          "失敗条件"
-        ]
+        "preserve": ["失敗条件"]
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 5,
@@ -744,10 +598,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -770,9 +621,7 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         }
       },
@@ -803,16 +652,7 @@
   {
     "name": "complete research",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 5,
@@ -831,10 +671,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -857,9 +694,7 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         }
       },
@@ -889,22 +724,11 @@
       "stage": "research",
       "output": {
         "evidence": [],
-        "uncertainties": [
-          "ログ未確認"
-        ]
+        "uncertainties": ["ログ未確認"]
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 6,
@@ -923,10 +747,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -949,18 +770,14 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         }
       },
@@ -992,16 +809,7 @@
   {
     "name": "complete outline",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 6,
@@ -1020,10 +828,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1046,18 +851,14 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         }
       },
@@ -1087,25 +888,12 @@
       "revision": 1,
       "stage": "outline",
       "output": {
-        "sections": [
-          "体験",
-          "判断",
-          "結果"
-        ],
+        "sections": ["体験", "判断", "結果"],
         "rationale": "時間順で因果を説明"
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 7,
@@ -1124,10 +912,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1150,28 +935,20 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         },
         "outline": {
           "revision": 1,
           "output": {
-            "sections": [
-              "体験",
-              "判断",
-              "結果"
-            ],
+            "sections": ["体験", "判断", "結果"],
             "rationale": "時間順で因果を説明"
           }
         }
@@ -1205,16 +982,7 @@
   {
     "name": "complete draft",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 7,
@@ -1233,10 +1001,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1259,28 +1024,20 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         },
         "outline": {
           "revision": 1,
           "output": {
-            "sections": [
-              "体験",
-              "判断",
-              "結果"
-            ],
+            "sections": ["体験", "判断", "結果"],
             "rationale": "時間順で因果を説明"
           }
         }
@@ -1317,16 +1074,7 @@
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 8,
@@ -1345,10 +1093,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1371,28 +1116,20 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         },
         "outline": {
           "revision": 1,
           "output": {
-            "sections": [
-              "体験",
-              "判断",
-              "結果"
-            ],
+            "sections": ["体験", "判断", "結果"],
             "rationale": "時間順で因果を説明"
           }
         },
@@ -1434,16 +1171,7 @@
   {
     "name": "complete review",
     "before": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 8,
@@ -1462,10 +1190,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1488,28 +1213,20 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         },
         "outline": {
           "revision": 1,
           "output": {
-            "sections": [
-              "体験",
-              "判断",
-              "結果"
-            ],
+            "sections": ["体験", "判断", "結果"],
             "rationale": "時間順で因果を説明"
           }
         },
@@ -1549,23 +1266,12 @@
       "revision": 1,
       "stage": "review",
       "output": {
-        "findings": [
-          "出典未確認を表示"
-        ],
+        "findings": ["出典未確認を表示"],
         "preservationCheck": "条件・語り口を保持"
       }
     },
     "state": {
-      "plan": [
-        "diagnose",
-        "topic",
-        "audience",
-        "value",
-        "research",
-        "outline",
-        "draft",
-        "review"
-      ],
+      "plan": ["diagnose", "topic", "audience", "value", "research", "outline", "draft", "review"],
       "schemaVersion": 1,
       "articleId": "migration-example",
       "version": 9,
@@ -1584,10 +1290,7 @@
           "output": {
             "purpose": "経験と判断の共有",
             "audience": "同じ課題の開発者",
-            "sectionModes": [
-              "experience",
-              "explanation"
-            ],
+            "sectionModes": ["experience", "explanation"],
             "preserveVoice": "一人称の迷いを保持",
             "strategy": "経験→判断→結果; 分類表を強制しない"
           }
@@ -1610,28 +1313,20 @@
           "revision": 1,
           "output": {
             "outcome": "判断を再現",
-            "preserve": [
-              "失敗条件"
-            ]
+            "preserve": ["失敗条件"]
           }
         },
         "research": {
           "revision": 1,
           "output": {
             "evidence": [],
-            "uncertainties": [
-              "ログ未確認"
-            ]
+            "uncertainties": ["ログ未確認"]
           }
         },
         "outline": {
           "revision": 1,
           "output": {
-            "sections": [
-              "体験",
-              "判断",
-              "結果"
-            ],
+            "sections": ["体験", "判断", "結果"],
             "rationale": "時間順で因果を説明"
           }
         },
@@ -1645,9 +1340,7 @@
         "review": {
           "revision": 1,
           "output": {
-            "findings": [
-              "出典未確認を表示"
-            ],
+            "findings": ["出典未確認を表示"],
             "preservationCheck": "条件・語り口を保持"
           }
         }

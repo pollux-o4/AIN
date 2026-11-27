@@ -9,9 +9,9 @@ import { join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { chromium, expect } from "@playwright/test";
-import { AGENT_TOKEN_FILE } from "../../../contracts/runtime.mjs";
-import { readAsset } from "../../assets.mjs";
-import { makeRun } from "../stories/fixtures.ts";
+import { AGENT_TOKEN_FILE } from "../../automation/contracts/runtime.mjs";
+import { readAsset } from "../../automation/editorial/assets.mjs";
+import { makeRun } from "../../automation/editorial/ui/stories/fixtures.ts";
 
 const invoke = promisify(execFile);
 
