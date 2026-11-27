@@ -91,6 +91,6 @@ func run(ctx context.Context) error {
 	turns := runtime.Turns{Writing: builder, Figures: draw}
 	return runtime.ServeEditorial(ctx, *address, db, wire, turns, runtime.EditorialConfig{
 		Assets: os.DirFS(*assets), SessionKey: sessionKey, AgentToken: agentToken, Outbox: *outbox,
-		Runner: runner.Config{Sessions: sessionManager, Workers: 4, Queue: 64, TurnLimit: 5 * time.Minute, RecheckInterval: 2 * time.Second, MaxRechecks: 5},
+		Runner: runner.Config{OnError: reportExecution, Sessions: sessionManager, Workers: 4, Queue: 64, TurnLimit: 5 * time.Minute, RecheckInterval: 2 * time.Second, MaxRechecks: 5},
 	})
 }
