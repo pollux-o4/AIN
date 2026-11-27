@@ -9,3 +9,5 @@
 최소 실행: `go -C backend test ./tools/paseoprobe/...`와 실데몬 읽기 전용 연결 probe. 공통 모듈 초기화 전에는 독립 작업 디렉터리에서 probe를 작성한다.
 
 완료 기준: 메시지 스키마와 합성 WebSocket 시험으로 상관 ID·구독 종료·재연결을 확인한다. 실제 데몬에서는 비용 없는 로컬 조회로 연결 조건을 확인한다. 모델 호출이 필요한 의미는 미검증으로 표시한다. 전송 여부를 확인할 수 없으면 재전송 없이 확인 대기로 두는 조건을 계약에 반영한다. 인증·조회 호환을 입증하지 못하면 MIG-013의 직접 연결 승인을 보류한다.
+
+검증 기록: `go -C backend test ./tools/paseoprobe/...`와 `go -C backend run ./tools/paseoprobe -home "$PASEO_HOME"`을 통과했다. 현재 로컬 데몬에서 hello 인증과 존재하지 않는 에이전트의 읽기 전용 조회를 확인했다. 실제 모델 호출은 포함하지 않았다.
