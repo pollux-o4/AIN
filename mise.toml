@@ -115,11 +115,11 @@ run = "pnpm dev"
 
 [tasks."ai:test:contract"]
 description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델: 연결 1회 통과 후 합성 글 1편 검증 · 최대 31회 호출 · TIME-001"
-run = "node automation/n8n/build-workflow.mjs && node automation/paseo/contract-e2e.mjs"
+run = "node automation/paseo/contract-e2e.mjs"
 
 [tasks."ai:eval"]
 description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델 평가: 글감 4종 × 1회(기본) · 멱등성은 --trials 3 · 예) mise run ai:eval -- --cases narrate --trials 3 · TIME-001"
-run = "node automation/n8n/build-workflow.mjs && node automation/paseo/eval.mjs"
+run = "node automation/paseo/eval.mjs"
 
 [tasks.lab]
 description = "시각자료 연구소 · 색인(index)·요약(summary)·판정(judge) · 예) mise run lab -- judge algo-f3 res010 figure 1 fail \"모두 갖춰야가 안 보임\" · 화면은 Storybook 연구소 · LAB-001"
