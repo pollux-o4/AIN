@@ -10,3 +10,8 @@ run = "CGO_ENABLED=0 go -C backend build -trimpath -o ../.local/ain-go ./cmd/ain
 description = "명시한 데이터 경로에서 Go 편집 런타임 실행"
 depends = ["go:build", "build"]
 run = "exec .local/ain-go"
+
+["go:client-check"]
+description = "Go API 응답 계약의 Chromium·CLI 합성 검증"
+depends = ["build"]
+run = "node --test tests/migration/go-client.test.mjs"
