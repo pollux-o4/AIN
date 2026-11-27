@@ -50,6 +50,11 @@ func (b *Builder) BuildReuseTurn(run contract.Run, action contract.Action, deliv
 	return b.build(run, action, delivered)
 }
 
+// BuildTrackedTurn returns the initial prompt and the context it delivers.
+func (b *Builder) BuildTrackedTurn(run contract.Run, action contract.Action) (contract.SessionSpec, map[string]string, error) {
+	return b.build(run, action, nil)
+}
+
 func (b *Builder) build(run contract.Run, action contract.Action, delivered map[string]string) (contract.SessionSpec, map[string]string, error) {
 	stage, err := taskID(action)
 	if err != nil {
