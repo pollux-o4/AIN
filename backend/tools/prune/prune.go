@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -34,7 +31,7 @@ func prune(ctx context.Context, data string, wire pruneWire, all bool) (sessions
 		return sessions.SweepResult{}, err
 	}
 	defer lock.Close()
-	if err := requireGoSchema(ctx, path); err != nil {
+	if err := store.RequireExistingRuntimeSchema(ctx, path); err != nil {
 		return sessions.SweepResult{}, err
 	}
 	if _, err := wire.Probe(ctx); err != nil {
@@ -55,40 +52,4 @@ func prune(ctx context.Context, data string, wire pruneWire, all bool) (sessions
 		return sessions.SweepResult{}, err
 	}
 	return manager.Sweep(ctx, db.IsAgentActive, all)
-}
-
-func privateDatabase(path string) error {
-	for _, suffix := range []string{"", "-wal", "-shm", "-journal"} {
-		info, err := os.Lstat(path + suffix)
-		if suffix != "" && errors.Is(err, os.ErrNotExist) {
-			continue
-		}
-		if err != nil {
-			return fmt.Errorf("existing Go editorial database required: %w", err)
-		}
-		if !info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0 {
-			return errors.New("editorial database and sidecars must be private regular files")
-		}
-	}
-	return nil
-}
-
-func requireGoSchema(ctx context.Context, path string) error {
-	if err := privateDatabase(path); err != nil {
-		return err
-	}
-	dsn := url.URL{Scheme: "file", Path: filepath.ToSlash(path), RawQuery: "mode=ro"}
-	db, err := sql.Open("sqlite", dsn.String())
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-	var version int
-	if err := db.QueryRowContext(ctx, "SELECT MAX(version) FROM ain_schema_migrations").Scan(&version); err != nil {
-		return fmt.Errorf("existing Go editorial schema required: %w", err)
-	}
-	if version < 1 {
-		return errors.New("existing Go editorial schema required")
-	}
-	return nil
 }

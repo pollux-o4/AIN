@@ -7,11 +7,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 
-	_ "modernc.org/sqlite"
+	"github.com/pollux-o4/AIN/backend/internal/store"
 )
 
 func main() {
@@ -75,16 +74,7 @@ func run(ctx context.Context, args []string) error {
 }
 
 func openReadOnly(root string) (*sql.DB, error) {
-	path, err := filepath.Abs(filepath.Join(root, "editorial.sqlite"))
-	if err != nil {
-		return nil, err
-	}
-	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() {
-		return nil, errors.New("source editorial database does not exist or is unsafe")
-	}
-	dsn := url.URL{Scheme: "file", Path: filepath.ToSlash(path), RawQuery: "mode=ro&_pragma=query_only(1)"}
-	return sql.Open("sqlite", dsn.String())
+	return store.OpenReadOnly(filepath.Join(root, "editorial.sqlite"))
 }
 
 type reader interface {

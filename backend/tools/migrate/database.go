@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -43,19 +42,6 @@ type hold struct {
 	RemoteAfter    int64  `json:"remoteAfter,omitempty"`
 }
 
-func openRead(path string) (*sql.DB, error) {
-	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() {
-		return nil, errors.New("editorial.sqlite is not a regular file")
-	}
-	dsn := url.URL{Scheme: "file", Path: filepath.ToSlash(path), RawQuery: "mode=ro&_pragma=query_only(1)"}
-	db, err := sql.Open("sqlite", dsn.String())
-	if err == nil {
-		db.SetMaxOpenConns(1)
-	}
-	return db, err
-}
-
 func checkSQLite(ctx context.Context, db *sql.DB, mustBeLegacy bool) error {
 	var integrity string
 	if err := db.QueryRowContext(ctx, "PRAGMA integrity_check").Scan(&integrity); err != nil || integrity != "ok" {
@@ -83,7 +69,7 @@ func checkSQLite(ctx context.Context, db *sql.DB, mustBeLegacy bool) error {
 }
 
 func scanRuns(ctx context.Context, path string, visit func(contract.Run) error) error {
-	db, err := openRead(path)
+	db, err := store.OpenReadOnly(path)
 	if err != nil {
 		return err
 	}
@@ -241,7 +227,7 @@ func reconcile(run contract.Run, saved inspectedRun, jobs map[string]store.Legac
 func applySchema(ctx context.Context, root string) ([]runEntry, []hold, int, error) {
 	runtime := filepath.Join(root, "ai-runtime")
 	path, jobsRoot := filepath.Join(runtime, "editorial.sqlite"), filepath.Join(runtime, "jobs")
-	prior, err := openRead(path)
+	prior, err := store.OpenReadOnly(path)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -304,7 +290,7 @@ func applySchema(ctx context.Context, root string) ([]runEntry, []hold, int, err
 	if err != nil || len(expected) != 0 {
 		return nil, nil, 0, errors.Join(err, errors.New("candidate run inventory is incomplete"))
 	}
-	checked, err := openRead(path)
+	checked, err := store.OpenReadOnly(path)
 	if err != nil {
 		return nil, nil, 0, err
 	}
