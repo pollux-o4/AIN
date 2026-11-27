@@ -73,6 +73,9 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 			return contract.ErrDeliveryUncertain
 		}
 	}
+	if !proveSession(planned, snapshot) {
+		return contract.ErrDeliveryUncertain
+	}
 	var result *contract.Event
 	if snapshot.Status == "completed" {
 		event, err := r.terminalEvent(intent.ID, planned.Action, snapshot)
@@ -88,6 +91,7 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 	if err := r.store.Commit(ctx, run.Version, intent.ID, paused); err != nil {
 		return err
 	}
+	r.releaseSession(ctx, *intent, planned, snapshot, false)
 	r.requestRecovery()
 	return nil
 }

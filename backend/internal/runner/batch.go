@@ -167,6 +167,10 @@ func (r *Runner) runBatchChild(ctx context.Context, store batchStore, child cont
 			defer cancel()
 			return store.FinishBatchChild(cleanup, child.ID, true, nil, "그림 작업을 시작하기 전에 중단했습니다.")
 		}
+		if err := r.trackFresh(ctx, intent, plan, spec); err != nil {
+			recordErr := store.FinishBatchChild(ctx, child.ID, true, nil, "그림 세션을 준비하지 못했습니다.")
+			return errors.Join(err, recordErr)
+		}
 		ref, err := r.paseo.Create(ctx, intent.AgentID, *spec)
 		if err == nil {
 			if ref.AgentID != intent.AgentID || ref.TurnID != plan.MessageID {
@@ -201,6 +205,7 @@ func (r *Runner) persistBatchSnapshot(ctx context.Context, store batchStore, chi
 	if err := store.FinishBatchChild(ctx, child.ID, true, event, failure); err != nil {
 		return err
 	}
+	r.releaseSession(ctx, child.Intent, plan, snapshot, false)
 	r.requestRecovery()
 	return nil
 }

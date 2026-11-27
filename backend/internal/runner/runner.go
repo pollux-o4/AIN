@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/sessions"
 )
 
 type Config struct {
@@ -20,8 +21,12 @@ type Config struct {
 	// Reserve applies reservation state, including the budget change, without I/O.
 	Reserve func(contract.Run, contract.Action) (contract.Run, error)
 	// Paused applies a confirmed pause and may retain a result that raced with cancellation.
-	Paused  func(contract.Run, *contract.Event) (contract.Run, error)
-	OnError func(runID string, err error)
+	Paused   func(contract.Run, *contract.Event) (contract.Run, error)
+	OnError  func(runID string, err error)
+	Sessions *sessions.Manager
+	// SessionTicks optionally drives deterministic cleanup. A nil channel uses
+	// the lifecycle policy's normal periodic sweep.
+	SessionTicks <-chan time.Time
 }
 
 type Runner struct {
@@ -87,6 +92,9 @@ func (r *Runner) Run(ctx context.Context) error {
 	for range r.cfg.Workers {
 		workers.Go(func() { r.work(ctx) })
 	}
+	if r.cfg.Sessions != nil {
+		workers.Go(func() { r.sweepSessions(ctx) })
+	}
 	r.requestRecovery()
 scan:
 	for {
@@ -98,6 +106,9 @@ scan:
 		}
 	}
 	workers.Wait()
+	if r.cfg.Sessions != nil {
+		r.sweep(ctx, true)
+	}
 	return nil
 }
 

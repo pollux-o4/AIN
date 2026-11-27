@@ -15,6 +15,7 @@ import (
 	"github.com/pollux-o4/AIN/backend/internal/paseowire"
 	"github.com/pollux-o4/AIN/backend/internal/runner"
 	"github.com/pollux-o4/AIN/backend/internal/runtime"
+	"github.com/pollux-o4/AIN/backend/internal/sessions"
 	"github.com/pollux-o4/AIN/backend/internal/store"
 	"github.com/pollux-o4/AIN/backend/internal/writingai"
 )
@@ -56,6 +57,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 	defer db.Close()
+	wire := paseowire.New(*home)
+	registry, err := db.SessionRegistry(ctx)
+	if err != nil {
+		return err
+	}
+	sessionManager, err := sessions.New(registry, wire, sessions.Config{Owner: root})
+	if err != nil {
+		return err
+	}
 	builder := writingai.New(writingai.Config{Base: contract.SessionSpec{
 		Provider: *provider, Model: *model, WorkDir: root,
 	}})
@@ -67,8 +77,8 @@ func run(ctx context.Context) error {
 		return err
 	}
 	turns := runtime.Turns{Writing: builder, Figures: draw}
-	return runtime.ServeEditorial(ctx, *address, db, paseowire.New(*home), turns, runtime.EditorialConfig{
+	return runtime.ServeEditorial(ctx, *address, db, wire, turns, runtime.EditorialConfig{
 		Assets: os.DirFS(*assets), SessionKey: sessionKey, AgentToken: agentToken, Outbox: *outbox,
-		Runner: runner.Config{Workers: 4, Queue: 64, TurnLimit: 5 * time.Minute, RecheckInterval: 2 * time.Second, MaxRechecks: 5},
+		Runner: runner.Config{Sessions: sessionManager, Workers: 4, Queue: 64, TurnLimit: 5 * time.Minute, RecheckInterval: 2 * time.Second, MaxRechecks: 5},
 	})
 }

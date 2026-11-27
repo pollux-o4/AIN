@@ -14,6 +14,7 @@ type reservedAction struct {
 	Action    contract.Action
 	Version   int64
 	MessageID string
+	Session   *sessionPlan
 }
 
 func (r *Runner) process(ctx context.Context, id string, intent *contract.Intent, candidate bool) (bool, error) {
@@ -58,7 +59,7 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	}
 	id := contract.IntentID(run, action)
 	action.WorkID = id
-	spec, err := r.turns.BuildTurn(run, action)
+	spec, delivered, err := r.buildTrackedTurn(run, action)
 	if err != nil {
 		return false, err
 	}
@@ -71,14 +72,17 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	}
 	agent := agentID(id)
 	planned := reservedAction{Action: action, Version: reserved.Version, MessageID: agent}
-	value, err := json.Marshal(planned)
-	if err != nil {
-		return false, err
+	if r.cfg.Sessions != nil {
+		planned.Session = &sessionPlan{Delivered: delivered}
 	}
 	intent := contract.Intent{
-		ID: id, RunID: run.ID, AgentID: agent, Action: value, Deadline: r.cfg.Now().Add(r.cfg.TurnLimit),
+		ID: id, RunID: run.ID, AgentID: agent, Deadline: r.cfg.Now().Add(r.cfg.TurnLimit),
 	}
-	if err := r.reserveTurn(ctx, run.Version, reserved, intent); err != nil {
+	if handled, advanced, err := r.tryReuse(ctx, run, reserved, intent, planned, spec); handled {
+		return advanced, err
+	}
+	if err := r.reservePlannedTurn(ctx, run.Version, reserved, &intent, planned); err != nil {
+
 		if errors.Is(err, errAtCapacity) {
 			return false, nil
 		}
@@ -86,6 +90,9 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	}
 	if err := ctx.Err(); err != nil {
 		return false, err
+	}
+	if err := r.trackFresh(ctx, intent, planned, &spec); err != nil {
+		return r.failBeforeDispatch(ctx, reserved, intent, planned, err)
 	}
 	ref, err := r.paseo.Create(ctx, intent.AgentID, spec)
 	if err != nil {
@@ -104,10 +111,22 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	return r.finish(ctx, reserved, intent, planned)
 }
 
+func (r *Runner) reservePlannedTurn(ctx context.Context, version int64, run contract.Run, intent *contract.Intent, plan reservedAction) error {
+	value, err := json.Marshal(plan)
+	if err != nil {
+		return err
+	}
+	intent.Action = value
+	return r.reserveTurn(ctx, version, run, *intent)
+}
+
 func (r *Runner) finish(ctx context.Context, run contract.Run, intent contract.Intent, planned reservedAction) (bool, error) {
 	snapshot, err := r.awaitTerminal(ctx, &intent, planned.MessageID)
 	if err != nil {
 		return false, err
+	}
+	if !proveSession(planned, snapshot) {
+		return false, contract.ErrDeliveryUncertain
 	}
 	event, err := r.terminalEvent(intent.ID, planned.Action, snapshot)
 	if err != nil {
@@ -120,6 +139,7 @@ func (r *Runner) finish(ctx context.Context, run contract.Run, intent contract.I
 	if err := r.store.Commit(ctx, run.Version, intent.ID, next); err != nil {
 		return false, err
 	}
+	r.releaseSession(ctx, intent, planned, snapshot, event.Kind != "fail")
 	r.requestRecovery()
 	return true, nil
 }

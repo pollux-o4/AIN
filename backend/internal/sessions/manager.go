@@ -194,7 +194,11 @@ func (m *Manager) Dispatch(ctx context.Context, lease Lease, desired contract.Se
 	}
 	assignment := (Lease{worker}).Assignment()
 	if err := persist(ctx, assignment); err != nil {
-		return err
+		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+		defer cancel()
+		worker.Phase, worker.ChangedAt = retired, m.cfg.Now()
+		_, cleanupErr := m.registry.save(cleanup, worker)
+		return errors.Join(err, cleanupErr)
 	}
 	ref := assignment.Remote
 	ref.TurnID = worker.MessageID
@@ -222,11 +226,16 @@ func (m *Manager) Dispatch(ctx context.Context, lease Lease, desired contract.Se
 // ProvesResult accepts only the exact client message, in the observed epoch,
 // after the old native turn and cursor. Fresh jobs have no baseline.
 func (l Lease) ProvesResult(snapshot contract.Snapshot) bool {
-	worker := l.worker
+	return l.Assignment().ProvesResult(snapshot)
+}
+
+// ProvesResult also works from the assignment saved with the editorial intent
+// when the registry lease cannot be loaded after a restart.
+func (a Assignment) ProvesResult(snapshot contract.Snapshot) bool {
 	ref := snapshot.Ref
-	if ref.AgentID != worker.AgentID || ref.TurnID == "" || ref.TurnID != worker.MessageID ||
-		ref.Epoch == "" || ref.After <= worker.Boundary.After ||
-		(worker.Boundary.Epoch != "" && ref.Epoch != worker.Boundary.Epoch) {
+	if ref.AgentID != a.Remote.AgentID || ref.TurnID == "" || ref.TurnID != a.MessageID ||
+		ref.Epoch == "" || ref.After <= a.Boundary.After ||
+		(a.Boundary.Epoch != "" && ref.Epoch != a.Boundary.Epoch) {
 		return false
 	}
 	if !slices.Contains([]string{"completed", "failed", "cancelled", "stopped"}, snapshot.Status) {
@@ -234,7 +243,7 @@ func (l Lease) ProvesResult(snapshot contract.Snapshot) bool {
 	}
 	var result struct{ DaemonTurnID string }
 	return json.Unmarshal(snapshot.Body, &result) == nil && result.DaemonTurnID != "" &&
-		result.DaemonTurnID != worker.Boundary.DaemonTurnID
+		result.DaemonTurnID != a.Boundary.DaemonTurnID
 }
 
 // Release runs after the result was durably applied. A rejected/failed session
