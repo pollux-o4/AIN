@@ -16,15 +16,24 @@ type historyArtifact struct {
 type historySnapshot struct {
 	Revision  int64
 	Feedback  *string
-	Artifacts map[string]historyArtifact
+	Artifacts map[string]json.RawMessage
+}
+
+// A malformed old stage is unavailable without hiding the rest of the run.
+func (s historySnapshot) item(stage string) historyArtifact {
+	var item historyArtifact
+	if json.Unmarshal(s.Artifacts[stage], &item) != nil {
+		return historyArtifact{}
+	}
+	return item
 }
 
 func (s historySnapshot) artifact(stage string) historyOutput {
-	return s.Artifacts[stage].Output
+	return s.item(stage).Output
 }
 
 func (s historySnapshot) current(stage string) historyOutput {
-	if item := s.Artifacts[stage]; item.Revision == s.Revision {
+	if item := s.item(stage); item.Revision == s.Revision {
 		return item.Output
 	}
 	return nil
@@ -44,7 +53,7 @@ type journeyRow struct {
 	HasDraft  bool            `json:"hasDraft"`
 }
 
-func rawString(raw json.RawMessage) *string {
+func historyRawString(raw json.RawMessage) *string {
 	var value *string
 	if json.Unmarshal(raw, &value) != nil {
 		return nil
@@ -58,7 +67,7 @@ func directionForHistory(snapshot historySnapshot) []journeyChoice {
 	_ = json.Unmarshal(outline["sections"], &sections)
 	titles := make([]string, 0, len(sections))
 	for _, section := range sections {
-		if label := rawString(section); label != nil {
+		if label := historyRawString(section); label != nil {
 			titles = append(titles, *label)
 		} else {
 			var card struct{ Title string }
@@ -66,15 +75,15 @@ func directionForHistory(snapshot historySnapshot) []journeyChoice {
 			titles = append(titles, card.Title)
 		}
 	}
-	key := rawString(value["outcome"])
+	key := historyRawString(value["outcome"])
 	if key == nil {
-		key = rawString(topic["problem"])
+		key = historyRawString(topic["problem"])
 	}
 	direction := make([]journeyChoice, 0, 3)
 	for _, choice := range []journeyChoice{
-		{"독자", stringValue(rawString(audience["reader"])), rawString(audience["intent"])},
-		{"핵심", stringValue(key), rawString(topic["scope"])},
-		{"구성", strings.Join(titles, " → "), rawString(outline["rationale"])},
+		{"독자", historyStringValue(historyRawString(audience["reader"])), historyRawString(audience["intent"])},
+		{"핵심", historyStringValue(key), historyRawString(topic["scope"])},
+		{"구성", strings.Join(titles, " → "), historyRawString(outline["rationale"])},
 	} {
 		if strings.TrimSpace(choice.Text) != "" {
 			direction = append(direction, choice)
@@ -98,7 +107,7 @@ func historyFindings(review, research historyOutput) []string {
 		var items []json.RawMessage
 		_ = json.Unmarshal(raw, &items)
 		for _, item := range items {
-			value := stringValue(rawString(item))
+			value := historyStringValue(historyRawString(item))
 			if strings.TrimSpace(value) != "" && !seen[value] {
 				findings = append(findings, value)
 				seen[value] = true
@@ -144,9 +153,9 @@ func projectHistoryJourney(snapshots []historySnapshot, records []historyRecord)
 		}
 		rows = append(rows, journeyRow{
 			Revision: snapshot.Revision, Request: request, Direction: delta,
-			Summary:  rawString(snapshot.current("draft")["changeSummary"]),
+			Summary:  historyRawString(snapshot.current("draft")["changeSummary"]),
 			Findings: historyFindings(snapshot.current("review"), snapshot.current("research")),
-			HasDraft: stringValue(rawString(snapshot.artifact("draft")["text"])) != "",
+			HasDraft: historyStringValue(historyRawString(snapshot.artifact("draft")["text"])) != "",
 		})
 		before, previousFeedback = direction, snapshot.Feedback
 	}

@@ -96,9 +96,12 @@ func (q Queries) HistoryView(ctx context.Context, id string) (json.RawMessage, e
 	}
 	snapshots := append(saved.State.History, saved.State.historySnapshot)
 	retained := make(map[int64]historySnapshot, len(snapshots))
-	for _, snapshot := range snapshots {
-		retained[snapshot.Revision] = snapshot
+	for _, snapshot := range saved.State.History {
+		if _, exists := retained[snapshot.Revision]; !exists {
+			retained[snapshot.Revision] = snapshot
+		}
 	}
+	retained[saved.State.Revision] = saved.State.historySnapshot
 	records := historyRecords(saved.Events, jobs, retained)
 	return json.Marshal(map[string]any{
 		"records": records,
@@ -112,13 +115,13 @@ func historyRecords(events []historyEvent, jobs map[string]*historyJob, snapshot
 	feedback := make(map[int64]*string)
 	for index := len(events) - 1; index >= 0; index-- {
 		event := events[index]
-		job := jobs[stringValue(event.JobID)]
+		job := jobs[historyStringValue(event.JobID)]
 		rec := historyRecord{
 			Key: strconv.Itoa(index), At: event.At, Kind: event.Kind, Label: event.Label,
 			Revision: event.Revision, Stage: event.Stage, Name: historyStageName(event.Stage),
 			Inputs: []string{}, InputsSource: "unavailable", ResultSource: "none",
 			ExecutionID: event.ExecutionID, Reason: event.Reason,
-			Unavailable: stringValue(event.JobID) != "" && job == nil, Steps: []sessions.Step{},
+			Unavailable: historyStringValue(event.JobID) != "" && job == nil, Steps: []sessions.Step{},
 		}
 		completed := event.Kind == "ai_completed"
 		if completed || event.Kind == "ai_requested" {
@@ -141,7 +144,7 @@ func historyRecords(events []historyEvent, jobs map[string]*historyJob, snapshot
 				if job.Output != nil {
 					rec.ResultSource = "job"
 				}
-				if stringValue(job.Target) != "" {
+				if historyStringValue(job.Target) != "" {
 					target := historyStageName(*job.Target)
 					rec.Target = &target
 				}
@@ -159,7 +162,7 @@ func historyRecords(events []historyEvent, jobs map[string]*historyJob, snapshot
 		if rec.Reason == nil && job != nil && job.Status == "failed" {
 			rec.Reason = historyFailure(job.FailureKind)
 		}
-		if job != nil && stringValue(job.Feedback) != "" {
+		if job != nil && historyStringValue(job.Feedback) != "" {
 			feedback[event.Revision] = job.Feedback
 		}
 		records[index] = rec
@@ -167,7 +170,7 @@ func historyRecords(events []historyEvent, jobs map[string]*historyJob, snapshot
 	return records
 }
 
-func stringValue(s *string) string {
+func historyStringValue(s *string) string {
 	if s == nil {
 		return ""
 	}

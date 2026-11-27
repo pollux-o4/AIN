@@ -97,7 +97,7 @@ func attemptsForHistory(events []historyEvent, jobs map[string]*historyJob, now 
 	later := make(map[retryLocation]bool)
 	for index := len(events) - 1; index >= 0; index-- {
 		event := events[index]
-		id := stringValue(event.JobID)
+		id := historyStringValue(event.JobID)
 		switch event.Kind {
 		case "ai_completed":
 			completions[id] = index

@@ -134,7 +134,7 @@ func readHistoryJobs(ctx context.Context, source RunReader, events []historyEven
 		return result
 	}
 	for _, event := range events {
-		job(stringValue(event.JobID), 0)
+		job(historyStringValue(event.JobID), 0)
 	}
 	return results, ctx.Err()
 }
@@ -179,7 +179,7 @@ func projectHistoryJob(fields legacyHistoryFields) *historyJob {
 	}
 	if fields.Event.Output != nil {
 		job.Output = projectedHistoryOutput(fields.Event.Output, stage, false)
-		if text := rawString(fields.Event.Output["text"]); text != nil {
+		if text := historyRawString(fields.Event.Output["text"]); text != nil {
 			chars := int64(utf8.RuneCountInString(historyMarkdownLink.ReplaceAllString(*text, "]")))
 			job.Chars = &chars
 		}
@@ -209,7 +209,7 @@ var historyStageInputs = map[string][]string{
 }
 
 func reconstructHistoryInputs(fields legacyHistoryFields, stage string, feedback *string) historyInputs {
-	r := historyInputs{Feedback: stringValue(feedback) != ""}
+	r := historyInputs{Feedback: historyStringValue(feedback) != ""}
 	if fields.Action.Type == "request_figure" {
 		r.Stages = []string{"audience", "value", "outline", "draft"}
 		return r
@@ -235,11 +235,11 @@ func reconstructHistoryInputs(fields legacyHistoryFields, stage string, feedback
 		}
 		switch {
 		case fields.Action.Mode == "edit":
-			r.Baseline = stringValue(rawString(last.artifact("draft")["text"])) != ""
+			r.Baseline = historyStringValue(historyRawString(last.artifact("draft")["text"])) != ""
 		case stage != "route" && stage != "review" && stage == edit && r.Feedback:
 			r.Baseline = last.artifact(stage) != nil
 			if fields.Action.Section != nil {
-				r.Baseline = hasHistoryPart(stringValue(rawString(last.artifact("draft")["text"])), fields.Action.Section.historySection)
+				r.Baseline = hasHistoryPart(historyStringValue(historyRawString(last.artifact("draft")["text"])), fields.Action.Section.historySection)
 			}
 		}
 	}
@@ -247,7 +247,7 @@ func reconstructHistoryInputs(fields legacyHistoryFields, stage string, feedback
 	if fields.Action.Section != nil {
 		rejected = fields.Action.Section.Rejected
 	}
-	r.Baseline = r.Baseline || stringValue(rawString(rejected)) != ""
+	r.Baseline = r.Baseline || historyStringValue(historyRawString(rejected)) != ""
 	return r
 }
 
@@ -292,6 +292,7 @@ func publicHistorySteps(saved []sessions.Step) []sessions.Step {
 				continue
 			}
 			step.Status = ""
+			step.Text = limitHistoryNote(step.Text)
 		case "tool":
 			if !slices.Contains([]string{"명령 실행", "파일 수정", "자료 읽기", "자료 찾기", "웹 확인", "도구 실행"}, step.Text) {
 				step.Text = "도구 실행"
@@ -305,4 +306,18 @@ func publicHistorySteps(saved []sessions.Step) []sessions.Step {
 		result = append(result, step)
 	}
 	return result
+}
+
+func limitHistoryNote(text string) string {
+	units := 0
+	for index, r := range text {
+		units++
+		if r > 0xffff {
+			units++
+		}
+		if units > sessions.ActivityNoteLimit {
+			return text[:index]
+		}
+	}
+	return text
 }
