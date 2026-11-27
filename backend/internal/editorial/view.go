@@ -44,6 +44,11 @@ type publicRunRecord struct {
 	IssueKind  json.RawMessage
 	CallsUsed  int64
 	MaxCalls   int64
+	UpdatedAt  *int64
+	Worker     struct {
+		ConfirmedAt *int64
+		ExecutionID *string
+	}
 }
 
 func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error) {
@@ -79,7 +84,11 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	var textRevision *int64
 	if draft != nil {
 		text = draft.Output.Text
-		textRevision = &draft.Revision
+		revision := draft.Revision
+		if revision == 0 {
+			revision = s.Revision
+		}
+		textRevision = &revision
 		for line := range strings.SplitSeq(text, "\n") {
 			if heading, ok := strings.CutPrefix(line, "# "); ok && strings.TrimSpace(heading) != "" {
 				title = heading
@@ -127,7 +136,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	}
 	return json.Marshal(map[string]any{
 		"id": id, "version": s.Version, "revision": s.Revision, "idea": s.Idea, "title": title,
-		"source": s.Source, "status": s.Status, "issue": run.Issue, "text": text, "textRevision": textRevision,
+		"source": s.Source, "status": s.Status, "stage": s.Stage, "label": label, "busy": kind == "queued" || kind == "working", "updatedAt": run.UpdatedAt, "issue": run.Issue, "text": text, "textRevision": textRevision,
 		"previous": previous, "findings": findings, "artifacts": stageArtifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
 		"canDownload": text != "" && presented, "canFeedback": presented,
@@ -137,7 +146,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"html":     html,
 		"monitor": map[string]any{
 			"kind": kind, "label": label, "now": time.Now().UnixMilli(),
-			"lastConfirmedAt": nil, "canPause": pending, "canResume": !held && (s.Status == "paused" || s.Status == "failed"),
+			"lastConfirmedAt": run.Worker.ConfirmedAt, "executionId": run.Worker.ExecutionID, "canPause": pending, "canResume": !held && (s.Status == "paused" || s.Status == "failed"),
 			"resumeLabel": "이어가기", "needsAiAttention": false, "events": events, "pipeline": pipeline(s.Stage, s.Status, s.Revision, stageArtifacts, events),
 		},
 	})
