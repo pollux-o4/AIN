@@ -1,58 +1,112 @@
 package figuredomain
 
-import "strings"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+var animatedSVG = regexp.MustCompile(`(?i)<(?:animate|animateTransform|animateMotion|set)\b|@keyframes|animation\s*:`)
 
 // PublicView exposes figures without embedding SVG or workspace files.
-func PublicView(figure map[string]any, revision int64) map[string]any {
+func PublicView(figure map[string]any, revision int64, draft string, route func(kind, choice string) string) map[string]any {
 	if figure == nil || int64(count(figure["revision"])) != revision {
 		return nil
 	}
-	phase := str(figure["phase"])
 	candidates := []object{}
+	looks := map[string]any{}
 	for _, raw := range list(figure["candidates"]) {
 		row := obj(raw)
-		candidate := publicFields(row, "id", "anchor", "claim", "origin", "reason", "analogy",
-			"scene", "kind", "motifs", "without", "mapping", "route", "direction", "lookBy")
-		candidate["section"] = nil
+		candidate := optionalFields(row, "reason", "analogy", "scene", "kind", "without", "direction")
+		candidate["id"], candidate["anchor"], candidate["claim"] = row["id"], row["anchor"], row["claim"]
+		candidate["origin"] = coalesce(row["origin"], "ai")
+		candidate["quote"], _ = projection(str(row["anchor"]))
+		candidate["section"] = publicSection(draft, str(row["anchor"]))
+		candidate["motifs"], candidate["mapping"] = publicList(row["motifs"]), publicList(row["mapping"])
+		candidate["route"] = route(str(row["kind"]), str(row["route"]))
 		candidate["routeBy"] = "default"
 		if str(row["route"]) != "" {
 			candidate["routeBy"] = "user"
 		}
+		candidate["look"] = coalesce(row["look"], obj(figure["style"])["look"])
+		candidate["lookBy"] = "auto"
+		if row["lookBy"] == "user" {
+			candidate["lookBy"] = "user"
+		}
+		looks[str(row["id"])] = candidate["look"]
 		candidates = append(candidates, candidate)
 	}
 	items := []object{}
 	for _, raw := range list(figure["items"]) {
 		row := obj(raw)
-		item := publicFields(row, "id", "anchor", "claim", "look", "alt", "caption", "route", "labels")
-		item["mime"] = "image/svg+xml"
-		svg := strings.ToLower(str(row["svg"]))
-		item["motion"] = strings.Contains(svg, "<animate") || strings.Contains(svg, "@keyframes") || strings.Contains(svg, "<set ")
+		item := optionalFields(row, "id", "anchor", "claim", "alt", "caption")
+		item["look"] = coalesce(looks[str(row["id"])], obj(figure["style"])["look"])
+		item["mime"], item["route"] = "image/svg+xml", "svg"
+		item["motion"] = animatedSVG.MatchString(str(row["svg"]))
+		item["labels"] = []any{}
 		items = append(items, item)
 	}
-	result := publicFields(figure, "phase", "note", "world", "feedback", "recompose", "style", "motifs", "failed", "coverage")
+	result := optionalFields(figure, "phase", "note", "world", "feedback", "style")
 	result["routesAvailable"], result["candidates"], result["items"] = []string{"svg"}, candidates, items
-	result["selected"] = ids(figure["selected"])
-	if result["selected"] == nil {
-		result["selected"] = []string{}
-	}
-	if cov := obj(result["coverage"]); cov != nil {
+	result["selected"], result["motifs"], result["recompose"] = publicList(figure["selected"]), publicList(figure["motifs"]), publicList(figure["recompose"])
+	result["failed"], result["coverage"], result["current"] = coalesce(figure["failed"], object{}), nil, nil
+	if cov := obj(figure["coverage"]); cov != nil {
 		clone := omit(cov)
-		clone["gap"] = nil
+		clone["gap"] = publicCoverageGap(cov)
 		result["coverage"] = clone
 	}
-	if phase == "generate" {
-		ids, pass := current(figure)
-		result["current"] = object{"ids": ids, "pass": pass}
+	if figure["phase"] == "generate" {
+		batch, pass := current(figure)
+		result["current"] = object{"ids": batch, "pass": pass}
 	}
 	return result
 }
 
-func publicFields(from object, keys ...string) object {
+func publicCoverageGap(value object) any {
+	if missing := len(list(value["missing"])); missing > 0 {
+		return fmt.Sprintf("검토하지 않은 단위 %d곳", missing)
+	}
+	if units, candidates := count(value["units"]), count(value["candidates"]); units >= 3 && candidates <= 1 {
+		return fmt.Sprintf("단위 %d곳 중 후보 %d개", units, candidates)
+	}
+	return nil
+}
+
+func optionalFields(from object, keys ...string) object {
 	result := object{}
 	for _, key := range keys {
-		if value, ok := from[key]; ok {
-			result[key] = value
-		}
+		result[key] = from[key]
 	}
 	return result
+}
+
+func publicList(raw any) []any {
+	if result := list(raw); result != nil {
+		return result
+	}
+	return []any{}
+}
+
+func coalesce(value, fallback any) any {
+	if value != nil {
+		return value
+	}
+	return fallback
+}
+
+func publicSection(draft, anchor string) any {
+	at := strings.Index(draft, anchor)
+	if at < 0 || anchor == "" {
+		return nil
+	}
+	var title string
+	for line := range strings.SplitSeq(draft[:at], "\n") {
+		if section := headingTitle(line); section != "" {
+			title = section
+		}
+	}
+	if title == "" {
+		return nil
+	}
+	return title
 }
