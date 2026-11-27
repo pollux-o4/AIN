@@ -32,10 +32,12 @@ type publicRunRecord struct {
 		Idea              string
 		Source            string
 		Status            string
+		Stage             string
 		SatisfiedRevision int64
 		Artifacts         map[string]json.RawMessage
 		History           []revisionView
 	}
+	Events     json.RawMessage
 	Operations map[string]string
 	ArchivedAt json.RawMessage
 	Issue      *string
@@ -90,6 +92,16 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	}
 	sort.Strings(operations)
 	pending := isPending(s.Status)
+	events := publicEvents(run.Events)
+	kind := "ready"
+	switch {
+	case s.Status == "paused" || s.Status == "failed":
+		kind = s.Status
+	case run.Issue != nil:
+		kind = "blocked"
+	case pending:
+		kind = "queued"
+	}
 	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
 	stageArtifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
 	saved := contract.Run{ID: id, Value: data}
@@ -113,9 +125,9 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"archived": isArchived(run.ArchivedAt),
 		"html":     html,
 		"monitor": map[string]any{
-			"kind": s.Status, "label": stateLabel(s.Status), "now": time.Now().UnixMilli(),
+			"kind": kind, "label": stateLabel(s.Status), "now": time.Now().UnixMilli(),
 			"lastConfirmedAt": nil, "canPause": pending, "canResume": s.Status == "paused" || s.Status == "failed",
-			"resumeLabel": "이어가기", "needsAiAttention": false, "events": []any{}, "pipeline": []any{},
+			"resumeLabel": "이어가기", "needsAiAttention": false, "events": events, "pipeline": pipeline(s.Stage, s.Status, s.Revision, stageArtifacts, events),
 		},
 	})
 }
