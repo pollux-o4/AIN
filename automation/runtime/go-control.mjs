@@ -36,6 +36,7 @@ const commands = new Set([
   "restart",
   "status",
   "prune",
+  "providers",
   "legacy-foreground",
   "legacy-bridge",
   "legacy-start",
@@ -293,22 +294,27 @@ function legacy(cfg, command, flags) {
 
 async function main() {
   const [command, ...flags] = process.argv.slice(2);
-  const permitted = command === "prune" ? ["--all", "--help", "-h"] : ["--force"];
+  const permitted =
+    command === "prune"
+      ? ["--all", "--help", "-h"]
+      : command === "providers"
+        ? ["--help", "-h"]
+        : ["--force"];
   if (!commands.has(command) || flags.some((flag) => !permitted.includes(flag)))
     throw Error("사용법: go-control.mjs <foreground|start|stop|restart|status> [--force]");
   const cfg = config();
-  if (command === "prune") {
+  if (command === "prune" || command === "providers") {
+    const options = command === "prune" ? ["--data", cfg.data] : ["--cwd", root];
     const result = spawnSync(
       "go",
       [
         "-C",
         "backend",
         "run",
-        "./tools/prune",
-        "--data",
-        cfg.data,
+        `./tools/${command}`,
         "--paseo-home",
         cfg.paseo,
+        ...options,
         ...flags,
       ],
       { cwd: root, stdio: "inherit" },

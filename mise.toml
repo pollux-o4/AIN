@@ -40,7 +40,7 @@ description = "이전 Node 브리지 · 별도 호환 실행"
 run = "node automation/runtime/go-control.mjs legacy-bridge"
 
 [tasks."ai:providers"]
-run = "node automation/paseo/providers.mjs"
+run = "node automation/runtime/go-control.mjs providers"
 
 [tasks."ai:prune"]
 description = "쓰지 않는 AIN Paseo 세션 보관(제공자 프로세스 종료) · --all: 대기 담당까지 · ADR-0015"
