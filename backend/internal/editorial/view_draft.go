@@ -23,8 +23,8 @@ type draftOutput struct {
 
 func (out *draftOutput) UnmarshalJSON(raw []byte) error {
 	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &fields); err != nil {
-		return err
+	if json.Unmarshal(raw, &fields) != nil {
+		return nil
 	}
 	var text *string
 	if json.Unmarshal(fields["text"], &text) == nil && text != nil {

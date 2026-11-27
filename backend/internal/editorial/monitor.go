@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
 )
 
 type activityEvent struct {
@@ -45,6 +46,10 @@ type pendingRunReader interface {
 	PendingRun(context.Context, string) (contract.Intent, error)
 }
 
+type pendingBatchReader interface {
+	BatchChildren(context.Context, string) ([]contract.BatchChild, error)
+}
+
 func (q Queries) monitor(ctx context.Context, id string, run publicRunRecord, needsCompletion, held bool) (detailMonitor, error) {
 	stage := displayWorkStage(run.State)
 	now := q.now().UnixMilli()
@@ -57,7 +62,10 @@ func (q Queries) monitor(ctx context.Context, id string, run publicRunRecord, ne
 		switch {
 		case err == nil:
 			managed = true
-			running = intent.Remote.AgentID != "" && intent.Remote.TurnID != ""
+			running, err = q.hasObservedTurn(ctx, intent, stage)
+			if err != nil {
+				return detailMonitor{}, err
+			}
 		case !errors.Is(err, contract.ErrNotFound):
 			return detailMonitor{}, err
 		}
@@ -71,35 +79,29 @@ func (q Queries) monitor(ctx context.Context, id string, run publicRunRecord, ne
 		CanPause: isPending(run.State.Status) && !held, ResumeLabel: "이어가기", Events: events,
 	}
 	lastAt := firstDetailTime(run.Worker.ConfirmedAt, run.QueuedAt, run.StartedAt)
+	ready := readyLabels[run.State.Status]
+	if run.State.Status == "satisfied" && run.State.Figure != nil {
+		ready = "시각자료 확인됨"
+	}
 	switch {
 	case held:
 		monitor.Kind, monitor.Label = "blocked", "이전 AI 작업 확인 대기"
 	case needsCompletion:
 		monitor.Kind, monitor.Label = "blocked", "요구사항 보완 필요"
-	case run.State.Status == "satisfied":
-		monitor.Kind, monitor.Label = "ready", "초안 확정"
-		if run.State.Figure != nil {
-			monitor.Label = "시각자료 확인됨"
-		}
+	case ready != "":
+		monitor.Kind, monitor.Label = "ready", ready
+	case run.State.Status == "paused":
+		monitor.Kind, monitor.Label = "paused", "중단됨"
+	case run.State.Status == "failed":
+		monitor.Kind, monitor.Label = "failed", "실패"
+	case run.Issue != nil && *run.Issue != "":
+		monitor.Kind, monitor.Label = "blocked", "확인 필요"
+	case !managed && lastAt != nil && now-*lastAt > 15000:
+		monitor.Kind, monitor.Label = "stale", "진행 확인 지연"
+	case running:
+		monitor.Kind, monitor.Label = "working", displayWorkName(run.State, stage)+" 중"
 	default:
-		if label := readyLabels[run.State.Status]; label != "" {
-			monitor.Kind, monitor.Label = "ready", label
-		} else {
-			switch {
-			case run.State.Status == "paused":
-				monitor.Kind, monitor.Label = "paused", "중단됨"
-			case run.State.Status == "failed":
-				monitor.Kind, monitor.Label = "failed", "실패"
-			case run.Issue != nil && *run.Issue != "":
-				monitor.Kind, monitor.Label = "blocked", "확인 필요"
-			case !managed && lastAt != nil && now-*lastAt > 15000:
-				monitor.Kind, monitor.Label = "stale", "진행 확인 지연"
-			case running:
-				monitor.Kind, monitor.Label = "working", displayWorkName(run.State, stage)+" 중"
-			default:
-				monitor.Kind, monitor.Label = "queued", displayWorkName(run.State, stage)+" 대기"
-			}
-		}
+		monitor.Kind, monitor.Label = "queued", displayWorkName(run.State, stage)+" 대기"
 	}
 	monitor.CanResume = !held && !needsCompletion &&
 		slices.Contains([]string{"paused", "failed", "stale", "blocked"}, monitor.Kind)
@@ -114,7 +116,25 @@ func (q Queries) monitor(ctx context.Context, id string, run publicRunRecord, ne
 	return monitor, nil
 }
 
+func (q Queries) hasObservedTurn(ctx context.Context, intent contract.Intent, stage string) (bool, error) {
+	if intent.Remote.AgentID != "" && intent.Remote.TurnID != "" {
+		return true, nil
+	}
+	if reader, ok := q.Store.(pendingBatchReader); ok && stage == "figure" && intent.AgentID == "" {
+		children, err := reader.BatchChildren(ctx, intent.ID)
+		if err != nil {
+			return false, err
+		}
+		return slices.ContainsFunc(children, func(child contract.BatchChild) bool {
+			return child.Started && child.Result == nil && child.Failure == "" &&
+				child.Remote.AgentID != "" && child.Remote.TurnID != ""
+		}), nil
+	}
+	return false, nil
+}
+
 var readyLabels = map[string]string{
+	"satisfied":              "초안 확정",
 	"publication_ready":      "발행 준비 승인",
 	"awaiting_figure_choice": "시각자료 위치 선택 대기",
 	"awaiting_figure_design": "시각자료 구성 확인 대기",
@@ -178,75 +198,11 @@ func displayWorkName(state publicRunState, stage string) string {
 	if stage != "figure" || state.Figure["phase"] != "generate" {
 		return name
 	}
-	current, _ := state.Figure["current"].(map[string]any)
-	ids, _ := current["ids"].([]any)
-	if len(ids) == 0 && current["id"] != nil {
-		ids = append(ids, current["id"])
+	progress := figuredomain.PublicProgress(state.Figure)
+	if progress.Pass == "fix" {
+		return fmt.Sprintf("%s %d장 동시 · 부분 수정", name, len(progress.IDs))
 	}
-	if current["pass"] == "fix" {
-		return fmt.Sprintf("%s %d장 동시 · 부분 수정", name, len(ids))
-	}
-	return fmt.Sprintf("%s %d장 동시 · 그리기 1/1", name, len(ids))
-}
-
-type pipelineStep struct {
-	Stage       string `json:"stage"`
-	Name        string `json:"name"`
-	Status      string `json:"status"`
-	StartedAt   *int64 `json:"startedAt"`
-	CompletedAt *int64 `json:"completedAt"`
-}
-
-func pipeline(state publicRunState, artifacts []artifactView, events []monitorEvent, blocked bool) []pipelineStep {
-	current := ""
-	if !blocked {
-		current = map[string]string{"waiting_ai": "active", "waiting_figure": "active", "paused": "paused", "failed": "failed"}[state.Status]
-	}
-	status := func(stage, working string, done bool) string {
-		if done {
-			return "done"
-		}
-		if stage == working && current != "" {
-			return current
-		}
-		return "pending"
-	}
-	step := func(stage, status string) pipelineStep {
-		result := pipelineStep{Stage: stage, Name: monitorStageName(stage), Status: status}
-		for _, event := range events {
-			if event.Revision != state.Revision || event.Stage != stage {
-				continue
-			}
-			if event.Kind == "ai_requested" {
-				result.StartedAt = &event.At
-			}
-			if event.Kind == "ai_completed" && status == "done" {
-				result.CompletedAt = &event.At
-			}
-		}
-		return result
-	}
-	result := make([]pipelineStep, 0, len(writingStages)+4)
-	if state.Status == "waiting_route" {
-		routeState := "active"
-		if blocked {
-			routeState = "pending"
-		}
-		result = append(result, step("route", routeState))
-	}
-	for _, stage := range writingStages {
-		done := slices.ContainsFunc(artifacts, func(artifact artifactView) bool { return artifact.Stage == stage.key })
-		result = append(result, step(stage.key, status(stage.key, state.Stage, done)))
-	}
-	if phase, _ := state.Figure["phase"].(string); phase != "" {
-		working := displayWorkStage(state)
-		result = append(result,
-			step("figure_plan", status("figure_plan", working, phase != "propose")),
-			step("figure_compose", status("figure_compose", working, slices.Contains([]string{"design", "generate", "review", "confirmed"}, phase))),
-			step("figure", status("figure", working, phase == "review" || phase == "confirmed")),
-		)
-	}
-	return result
+	return fmt.Sprintf("%s %d장 동시 · 그리기 1/1", name, len(progress.IDs))
 }
 
 func publicEvents(raw json.RawMessage) []activityEvent {

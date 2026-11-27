@@ -56,8 +56,7 @@ func PublicView(figure map[string]any, revision int64, draft string, route func(
 		result["coverage"] = clone
 	}
 	if figure["phase"] == "generate" {
-		batch, pass := current(figure)
-		result["current"] = object{"ids": batch, "pass": pass}
+		result["current"] = PublicProgress(figure)
 	}
 	return result
 }
@@ -109,4 +108,14 @@ func publicSection(draft, anchor string) any {
 		return nil
 	}
 	return title
+}
+
+type FigureProgress struct {
+	IDs  []string `json:"ids"`
+	Pass string   `json:"pass"`
+}
+
+func PublicProgress(figure map[string]any) FigureProgress {
+	batch, pass := current(figure)
+	return FigureProgress{IDs: batch, Pass: pass}
 }
