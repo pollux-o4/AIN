@@ -114,7 +114,7 @@ run = [
 run = "pnpm dev"
 
 [tasks."ai:test:contract"]
-description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델: 연결 1회 통과 후 합성 글 1편 검증 · 최대 31회 호출 · TIME-001"
+description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델: 연결 1회 통과 후 합성 글 1편 검증 · 기본 최대 31회 호출 · 수정 검증 포함 최대 61회 · TIME-001"
 run = "node automation/paseo/contract-e2e.mjs"
 
 [tasks."ai:eval"]
