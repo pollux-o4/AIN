@@ -8,6 +8,7 @@ import {
   type WritingJourneyEntry,
 } from "../shared/api";
 import { StageOutput } from "../shared/StageOutput";
+import { PaseoLink } from "./PaseoLink";
 import { UsageSummary } from "./UsageSummary";
 import { WritingJourney } from "./WritingJourney";
 
@@ -64,33 +65,13 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
           {run.model} · 이번 요청 {run.callsUsed}/{run.maxCalls}회
         </p>
         {loaded?.id === run.id && <UsageSummary usage={loaded.usage} />}
-        <div
-          id="execution-links"
-          className="flex flex-wrap gap-x-[18px] gap-y-2.5"
-          hidden={!run.executionLinks.length}
-        >
-          {run.executionLinks.map((link) => (
-            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
-              n8n 실행 {link.id}
-            </a>
-          ))}
-        </div>
-        <a
-          id="ai-console"
-          href={__PASEO_URL__}
-          target="_blank"
-          rel="noopener noreferrer"
-          hidden={!run.monitor.needsAiAttention}
-        >
-          AI 확인 화면
-        </a>
+        {run.monitor.needsAiAttention && <PaseoLink url={run.paseoUrl} />}
 
         <ol id="trace" hidden={!run.monitor.events.length}>
           {(
             records ?? run.monitor.events.map((event, index) => ({ ...event, key: String(index) }))
           ).map((event, index) => {
             const record = records?.[index];
-            const execution = run.executionLinks.find((link) => link.id === record?.executionId);
             return (
               <li key={event.key} data-stage={record?.stage} data-revision={event.revision}>
                 <time dateTime={new Date(event.at).toISOString()}>{time(event.at)}</time>
@@ -99,7 +80,8 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
                   (records ?? run.monitor.events)[index - 1].revision !== event.revision ? (
                     <h3>초안 {event.revision}</h3>
                   ) : null}
-                  {record && (record.goal || record.reason || record.output) ? (
+                  {record &&
+                  (record.goal || record.reason || record.output || record.executionId) ? (
                     <details>
                       <summary>{event.label}</summary>
                       {record.goal && <p>{record.goal}</p>}
@@ -114,11 +96,7 @@ export function ExecutionHistory({ run, open }: { run: Run; open: boolean }) {
                       {record.model && <p className="hint">AI: {record.model}</p>}
                       {record.reason && <p>{record.reason}</p>}
                       {record.target && <p>다음 작업: {record.target}</p>}
-                      {execution && (
-                        <a href={execution.url} target="_blank" rel="noopener noreferrer">
-                          이 단계의 n8n 실행 보기
-                        </a>
-                      )}
+                      {record.executionId && <p className="hint">실행 ID {record.executionId}</p>}
                       {record.resultSource === "artifact" && (
                         <p className="hint">
                           당시 실행 파일이 없어 현재 보존된 단계 결과를 표시합니다.

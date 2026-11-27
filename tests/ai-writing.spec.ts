@@ -278,11 +278,8 @@ test("실제 확인 시각·실행 이력·연결 단절 표시와 빈 영역 �
   for (const [, name] of stages) await expect(page.locator("#trace")).toContainText(`${name} 완료`);
   const runId = new URL(page.url()).hash.slice(1);
   const run = await (await page.request.get(`/write/api/runs/${runId}`)).json();
-  expect(run.monitor.executionId).toBeTruthy();
-  await expect(page.locator("#execution-links a").last()).toHaveAttribute(
-    "href",
-    new RegExp(`/executions/${run.monitor.executionId}$`),
-  );
+  await expect(page.locator("#trace li")).not.toHaveCount(0);
+  await expect(page.getByRole("link", { name: /n8n 실행/ })).toHaveCount(0);
   const events = run.monitor.events;
   await page.reload();
   await page.locator("#record-title").click();

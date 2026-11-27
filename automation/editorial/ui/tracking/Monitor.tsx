@@ -80,7 +80,6 @@ export function Monitor({
   const now = clock.server === monitor.now ? clock.server + elapsed : monitor.now;
   const kind = online ? monitor.kind : "offline";
   const active = ["working", "queued", "stale", "blocked"].includes(monitor.kind);
-  const live = run.executionLinks.find((link) => link.id === monitor.executionId);
   const confirmed = monitor.lastConfirmedAt;
   const next = nextStep(run, online);
   return (
@@ -104,16 +103,6 @@ export function Monitor({
         >
           {confirmed ? `${ago(now - confirmed)} 전 확인` : ""}
         </time>
-        <a
-          id="n8n-live"
-          className="live-link"
-          target="_blank"
-          rel="noopener noreferrer"
-          hidden={!live || !active}
-          href={live?.url}
-        >
-          n8n 실행 보기
-        </a>
       </div>
       <JourneyMap run={run} next={next} now={now} onPick={onPick} />
       <p

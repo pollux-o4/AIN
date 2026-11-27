@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Run } from "../shared/api";
+import { PaseoLink } from "./PaseoLink";
 import { previewFields } from "./preview";
 import { useActivity } from "./useActivity";
 import { isPending } from "./useRunTracking";
@@ -10,7 +11,7 @@ const labels = {
   generating: "답변을 생성하고 있습니다.",
   tool: "AI가 도구를 실행하고 있습니다.",
   validating: "응답이 도착했습니다. 결과를 확인하고 있습니다.",
-  permission: "AI 실행에 승인이 필요합니다. AI 실행 보기를 확인해 주세요.",
+  permission: "AI 실행에 승인이 필요합니다.",
   failed: "작업을 진행할 수 없습니다. 작업 안내를 확인해 주세요.",
   unavailable: "실시간 내용을 확인하지 못했습니다. 단계 상태는 계속 확인합니다.",
   complete: "단계 결과를 받았습니다.",
@@ -136,9 +137,7 @@ export function LiveActivity({ run, online }: { run: Run; online: boolean }) {
         </details>
       )}
       {(activity?.phase === "permission" || activity?.phase === "unavailable") && (
-        <a href={__PASEO_URL__} target="_blank" rel="noopener noreferrer">
-          AI 실행 보기
-        </a>
+        <PaseoLink url={run.paseoUrl} />
       )}
     </section>
   );

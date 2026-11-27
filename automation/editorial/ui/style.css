@@ -417,23 +417,6 @@ details[open] > :not(summary) {
   font-variant-numeric: tabular-nums;
 }
 
-/* n8n 진행 추적 */
-.live-link {
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  animation: fade-in var(--slow) var(--ease) both;
-}
-.live-link::after {
-  content: "↗";
-  transition: transform var(--fast) var(--ease);
-}
-.live-link:hover::after {
-  transform: translate(2px, -2px);
-}
 @keyframes ring {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--busy) 45%, transparent);
@@ -844,9 +827,6 @@ article:where(#article) blockquote {
 #trace p {
   grid-column: 2;
   margin: 0;
-}
-#execution-links {
-  margin: 16px 0;
 }
 #original-request {
   white-space: pre-wrap;
