@@ -129,14 +129,20 @@ func recordCommand(value json.RawMessage, operation, signature, kind, actor stri
 	operations[operation] = signature
 	record["operations"], _ = json.Marshal(operations)
 
-	var events []json.RawMessage
-	if raw, ok := record["events"]; ok {
-		if err := json.Unmarshal(raw, &events); err != nil {
-			return nil, err
-		}
+	var state struct {
+		Revision int64
+		Stage    string
 	}
-	event, _ := json.Marshal(map[string]string{"kind": kind, "by": actor})
-	record["events"], _ = json.Marshal(append(events, event))
+	if err := json.Unmarshal(record["state"], &state); err != nil {
+		return nil, err
+	}
+	now := time.Now().UnixMilli()
+	if err := appendActivity(record, activityEvent{
+		At: now, Revision: state.Revision, Stage: state.Stage,
+		By: actor, Kind: kind, Label: commandLabel(kind),
+	}); err != nil {
+		return nil, err
+	}
 	if action.Kind != "" {
 		var limit int
 		switch {
@@ -150,9 +156,32 @@ func recordCommand(value json.RawMessage, operation, signature, kind, actor stri
 		if limit > 0 {
 			record["callsUsed"] = json.RawMessage("0")
 			record["maxCalls"], _ = json.Marshal(limit)
-			record["startedAt"], _ = json.Marshal(time.Now().UnixMilli())
+			record["startedAt"], _ = json.Marshal(now)
 		}
 	}
 
 	return json.Marshal(record)
+}
+
+func commandLabel(kind string) string {
+	switch kind {
+	case "feedback":
+		return "수정 요청"
+	case "approve_brief":
+		return "수정 해석 승인"
+	case "revise_brief":
+		return "수정 해석 다시 요청"
+	case "satisfy":
+		return "초안 확정"
+	case "authorize_publication":
+		return "발행 준비 승인"
+	case "pause":
+		return "작업 중단"
+	case "resume":
+		return "작업 다시 연결"
+	case "complete_requirements":
+		return "요구사항 보완"
+	default:
+		return "시각자료 변경"
+	}
 }

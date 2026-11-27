@@ -3,6 +3,7 @@ package editorial
 import "encoding/json"
 
 type activityEvent struct {
+	By          string  `json:"by,omitempty"`
 	At          int64   `json:"at"`
 	Kind        string  `json:"kind"`
 	Label       string  `json:"label"`
