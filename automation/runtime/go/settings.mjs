@@ -2,6 +2,7 @@ import { existsSync, lstatSync, readdirSync, realpathSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AI_MODELS } from "../../contracts/ai-models.mjs";
+import { paseoHome } from "../../contracts/paseo-home.mjs";
 import { DEFAULT_OUTBOX, dataDir, LIVE_RUNTIME_DIR, OUTBOX_ENV } from "../../contracts/runtime.mjs";
 
 export const root = realpathSync(fileURLToPath(new URL("../../../", import.meta.url)));
@@ -25,8 +26,7 @@ export function config(env = process.env) {
   const control = resolve(root, env.AIN_GO_CONTROL_DIR || ".local/editorial-go");
   const binary = canonical(env.AIN_GO_BINARY || ".local/ain-go");
   const assets = canonical(env.AIN_ASSETS || ".local/editorial-web");
-  // The shared paseo.sh and endpoint.mjs use home/; older installs used .local/home/.
-  const paseo = canonical(env.PASEO_HOME || defaultPaseoHome());
+  const paseo = canonical(paseoHome(env));
   const outbox = canonical(env[OUTBOX_ENV] || DEFAULT_OUTBOX);
   const { standard, high } = AI_MODELS;
   const provider = env.AIN_PROVIDER || standard.provider;
@@ -66,13 +66,6 @@ export function config(env = process.env) {
       ...(reviewThinking ? ["-review-thinking", reviewThinking] : []),
     ],
   };
-}
-
-function defaultPaseoHome() {
-  return existsSync(resolve(root, "../paseo/home/config.json")) ||
-    !existsSync(resolve(root, "../paseo/.local/home/config.json"))
-    ? "../paseo/home"
-    : "../paseo/.local/home";
 }
 
 function latest(path, accept) {

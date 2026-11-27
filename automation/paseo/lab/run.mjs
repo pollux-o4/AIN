@@ -6,6 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { AI_MODELS } from "../../contracts/ai-models.mjs";
+import { paseoHome } from "../../contracts/paseo-home.mjs";
 import { DEFAULT_RUNTIME_URL, LIVE_RUNTIME_DIR } from "../../contracts/runtime.mjs";
 import { requireLiveConsent } from "../live/consent.mjs";
 import { createHttpSession, drive, fix } from "./drive.mjs";
@@ -91,12 +92,7 @@ export async function main() {
   const assets = resolve(process.env.AIN_ASSETS || ".local/editorial-web");
   if (!existsSync(join(assets, "index.html")))
     throw new Error("먼저 mise run build를 실행해 주세요.");
-  const home = resolve(
-    process.env.PASEO_HOME ||
-      (existsSync("../paseo/home/config.json") || !existsSync("../paseo/.local/home/config.json")
-        ? "../paseo/home"
-        : "../paseo/.local/home"),
-  );
+  const home = paseoHome();
   const runtimeDir = labData(options.runtime, options.variant, options.source);
   const ref =
     execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim() +

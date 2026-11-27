@@ -1,8 +1,9 @@
 import { execFile, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { paseoHome } from "../../contracts/paseo-home.mjs";
 import { requireLiveConsent } from "./consent.mjs";
 
 const repository = fileURLToPath(new URL("../../../", import.meta.url));
@@ -21,7 +22,7 @@ export async function buildProbe(binary) {
 
 export async function runProbe(binary, config) {
   requireLiveConsent("격리 Go 검증");
-  const home = resolve(process.env.PASEO_HOME || join(repository, "../paseo/home"));
+  const home = paseoHome();
   const child = spawn(binary, [], {
     env: { ...process.env, AIN_LIVE: "1" },
     stdio: ["pipe", "ignore", "ignore"],
