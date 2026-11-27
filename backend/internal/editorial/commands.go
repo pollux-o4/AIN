@@ -87,7 +87,7 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 	if err := c.Store.UpdateRun(ctx, run.Version, next); err != nil {
 		return contract.Run{}, err
 	}
-	if action, err := c.Rules.Next(next); err == nil && action.Kind != "" && action.Kind != "requirements_required" {
+	if action, err := c.Rules.Next(next); err == nil && action.Kind != "" {
 		c.Scheduler.Wake(id)
 	}
 	return next, nil

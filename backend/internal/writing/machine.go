@@ -145,7 +145,7 @@ func (rules *Rules) Next(run contract.Run) (contract.Action, error) {
 		return contract.Action{}, err
 	}
 	kind := str(body["type"])
-	if isOneOf(kind, "wait_for_user", "publication_adapter_required") {
+	if isOneOf(kind, "wait_for_user", "publication_adapter_required", "requirements_required") {
 		kind = ""
 	}
 	stage := str(body["stage"])
