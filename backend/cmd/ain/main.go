@@ -52,6 +52,11 @@ func run(ctx context.Context) error {
 	if len(sessionKey) < 32 || len(agentToken) < 32 || sessionKey == agentToken {
 		return fmt.Errorf("separate AIN_SESSION_KEY and AIN_AGENT_TOKEN are required")
 	}
+	lock, err := lockData(root)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
 	db, err := store.Open(ctx, filepath.Join(root, "editorial.sqlite"))
 	if err != nil {
 		return err
