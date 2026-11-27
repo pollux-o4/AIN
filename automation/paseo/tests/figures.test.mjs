@@ -7,6 +7,7 @@ import { nextAction, partActions, transition } from "../../editorial/domain/inde
 import { scratchDir } from "../../runtime/scratch.mjs";
 import { judgeBatch } from "../figure-batch.mjs";
 import { Jobs } from "../jobs.mjs";
+import { figureSpec } from "../prompts/figure.mjs";
 import { buildPrompt, promptData } from "../prompts/index.mjs";
 import { resultEvent } from "../results.mjs";
 import { roleOf, sessionEndsAfter, sessionKeyOf } from "../roles.mjs";
@@ -128,8 +129,11 @@ test("FIGURE-001 프롬프트: 확정 본문만 주고 본문 수정 금지 · �
   // 한 층에서 구도 → 판정 → 세부·마감 → 배치를 차례로 밟는다
   assert.match(
     prompt,
-    /준비:[\s\S]*작성:[\s\S]*글자 뺀 PNG로 스스로 판정한다[\s\S]*마감:[\s\S]*prefers-reduced-motion/,
+    /준비:[\s\S]*작성:[\s\S]*글자 뺀 PNG에서 문제를 먼저 찾아 적는다[\s\S]*마감:[\s\S]*prefers-reduced-motion/,
   );
+  // 국소 수정도 지적 반영 뒤 같은 판정·마감을 거친다
+  const fixSteps = figureSpec({ stage: "figure", pass: "fix" }).steps.join("\n");
+  assert.match(fixSteps, /candidates\[\]\.fix[\s\S]*판정:[\s\S]*마감:/);
   const out = JSON.stringify({ figures: [{ id: "f1", svg: SVG, alt: "설명", notes: "구도" }] });
   state = transition(state, resultEvent(job, out)).state;
   assert.equal(state.status, "awaiting_figure_review");
