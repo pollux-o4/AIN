@@ -15,8 +15,9 @@ import (
 )
 
 type SQLite struct {
-	db         *sql.DB
-	legacyRoot string
+	db           *sql.DB
+	legacyRoot   string
+	summaryReady bool
 }
 
 type Option func(*SQLite)
@@ -55,6 +56,11 @@ func Open(ctx context.Context, path string, options ...Option) (*SQLite, error) 
 	if err := s.migrate(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("prepare editorial schema: %w", err)
+	}
+	s.summaryReady = true
+	if err := s.write(ctx, func(*sql.Tx) error { return nil }); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("refresh editorial summary health: %w", err)
 	}
 	return s, nil
 }
@@ -107,6 +113,11 @@ func (s *SQLite) write(ctx context.Context, change func(*sql.Tx) error) error {
 	defer tx.Rollback()
 	if err := change(tx); err != nil {
 		return err
+	}
+	if s.summaryReady {
+		if err := validateSummaries(ctx, tx); err != nil {
+			return err
+		}
 	}
 	return tx.Commit()
 }

@@ -5,16 +5,21 @@ import (
 	"encoding/json"
 	"sort"
 	"strconv"
-	"strings"
+
+	"github.com/pollux-o4/AIN/backend/internal/contract"
+
+	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
 type listItem struct {
-	ID        string `json:"id"`
-	Title     string `json:"title"`
-	Revision  int64  `json:"revision"`
-	Status    string `json:"status"`
-	Label     string `json:"label"`
-	UpdatedAt *int64 `json:"updatedAt"`
+	ID               string  `json:"id"`
+	Title            string  `json:"title"`
+	Revision         int64   `json:"revision"`
+	Status           string  `json:"status"`
+	Label            string  `json:"label"`
+	NeedsCompletion  bool    `json:"needsCompletion"`
+	CompletionReason *string `json:"completionReason"`
+	UpdatedAt        *int64  `json:"updatedAt"`
 }
 
 func (q Queries) ListView(ctx context.Context) (json.RawMessage, error) {
@@ -22,16 +27,38 @@ func (q Queries) ListView(ctx context.Context) (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
+	monitorQuery := q
+	if reader, ok := q.Store.(compactPendingReader); ok {
+		monitorQuery.Store = compactMonitorStore{RunReader: q.Store, reader: reader}
+	}
 	items := make([]listItem, 0, len(summaries))
 	for _, run := range summaries {
 		if run.Archived {
 			continue
 		}
-		title, _, _ := strings.Cut(run.Idea, "\n")
-		if chars := []rune(title); len(chars) > 100 {
-			title = string(chars[:100]) + "…"
+		var record publicRunRecord
+		if run.Monitor != "" {
+			if err := json.Unmarshal([]byte(run.Monitor), &record); err != nil {
+				return nil, err
+			}
 		}
-		item := listItem{ID: run.ID, Title: title, Revision: run.Revision, Status: run.Status, Label: stateLabel(run.Status)}
+		record.State.Status = run.Status
+		monitor, err := monitorQuery.monitor(ctx, run.ID, record, run.NeedsCompletion, writing.OnMigrationHold(record.IssueKind))
+		if err != nil {
+			return nil, err
+		}
+		title := run.Title
+		if title == "" {
+			title = run.Idea
+		}
+		item := listItem{
+			ID: run.ID, Title: displayTitle(title, ""), Revision: run.Revision, Status: run.Status,
+			Label: monitor.Label, NeedsCompletion: run.NeedsCompletion,
+		}
+		if run.NeedsCompletion {
+			reason := completionNotice
+			item.CompletionReason = &reason
+		}
 		if updated, err := strconv.ParseInt(run.UpdatedAt, 10, 64); err == nil {
 			item.UpdatedAt = &updated
 		}
@@ -46,21 +73,15 @@ func (q Queries) ListView(ctx context.Context) (json.RawMessage, error) {
 	}{Runs: items})
 }
 
-func stateLabel(status string) string {
-	switch status {
-	case "waiting_ai", "waiting_route", "waiting_figure":
-		return "작업 중"
-	case "awaiting_user":
-		return "초안 준비됨"
-	case "paused":
-		return "중단됨"
-	case "failed":
-		return "실패"
-	case "satisfied":
-		return "만족"
-	case "publication_ready":
-		return "발행 준비"
-	default:
-		return "확인 대기"
-	}
+type compactPendingReader interface {
+	PendingRunObservation(context.Context, string) (contract.Intent, error)
+}
+
+type compactMonitorStore struct {
+	RunReader
+	reader compactPendingReader
+}
+
+func (s compactMonitorStore) PendingRun(ctx context.Context, id string) (contract.Intent, error) {
+	return s.reader.PendingRunObservation(ctx, id)
 }

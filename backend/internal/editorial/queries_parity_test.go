@@ -192,13 +192,7 @@ func summarizeQueryValue(value any) string {
 
 func compareQueries(t *testing.T, endpoint string, got, want any) {
 	t.Helper()
-	strict := os.Getenv("AIN_REQUIRE_QUERY_PARITY") == "1"
 	for _, diff := range queryDiff(endpoint, got, want) {
-		message := fmt.Sprintf("%s: Go=%s Node=%s", diff.path, summarizeQueryValue(diff.got), summarizeQueryValue(diff.want))
-		if strict || !knownQueryGap(diff.path) {
-			t.Error(message)
-		} else {
-			t.Log(message)
-		}
+		t.Errorf("%s: Go=%s Node=%s", diff.path, summarizeQueryValue(diff.got), summarizeQueryValue(diff.want))
 	}
 }

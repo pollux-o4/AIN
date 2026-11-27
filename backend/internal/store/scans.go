@@ -13,12 +13,12 @@ const pageSize = 32
 
 func (s *SQLite) ListSummaries(ctx context.Context, visit func(contract.RunSummary) error) error {
 	return scanPages(ctx, s.db, `
-		SELECT sequence, id, status, idea, revision, updated_at, archived
+		SELECT sequence, id, status, idea, revision, updated_at, archived, title, monitor, COALESCE(needs_completion, 0)
 		FROM ain_run_summaries WHERE sequence > ? ORDER BY sequence LIMIT ?`,
 		func(rows *sql.Rows) (int64, contract.RunSummary, error) {
 			var sequence int64
 			var summary contract.RunSummary
-			err := rows.Scan(&sequence, &summary.ID, &summary.Status, &summary.Idea, &summary.Revision, &summary.UpdatedAt, &summary.Archived)
+			err := rows.Scan(&sequence, &summary.ID, &summary.Status, &summary.Idea, &summary.Revision, &summary.UpdatedAt, &summary.Archived, &summary.Title, &summary.Monitor, &summary.NeedsCompletion)
 			return sequence, summary, err
 		},
 		visit,
@@ -100,5 +100,19 @@ func (s *SQLite) PendingRun(ctx context.Context, id string) (contract.Intent, er
 	}
 	intent.Action = json.RawMessage(action)
 	intent.Deadline, err = time.Parse(time.RFC3339Nano, deadline)
+	return intent, err
+}
+
+// PendingRunObservation reads the binding used by monitor labels without
+// loading the stored action or its previous figure data.
+func (s *SQLite) PendingRunObservation(ctx context.Context, id string) (contract.Intent, error) {
+	var intent contract.Intent
+	err := s.db.QueryRowContext(ctx, `
+		SELECT remote_agent_id, remote_turn_id
+		FROM ain_intents WHERE run_id = ? AND completed = 0`, id).
+		Scan(&intent.Remote.AgentID, &intent.Remote.TurnID)
+	if err == sql.ErrNoRows {
+		return contract.Intent{}, contract.ErrNotFound
+	}
 	return intent, err
 }
