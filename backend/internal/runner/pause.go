@@ -6,7 +6,25 @@ import (
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 )
 
+type PauseRecord func(contract.Run) (contract.Run, error)
+
 func (r *Runner) Pause(ctx context.Context, id string) error {
+	return r.pause(ctx, id, nil, nil)
+}
+
+// PauseCommand records a user operation in the same commit as the confirmed pause.
+func (r *Runner) PauseCommand(ctx context.Context, id string, version int64, record PauseRecord) error {
+	return r.pause(ctx, id, &version, record)
+}
+
+func (r *Runner) pause(ctx context.Context, id string, version *int64, record PauseRecord) error {
+	transition := func(run contract.Run, result *contract.Event) (contract.Run, error) {
+		next, err := r.cfg.Paused(run, result)
+		if err == nil && record != nil {
+			return record(next)
+		}
+		return next, err
+	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -27,6 +45,7 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 		r.mu.Lock()
 		delete(r.pausing, id)
 		r.mu.Unlock()
+		r.requestRecovery()
 	}()
 	if active != nil {
 		select {
@@ -39,12 +58,15 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	if version != nil && *version != run.Version {
+		return contract.ErrConflict
+	}
 	intent, err := r.pendingFor(ctx, id)
 	if err != nil {
 		return err
 	}
 	if intent == nil {
-		paused, err := r.cfg.Paused(run, nil)
+		paused, err := transition(run, nil)
 		if err != nil {
 			return err
 		}
@@ -58,7 +80,7 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 		return contract.ErrConflict
 	}
 	if batchAction(planned.Action) {
-		return r.pauseBatch(ctx, run, *intent, planned)
+		return r.pauseBatch(ctx, run, *intent, planned, transition)
 	}
 	snapshot, err := r.confirm(ctx, intent, planned.MessageID)
 	if err != nil {
@@ -84,7 +106,7 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 		}
 		result = &event
 	}
-	paused, err := r.cfg.Paused(run, result)
+	paused, err := transition(run, result)
 	if err != nil {
 		return err
 	}

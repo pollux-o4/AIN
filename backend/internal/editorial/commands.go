@@ -3,11 +3,11 @@ package editorial
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/runner"
 	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
@@ -75,7 +75,21 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 		return contract.Run{}, err
 	}
 	if kind == "pause" {
-		return contract.Run{}, errors.New("pause requires remote confirmation")
+		pauser, ok := c.Scheduler.(interface {
+			PauseCommand(context.Context, string, int64, runner.PauseRecord) error
+		})
+		if !ok {
+			return contract.Run{}, contract.ErrDeliveryUncertain
+		}
+		err := pauser.PauseCommand(ctx, id, run.Version, func(next contract.Run) (contract.Run, error) {
+			value, err := recordCommand(next.Value, operation, string(signature), kind, actor, contract.Action{})
+			next.Value = value
+			return next, err
+		})
+		if err != nil {
+			return contract.Run{}, err
+		}
+		return c.Store.GetRun(ctx, id)
 	}
 	body["reviewedRevision"], _ = json.Marshal(journal.State.Revision)
 	if kind == "feedback" && actor == "agent" {

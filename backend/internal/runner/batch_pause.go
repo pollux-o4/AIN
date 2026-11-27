@@ -8,7 +8,7 @@ import (
 	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
 )
 
-func (r *Runner) pauseBatch(ctx context.Context, run contract.Run, parent contract.Intent, planned reservedAction) error {
+func (r *Runner) pauseBatch(ctx context.Context, run contract.Run, parent contract.Intent, planned reservedAction, transition func(contract.Run, *contract.Event) (contract.Run, error)) error {
 	store, ok := r.store.(batchStore)
 	if !ok {
 		return errors.New("figure batch store is unavailable")
@@ -51,7 +51,7 @@ func (r *Runner) pauseBatch(ctx context.Context, run contract.Run, parent contra
 	case !errors.Is(err, figuredomain.ErrNoFiguresPrepared):
 		return err
 	}
-	paused, err := r.cfg.Paused(run, completed)
+	paused, err := transition(run, completed)
 	if err != nil {
 		return err
 	}
