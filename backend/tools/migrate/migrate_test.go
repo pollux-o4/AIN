@@ -323,3 +323,58 @@ func TestSyntheticProcessAndConfirmationGuards(t *testing.T) {
 		}
 	}
 }
+
+// Imported legacy records kept their source slug as state.articleId; the Go runtime
+// derives the run identity from it, so the candidate takes the stored id and keeps the slug.
+func TestImportedRunIdentityRepair(t *testing.T) {
+	ctx := t.Context()
+	source, legacy := legacyFixture(t, false)
+	insert(t, legacy, "imported", `{"id":"imported","state":{"articleId":"history-slug","status":"awaiting_user","revision":2,"version":5}}`)
+	closeFixture(t, legacy)
+	original, err := walkTree(ctx, source, sourceTrees, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg := filepath.Join(privateFixtureDir(t), "package")
+	manifest, err := prepare(ctx, source, pkg, noWriter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repairs := map[string][]string{}
+	for _, entry := range manifest.Runs {
+		repairs[entry.ID] = entry.Repairs
+	}
+	if !slices.Equal(repairs["imported"], []string{"article-id"}) || repairs["saved"] != nil || len(manifest.Holds) != 0 {
+		t.Fatalf("unexpected repairs %v", repairs)
+	}
+	if after, err := walkTree(ctx, source, sourceTrees, ""); err != nil || !slices.Equal(after, original) {
+		t.Fatalf("source was changed: %v", err)
+	}
+	if verified, err := verify(ctx, pkg); err != nil || !reflect.DeepEqual(manifest, verified) {
+		t.Fatalf("package verification: %v", err)
+	}
+	local := privateFixtureDir(t)
+	if _, err := walkTree(ctx, filepath.Join(pkg, "candidate"), nil, local); err != nil {
+		t.Fatal(err)
+	}
+	db, err := store.Open(ctx, filepath.Join(local, "ai-runtime", "editorial.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	run, err := db.GetRun(ctx, "imported")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var parsed struct {
+		Provenance struct{ LegacyArticleID string }
+		State      struct {
+			ArticleID string
+			Version   int64
+		}
+	}
+	if err := json.Unmarshal(run.Value, &parsed); err != nil || parsed.State.ArticleID != "imported" ||
+		parsed.Provenance.LegacyArticleID != "history-slug" || parsed.State.Version != 5 {
+		t.Fatalf("identity repair lost data: %s", run.Value)
+	}
+}

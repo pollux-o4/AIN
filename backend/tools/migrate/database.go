@@ -31,6 +31,8 @@ type runEntry struct {
 	After     string `json:"after"`
 	Status    string `json:"status"`
 	Revision  int64  `json:"revision"`
+	// Repairs lists the normalizations applied to the candidate copy; backup keeps the original bytes.
+	Repairs []string `json:"repairs,omitempty"`
 }
 type hold struct {
 	RunID          string `json:"runId"`
@@ -140,13 +142,14 @@ func readJobs(ctx context.Context, jobsRoot string, db *store.SQLite) (map[strin
 }
 
 type inspectedRun struct {
-	state    map[string]json.RawMessage
-	record   map[string]json.RawMessage
-	status   string
-	revision int64
-	version  int64
-	issue    string
-	pending  *struct{ JobID string }
+	state     map[string]json.RawMessage
+	record    map[string]json.RawMessage
+	status    string
+	revision  int64
+	version   int64
+	issue     string
+	pending   *struct{ JobID string }
+	articleID string
 }
 
 func inspectRun(run contract.Run) (inspectedRun, error) {
@@ -168,8 +171,7 @@ func inspectRun(run contract.Run) (inspectedRun, error) {
 	}
 	if run.ID == "" || run.RequestID == "" || fields.State.Status == "" ||
 		fields.State.Revision < 1 || fields.State.Version < 1 ||
-		(fields.ID != "" && fields.ID != run.ID) || (fields.RequestID != "" && fields.RequestID != run.RequestID) ||
-		(fields.State.ArticleID != "" && fields.State.ArticleID != run.ID) {
+		(fields.ID != "" && fields.ID != run.ID) || (fields.RequestID != "" && fields.RequestID != run.RequestID) {
 		return result, errors.New("legacy run identity, status, or revision is inconsistent")
 	}
 	if err := json.Unmarshal(run.Value, &result.record); err != nil {
@@ -179,8 +181,63 @@ func inspectRun(run contract.Run) (inspectedRun, error) {
 		return result, errors.New("invalid legacy state object")
 	}
 	result.status, result.revision, result.version = fields.State.Status, fields.State.Revision, fields.State.Version
-	result.issue, result.pending = fields.Issue, fields.Pending
+	result.issue, result.pending, result.articleID = fields.Issue, fields.Pending, fields.State.ArticleID
 	return result, nil
+}
+
+// repair normalizes a legacy record to a Go runtime invariant on the candidate copy.
+// It reports whether it changed the record; the original stays byte-identical in backup/.
+type repair struct {
+	name  string
+	apply func(saved *inspectedRun, run contract.Run) (bool, error)
+}
+
+var repairs = []repair{
+	// The Go runtime derives the run identity from state.articleId. Records imported into the
+	// legacy service kept their source slug there; keep that slug as provenance instead.
+	{name: "article-id", apply: func(saved *inspectedRun, run contract.Run) (bool, error) {
+		if saved.articleID == run.ID {
+			return false, nil
+		}
+		provenance := map[string]json.RawMessage{}
+		if raw, exists := saved.record["provenance"]; exists && json.Unmarshal(raw, &provenance) != nil {
+			return false, errors.New("invalid legacy provenance")
+		}
+		if saved.articleID != "" {
+			provenance["legacyArticleId"], _ = json.Marshal(saved.articleID)
+		}
+		var err error
+		if saved.record["provenance"], err = json.Marshal(provenance); err != nil {
+			return false, err
+		}
+		saved.state["articleId"], _ = json.Marshal(run.ID)
+		saved.articleID = run.ID
+		return true, nil
+	}},
+}
+
+// applyRepairs runs every repair and serializes the record once when any of them applied.
+func applyRepairs(saved *inspectedRun, run contract.Run) (contract.Run, []string, error) {
+	var applied []string
+	for _, step := range repairs {
+		changed, err := step.apply(saved, run)
+		if err != nil {
+			return contract.Run{}, nil, err
+		}
+		if changed {
+			applied = append(applied, step.name)
+		}
+	}
+	if len(applied) == 0 {
+		return run, nil, nil
+	}
+	var err error
+	if saved.record["state"], err = json.Marshal(saved.state); err != nil {
+		return contract.Run{}, nil, err
+	}
+	run.Value, err = json.Marshal(saved.record)
+	run.Version = saved.version + 1
+	return run, applied, err
 }
 
 func reconcile(run contract.Run, saved inspectedRun, jobs map[string]store.LegacyJob) (contract.Run, *hold, error) {
@@ -255,20 +312,27 @@ func applySchema(ctx context.Context, root string) ([]runEntry, []hold, int, err
 		if err != nil {
 			return err
 		}
-		candidate, held, err := reconcile(run, saved, jobs)
+		repaired, applied, err := applyRepairs(&saved, run)
 		if err != nil {
 			return err
 		}
-		if held != nil {
+		candidate, held, err := reconcile(repaired, saved, jobs)
+		if err != nil {
+			return err
+		}
+		if held != nil || len(applied) > 0 {
+			candidate.Version = saved.version + 1
 			if err := db.UpdateRun(ctx, saved.version, candidate); err != nil {
 				return err
 			}
+		}
+		if held != nil {
 			holds = append(holds, *held)
 		}
 		entries = append(entries, runEntry{
 			ID: run.ID, RequestID: run.RequestID,
 			Before: digest(run.Value), After: digest(candidate.Value),
-			Status: saved.status, Revision: saved.revision,
+			Status: saved.status, Revision: saved.revision, Repairs: applied,
 		})
 		return nil
 	})

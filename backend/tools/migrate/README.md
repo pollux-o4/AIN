@@ -17,6 +17,7 @@ go -C backend run ./tools/migrate restore --package /private/cutover --target /p
 | 글·회차·이력·보관·승인·기존 실행 ID | `backup/`은 SQLite와 기존 WAL·SHM을 그대로 보존한다. `candidate/`는 복사본에 Go 스키마를 적용한다. |
 | 작업 ID·세션·사용량·결과·인계 | 기존 `jobs/`, 담당 등록부, 작업 폴더와 outbox는 원본 바이트를 보존한다. n8n 이력과 자격증명은 비공개 백업에 보존한다. |
 | 원격 상태 확인 대기 | 기존 pending 및 job ID를 보존하고 새 Go 실행 의도는 만들지 않는다. 미확정 대기 글은 중단 상태와 `legacy_reconcile`로 표시한다. 매니페스트의 `holds`는 기존 연결, 누락 또는 종료 결과 검토를 구분한다. |
+| 레거시 정규화 | Go 불변식에 맞지 않는 기록은 `candidate/`에서만 고치고 원래 값을 `provenance`에 남긴다. 적용한 정규화는 매니페스트의 `runs[].repairs`에 기록한다. `article-id`: 가져오기로 들어온 글의 `state.articleId`(원본 이름)를 저장 ID로 맞추고 원래 이름을 `provenance.legacyArticleId`에 보존한다. |
 | 검증 | 파일 크기·SHA-256, 편집 DB 무결성, 실행 묶음 참조, 글 ID·회차와 변경 전후 레코드 해시를 기록한다. 같은 원본으로 재실행하면 검증된 패키지를 재사용한다. |
 
 `prepare`는 실행 중인 기록, 인식한 로컬 서비스의 원본 사용 또는 복사 중 원본 변경을 발견하면 게시를 거부한다. 프로세스 시작 차단과 공개되지 않는 프로세스의 정지는 운영자가 보장한다. 매니페스트 및 백업에는 비공개 식별자·원고·토큰이 들어 있으므로 배포 파일에 포함하지 않는다.
