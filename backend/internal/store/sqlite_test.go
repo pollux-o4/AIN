@@ -235,3 +235,17 @@ func privateTestDir(t *testing.T) string {
 	}
 	return dir
 }
+
+func TestEDIT001LegacyNullOperations(t *testing.T) {
+	ctx := t.Context()
+	store := openTestStore(t, filepath.Join(privateTestDir(t), "editorial.sqlite"))
+	run := contract.Run{ID: "legacy", RequestID: "legacy-req", Version: 1, Value: json.RawMessage(`{"operations":null}`)}
+	if err := store.CreateRun(ctx, run); err != nil {
+		t.Fatal(err)
+	}
+	run.Version++
+	run.Value = json.RawMessage(`{"operations":{"new":"signature"}}`)
+	if err := store.UpdateRun(ctx, 1, run); err != nil {
+		t.Fatal(err)
+	}
+}

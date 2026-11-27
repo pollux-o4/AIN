@@ -80,7 +80,7 @@ func replaceRun(ctx context.Context, tx *sql.Tx, expectedVersion int64, run cont
 	result, err := tx.ExecContext(ctx, `
 		UPDATE editorial_runs SET value = ? WHERE id = ? AND NOT EXISTS (
 			SELECT 1 FROM json_each(editorial_runs.value, '$.operations') prior
-			WHERE NOT EXISTS (
+			WHERE prior.key IS NOT NULL AND NOT EXISTS (
 				SELECT 1 FROM json_each(?, '$.operations') proposed
 				WHERE prior.key = proposed.key AND prior.type = proposed.type
 					AND prior.value IS proposed.value
