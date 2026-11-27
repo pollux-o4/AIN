@@ -25,3 +25,5 @@
 실제 모델을 이용한 agy 전송·중단의 확인은 합성 시험과 별개다. 승인된 실제 실행이 있으면 OPS-003에 따라 증거를 남긴다.
 
 `6480432`의 격리 워크트리에서 `mise run verify -- --force`가 119.4초/300초로 통과했다. 타입 3.8/15초, Biome 2.2/10초, 의존 경계 5.2/20초, 비밀값 5.4/15초, 단위 7.3/30초, Go 1.5/30초, Go 클라이언트 8.1/45초, Playwright 104.0/180초였다.
+
+같은 스냅샷의 Linux/amd64 내부 배포본을 다른 경로로 옮기고 서버 PATH를 비운 뒤 기동했다. Chromium 화면과 별도 Node CLI 검사가 통과했다. 패키지에 Paseo 0.17.5의 LICENSE·NOTICE와 golang.org/x/image v0.31.0의 LICENSE·PATENTS를 확인했다.
