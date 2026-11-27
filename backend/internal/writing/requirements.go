@@ -1,6 +1,7 @@
 package writing
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -265,4 +266,25 @@ func sectionCounts(draft string) []string {
 		counts = append(counts, fmt.Sprintf("%s %d자", string(title[:min(len(title), 30)]), readerLength(part)))
 	}
 	return counts
+}
+
+// LegacyLengthFromState recovers the free-text length rule for pre-ledger runs.
+func LegacyLengthFromState(state map[string]json.RawMessage) json.RawMessage {
+	raw, err := json.Marshal(state)
+	if err != nil {
+		return nil
+	}
+	var decoded object
+	if json.Unmarshal(raw, &decoded) != nil {
+		return nil
+	}
+	length := obj(legacyLength(decoded))
+	if length == nil {
+		return nil
+	}
+	data, _ := json.Marshal(struct {
+		Min any `json:"min"`
+		Max any `json:"max"`
+	}{Min: length["min"], Max: length["max"]})
+	return data
 }

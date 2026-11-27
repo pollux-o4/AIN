@@ -7,6 +7,8 @@ import (
 	"maps"
 	"slices"
 	"strings"
+
+	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
 type field struct {
@@ -172,8 +174,9 @@ func standing(state map[string]json.RawMessage) ordered {
 		}
 		if target := direction["targetLength"]; present(target) {
 			set("length", target, encode("의뢰 화면 선택"))
-		}
-		if length := fields(fields(state["brief"])["acceptance"])["length"]; present(length) {
+		} else if length := fields(fields(state["brief"])["acceptance"])["length"]; present(length) {
+			set("length", length, encode("이전 기록"))
+		} else if length := writing.LegacyLengthFromState(state); present(length) {
 			set("length", length, encode("이전 기록"))
 		}
 		return result
