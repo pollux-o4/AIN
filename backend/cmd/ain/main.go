@@ -36,6 +36,8 @@ func run(ctx context.Context) error {
 	home := flag.String("paseo-home", os.Getenv("PASEO_HOME"), "local Paseo home")
 	provider := flag.String("provider", "", "Paseo provider")
 	model := flag.String("model", "", "Paseo model")
+	thinking := flag.String("thinking", "", "default Paseo thinking option")
+	reviewThinking := flag.String("review-thinking", "", "Paseo thinking option for review and revisions")
 	outbox := flag.String("outbox", "", "absolute publication outbox directory")
 	flag.Parse()
 	if *data == "" || *home == "" || *provider == "" || *model == "" {
@@ -78,12 +80,15 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	builder := writingai.New(writingai.Config{Base: contract.SessionSpec{
-		Provider: *provider, Model: *model, WorkDir: root,
-	}})
+	base := contract.SessionSpec{Provider: *provider, Model: *model, Thinking: *thinking, WorkDir: root}
+	var high contract.SessionSpec
+	if *reviewThinking != "" {
+		high = contract.SessionSpec{Provider: *provider, Model: *model, Thinking: *reviewThinking}
+	}
+	builder := writingai.New(writingai.Config{Base: base, High: high})
 	draw, err := figureai.New(figureai.Config{
 		WorkRoot: filepath.Join(root, "workspaces"),
-		Default:  figureai.Model{Provider: *provider, Model: *model},
+		Default:  figureai.Model{Provider: *provider, Model: *model, Thinking: *thinking},
 	})
 	if err != nil {
 		return err
