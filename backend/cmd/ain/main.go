@@ -48,15 +48,22 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	sessionKey, agentToken := os.Getenv("AIN_SESSION_KEY"), os.Getenv("AIN_AGENT_TOKEN")
-	if len(sessionKey) < 32 || len(agentToken) < 32 || sessionKey == agentToken {
-		return fmt.Errorf("separate AIN_SESSION_KEY and AIN_AGENT_TOKEN are required")
-	}
 	lock, err := lockData(root)
 	if err != nil {
 		return err
 	}
 	defer lock.Close()
+	sessionKey, err := credential(root, "session-key", os.Getenv("AIN_SESSION_KEY"))
+	if err != nil {
+		return err
+	}
+	agentToken, err := credential(root, "agent-token", os.Getenv("AIN_AGENT_TOKEN"))
+	if err != nil {
+		return err
+	}
+	if sessionKey == agentToken {
+		return fmt.Errorf("UI and agent credentials must differ")
+	}
 	db, err := store.Open(ctx, filepath.Join(root, "editorial.sqlite"))
 	if err != nil {
 		return err
