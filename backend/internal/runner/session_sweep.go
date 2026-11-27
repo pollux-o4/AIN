@@ -47,11 +47,15 @@ func (r *Runner) sweep(ctx context.Context, all bool) {
 var matchingAgent = errors.New("matching durable active agent")
 
 func (r *Runner) activeAgent(ctx context.Context, agent string) (bool, error) {
-	return ActiveAgent(ctx, r.store, agent)
+	return activeAgent(ctx, r.store, agent)
 }
 
-// ActiveAgent checks durable pending turns and unsettled batch children.
-func ActiveAgent(ctx context.Context, store contract.Store, agent string) (bool, error) {
+func activeAgent(ctx context.Context, store contract.Store, agent string) (bool, error) {
+	if indexed, ok := store.(interface {
+		IsAgentActive(context.Context, string) (bool, error)
+	}); ok {
+		return indexed.IsAgentActive(ctx, agent)
+	}
 	err := store.ScanPending(ctx, func(intent contract.Intent) error {
 		if referencesAgent(intent, agent) {
 			return matchingAgent

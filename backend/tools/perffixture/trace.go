@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"sync"
 	"time"
 
@@ -57,32 +56,6 @@ func (s *tracedStore) ReserveBatch(ctx context.Context, version int64, run contr
 	}
 	s.paseo.remember(parent.ID, children)
 	return nil
-}
-
-func (s *tracedStore) activeAgent(ctx context.Context, agent string) (bool, error) {
-	matched := errors.New("matching active session")
-	err := s.ScanPending(ctx, func(intent contract.Intent) error {
-		if intent.AgentID == agent || intent.Remote.AgentID == agent {
-			return matched
-		}
-		if intent.AgentID != "" {
-			return nil
-		}
-		children, err := s.BatchChildren(ctx, intent.ID)
-		if err != nil {
-			return err
-		}
-		for _, child := range children {
-			if child.Started && child.Result == nil && child.Failure == "" && (child.AgentID == agent || child.Remote.AgentID == agent) {
-				return matched
-			}
-		}
-		return nil
-	})
-	if errors.Is(err, matched) {
-		return true, nil
-	}
-	return false, err
 }
 
 type assignedTurn struct {

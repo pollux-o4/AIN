@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"github.com/pollux-o4/AIN/backend/internal/datalock"
-	"github.com/pollux-o4/AIN/backend/internal/runner"
 	"github.com/pollux-o4/AIN/backend/internal/sessions"
 	"github.com/pollux-o4/AIN/backend/internal/store"
 )
@@ -55,9 +54,7 @@ func prune(ctx context.Context, data string, wire pruneWire, all bool) (sessions
 	if err != nil {
 		return sessions.SweepResult{}, err
 	}
-	return manager.Sweep(ctx, func(ctx context.Context, agent string) (bool, error) {
-		return runner.ActiveAgent(ctx, db, agent)
-	}, all)
+	return manager.Sweep(ctx, db.IsAgentActive, all)
 }
 
 func privateDatabase(path string) error {

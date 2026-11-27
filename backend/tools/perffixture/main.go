@@ -191,7 +191,7 @@ func (app *application) invoke(ctx context.Context, req request) (any, error) {
 	case "traces":
 		return app.wire.traces(), nil
 	case "clean":
-		return app.sessions.Sweep(ctx, app.db.activeAgent, true)
+		return app.sessions.Sweep(ctx, app.db.IsAgentActive, true)
 	case "seedAndRecover":
 		return app.seedAndRecover(ctx, req.Argument)
 	case "stop":

@@ -143,14 +143,7 @@ func article(parent context.Context, client wire, cfg config, mode string, repor
 				report.CleanupIssues = append(report.CleanupIssues, "article_stop_unconfirmed")
 			}
 		}
-		result, err := manager.Sweep(cleanup, func(ctx context.Context, agent string) (bool, error) {
-			var active bool
-			err := db.ScanPending(ctx, func(intent contract.Intent) error {
-				active = active || intent.AgentID == agent || intent.Remote.AgentID == agent
-				return nil
-			})
-			return active, err
-		}, true)
+		result, err := manager.Sweep(cleanup, db.IsAgentActive, true)
 		if err != nil || result.Deferred != 0 {
 			report.CleanupIssues = append(report.CleanupIssues, "session_release_unconfirmed")
 		}
