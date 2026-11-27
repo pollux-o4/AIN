@@ -12,6 +12,8 @@ import { chromium, expect } from "@playwright/test";
 import { AGENT_TOKEN_FILE } from "../../automation/contracts/runtime.mjs";
 import { readAsset } from "../../automation/editorial/assets.mjs";
 import { makeRun } from "../../automation/editorial/ui/stories/fixtures.ts";
+import { completionDelayMs, idea } from "./perf/fixture.mjs";
+import { start } from "./perf/go-runtime.mjs";
 
 const invoke = promisify(execFile);
 
@@ -178,4 +180,47 @@ test("Go 응답 fixture의 화면·CLI 변경과 이전 회차를 제외하는 S
   assert.equal(fixture.actions[1].body.expectedVersion, version + 1);
   assert.equal(fixture.actions[1].body.type, "resume");
   await assert.rejects(() => fixture.cli("unrecognized"), { code: 2 });
+});
+
+test("Go 런타임의 초안을 PC·모바일 화면과 CLI에서 조회", { timeout: 30000 }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "ain-go-browser-"));
+  t.after(() => rm(root, { recursive: true }));
+  const runtime = await start({ root, completionDelayMs, historyCount: 1, historyBytes: 1024 });
+  t.after(() => runtime.stop());
+  const token = "synthetic-agent-key-not-a-secret00";
+  await writeFile(join(root, AGENT_TOKEN_FILE), token, { mode: 0o600 });
+  const cli = async (...args) => {
+    const { stdout } = await invoke(process.execPath, ["automation/cli/ain.mjs", ...args], {
+      env: { ...process.env, AIN_RUNTIME_DIR: root, AIN_URL: runtime.url },
+      timeout: 10000,
+    });
+    return JSON.parse(stdout);
+  };
+
+  const created = await cli("new", "--idea", idea);
+  const completed = await cli("wait", created.id, "--timeout", "8");
+  assert.equal(completed.status, "awaiting_user");
+  assert.equal((await cli("list"))[0].id, created.id);
+
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
+  const profiles = {
+    desktop: { viewport: { width: 1440, height: 1000 } },
+    mobile: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+  };
+  await Promise.all(
+    Object.entries(profiles).map(async ([name, options]) => {
+      const page = await browser.newPage(options);
+      try {
+        const response = await page.goto(`${runtime.url}/write/#${created.id}`);
+        assert.equal(response.status(), 200, name);
+        await expect(page.locator("#article")).toContainText(
+          "주문은 고객이 무엇을 샀는지 기록하는 책임을 집니다.",
+        );
+        await expect(page.locator("#work-title")).toHaveText("쇼핑몰의 책임");
+      } finally {
+        await page.close();
+      }
+    }),
+  );
 });
