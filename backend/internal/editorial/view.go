@@ -41,6 +41,7 @@ type publicRunRecord struct {
 	Operations map[string]string
 	ArchivedAt json.RawMessage
 	Issue      *string
+	IssueKind  json.RawMessage
 	CallsUsed  int64
 	MaxCalls   int64
 }
@@ -91,10 +92,20 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		operations = append(operations, id)
 	}
 	sort.Strings(operations)
-	pending := isPending(s.Status)
+	held := writing.OnMigrationHold(run.IssueKind)
+	pending := isPending(s.Status) && !held
+	label := stateLabel(s.Status)
+	if held {
+		label = "이전 AI 작업 확인 대기"
+		if run.Issue == nil {
+			run.Issue = &label
+		}
+	}
 	events := publicEvents(run.Events)
 	kind := "ready"
 	switch {
+	case held:
+		kind = "blocked"
 	case s.Status == "paused" || s.Status == "failed":
 		kind = s.Status
 	case run.Issue != nil:
@@ -125,8 +136,8 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"archived": isArchived(run.ArchivedAt),
 		"html":     html,
 		"monitor": map[string]any{
-			"kind": kind, "label": stateLabel(s.Status), "now": time.Now().UnixMilli(),
-			"lastConfirmedAt": nil, "canPause": pending, "canResume": s.Status == "paused" || s.Status == "failed",
+			"kind": kind, "label": label, "now": time.Now().UnixMilli(),
+			"lastConfirmedAt": nil, "canPause": pending, "canResume": !held && (s.Status == "paused" || s.Status == "failed"),
 			"resumeLabel": "이어가기", "needsAiAttention": false, "events": events, "pipeline": pipeline(s.Stage, s.Status, s.Revision, stageArtifacts, events),
 		},
 	})
