@@ -73,13 +73,13 @@ depends = ["test:editorial", "test:paseo", "test:n8n", "test:cli", "test:runtime
 
 # ── 통합 (무거움) ──
 ["test:n8n:runtime"]
-description = "격리 n8n 실제 실행"
+description = "레거시 기준 재현 · 격리 n8n 실제 실행"
 run = "nice -n 10 node automation/n8n/tests/n8n-runtime.mjs"
 sources = ["automation/n8n/**/*.mjs", "automation/contracts/**/*.mjs", "automation/editorial/domain/**/*.mjs"]
 outputs = { auto = true }
 
 ["test:flow"]
-description = "격리 n8n + fixture 제공자 글쓰기 흐름"
+description = "레거시 기준 재현 · 격리 n8n + fixture 제공자 글쓰기 흐름"
 run = "nice -n 10 node automation/paseo/tests/n8n-flow.mjs"
 sources = ["automation/**/*.mjs", "!automation/*/tests/**", "automation/paseo/tests/n8n-flow.mjs"]
 outputs = { auto = true }

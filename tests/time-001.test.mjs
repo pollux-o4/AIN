@@ -19,6 +19,13 @@ test("TIME-001: 단계별 예산의 합이 전체 상한 안이다", () => {
   assert.equal(TOTAL_SECONDS, 300);
 });
 
+test("TIME-001: 기본 검증은 Go 흐름과 PC·모바일 클라이언트를 검사한다", () => {
+  const tasks = PHASES.flatMap((phase) => phase.tasks.map(({ task }) => task));
+  assert.ok(tasks.includes("go:check"));
+  assert.ok(tasks.includes("go:client-check"));
+  assert.ok(!tasks.some((task) => task === "test:n8n:runtime" || task === "test:flow"));
+});
+
 test("TIME-001: 실제 모델 작업은 검증에도 다른 작업의 의존에도 묶이지 않는다", async () => {
   const budgeted = PHASES.flatMap((phase) => phase.tasks.map((entry) => entry.task));
   assert.deepEqual(
