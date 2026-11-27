@@ -236,7 +236,7 @@ export const 시각자료_구성검수: StoryObj = {
       throw new Error("구성 승인 요청이 맞지 않아요.");
   },
 };
-export const 시각자료_그림되돌리기: StoryObj = {
+export const 시각자료_그림고치기: StoryObj = {
   render: actionWorkspace(
     figureRun(
       makeFigure({
@@ -264,7 +264,7 @@ export const 시각자료_그림되돌리기: StoryObj = {
     const doc = canvasElement.ownerDocument;
     doc.querySelector<HTMLElement>("#work-dock details summary")?.click();
     const feedback = doc.querySelector<HTMLTextAreaElement>("#revise-f2");
-    if (!feedback) throw new Error("그림 되돌리기 입력란이 없어요.");
+    if (!feedback) throw new Error("그림 고칠 의견 입력란이 없어요.");
     enterText(feedback, "기준 두 축이 분명하게 보이도록 해 주세요.");
     doc.querySelector<HTMLButtonElement>("#revise-compose-f2")?.click();
     await Promise.resolve();
@@ -275,14 +275,16 @@ export const 시각자료_그림되돌리기: StoryObj = {
       !action.includes('"figures":["f2"]') ||
       !action.includes("기준 두 축이 분명하게 보이도록 해 주세요.")
     )
-      throw new Error("구성 단계 되돌리기 요청 본문이 맞지 않아요.");
+      throw new Error("다시 구성 요청 본문이 맞지 않아요.");
     doc.querySelector<HTMLButtonElement>("#work-dock .dock-toggle")?.click();
-    doc.querySelector<HTMLButtonElement>("#revise-generate-f2")?.click();
+    doc.querySelector<HTMLButtonElement>("#revise-generate")?.click();
     await Promise.resolve();
+    const fix = doc.querySelector<HTMLOutputElement>("#figure-action-result")?.value;
+    // 의견을 적은 그림을 모아 그림별 의견(notes)으로 보낸다 · ADR-0026
     if (
-      !doc
-        .querySelector<HTMLOutputElement>("#figure-action-result")
-        ?.value.includes('"target":"fix"')
+      !fix?.includes('"target":"fix"') ||
+      !fix.includes('"figures":["f2"]') ||
+      !fix.includes('"notes":{"f2":"기준 두 축이 분명하게 보이도록 해 주세요."}')
     )
       throw new Error("부분 수정 요청 본문이 맞지 않아요.");
   },
