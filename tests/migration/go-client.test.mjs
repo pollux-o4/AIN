@@ -12,7 +12,7 @@ import { chromium, expect } from "@playwright/test";
 import { AGENT_TOKEN_FILE } from "../../automation/contracts/runtime.mjs";
 import { readAsset } from "../../automation/editorial/assets.mjs";
 import { makeRun } from "../../automation/editorial/ui/stories/fixtures.ts";
-import { clickAction, downloadedBytes } from "../writing.ts";
+import { clickAction, downloadedBytes, openDock } from "../writing.ts";
 import { completionDelayMs, idea } from "./perf/fixture.mjs";
 import { start } from "./perf/go-runtime.mjs";
 
@@ -222,6 +222,23 @@ test("Go 런타임의 초안·승인·TXT를 PC·모바일과 CLI에서 검증",
         assert.match((await downloadedBytes(await download)).toString("utf8"), /쇼핑몰의 책임/);
         const confirmed = await clickAction(page, "초안 확정", "satisfy");
         assert.equal(confirmed.after.status, "satisfied");
+        if (name === "desktop") {
+          await clickAction(page, "시각자료 추가", "request_figures");
+          const choice = page.locator("#figure-choice");
+          await expect(choice).toBeVisible();
+          await openDock(page, "확인");
+          const checkboxes = choice.getByRole("checkbox");
+          await expect(checkboxes).toHaveCount(2);
+          await checkboxes.nth(0).check();
+          await checkboxes.nth(1).check();
+          await clickAction(page, "2곳에 만들기", "select_figures");
+          await expect(page.locator("#figure-design")).toBeVisible();
+          await clickAction(page, "이대로 그리기", "approve_design");
+          const review = page.locator("#figure-review");
+          await expect(review).toBeVisible();
+          await clickAction(page, "시각자료 확인", "confirm_figures");
+          await expect(page.locator("#article figure")).toHaveCount(2);
+        }
         const approved = await clickAction(page, "발행 준비 승인", "authorize_publication");
         assert.equal(approved.after.status, "publication_ready");
       } finally {
