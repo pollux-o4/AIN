@@ -61,11 +61,13 @@ func (p timeline) project(ref contract.RemoteRef, raw json.RawMessage) (contract
 	}
 	snapshot := contract.Snapshot{Ref: current, Status: status, Body: raw}
 	submission, latest := p.submission(ref.TurnID)
-	if submission == nil {
+	if submission == nil || latest > submission.SeqEnd ||
+		(p.Agent.Active != nil && p.Agent.Active.TurnID != submission.TurnID) ||
+		(p.Agent.Status == "running" && p.Agent.Active == nil) {
 		return snapshot, nil
 	}
 	snapshot.Ref.TurnID = ref.TurnID
-	if p.Agent.Active != nil || submission.SeqEnd <= 0 || latest > submission.SeqEnd {
+	if p.Agent.Active != nil || submission.SeqEnd <= 0 {
 		return snapshot, nil
 	}
 
@@ -102,7 +104,7 @@ func (p timeline) submission(messageID string) (*timelineEntry, int64) {
 		if match != nil && match.TurnID != entry.TurnID {
 			return nil, 0
 		}
-		if match == nil || entry.SeqEnd < match.SeqEnd {
+		if match == nil || entry.SeqEnd > match.SeqEnd {
 			match = entry
 		}
 	}
