@@ -9,6 +9,7 @@ import (
 
 	"github.com/pollux-o4/AIN/backend/internal/artifacts"
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
 	"github.com/pollux-o4/AIN/backend/internal/writing"
 )
 
@@ -36,6 +37,7 @@ type publicRunRecord struct {
 		SatisfiedRevision int64
 		Artifacts         map[string]json.RawMessage
 		History           []revisionView
+		Figure            map[string]any
 	}
 	Events     json.RawMessage
 	Operations map[string]string
@@ -130,6 +132,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		rules = writing.New()
 	}
 	approvals := rules.Approvals(saved)
+	figures := figuredomain.PublicView(s.Figure, s.Revision)
 	html, err := artifacts.PreviewRun(saved)
 	if err != nil {
 		return nil, err
@@ -140,7 +143,13 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"previous": previous, "findings": findings, "artifacts": stageArtifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
 		"canDownload": text != "" && presented, "canFeedback": presented,
-		"canSatisfy": approvals.Satisfy, "canAuthorizePublication": approvals.Authorize,
+		"figure": figures, "canRequestFigures": s.Status == "satisfied" && figures == nil && !held,
+		"canSelectFigures":  s.Status == "awaiting_figure_choice" && !held,
+		"canApproveDesign":  s.Status == "awaiting_figure_design" && !held,
+		"canConfirmFigures": s.Status == "awaiting_figure_review" && !held,
+		"canReviseFigures":  s.Status == "awaiting_figure_review" && !held,
+		"canDiscardFigures": figures != nil && !pending && s.Status != "publication_ready" && !held,
+		"canSatisfy":        approvals.Satisfy, "canAuthorizePublication": approvals.Authorize,
 		"callsUsed": run.CallsUsed, "maxCalls": run.MaxCalls, "appliedOperations": operations,
 		"archived": isArchived(run.ArchivedAt),
 		"html":     html,
