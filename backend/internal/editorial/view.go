@@ -6,6 +6,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pollux-o4/AIN/backend/internal/artifacts"
+	"github.com/pollux-o4/AIN/backend/internal/contract"
 )
 
 type draftArtifact struct {
@@ -87,17 +90,21 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	sort.Strings(operations)
 	pending := s.Status == "waiting_ai" || s.Status == "waiting_route" || s.Status == "waiting_figure"
 	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
-	artifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
+	stageArtifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
+	html, err := artifacts.PreviewRun(contract.Run{ID: id, Value: data})
+	if err != nil {
+		return nil, err
+	}
 	return json.Marshal(map[string]any{
 		"id": id, "version": s.Version, "revision": s.Revision, "idea": s.Idea, "title": title,
 		"source": s.Source, "status": s.Status, "issue": run.Issue, "text": text, "textRevision": textRevision,
-		"previous": previous, "findings": findings, "artifacts": artifacts, "model": "",
+		"previous": previous, "findings": findings, "artifacts": stageArtifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
 		"canDownload": text != "" && presented, "canFeedback": presented,
 		"canSatisfy": false, "canAuthorizePublication": false,
 		"callsUsed": run.CallsUsed, "maxCalls": run.MaxCalls, "appliedOperations": operations,
 		"archived": len(run.ArchivedAt) > 0 && string(run.ArchivedAt) != "null",
-		"html":     "",
+		"html":     html,
 		"monitor": map[string]any{
 			"kind": s.Status, "label": stateLabel(s.Status), "now": time.Now().UnixMilli(),
 			"lastConfirmedAt": nil, "canPause": pending, "canResume": s.Status == "paused" || s.Status == "failed",
