@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fixture-api",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "AIN_FIGURE_AI_PLAN=fixture/fixture-model AIN_FIGURE_AI_DRAW=fixture/fixture-model AIN_FIGURE_AI_FIX=fixture/fixture-model mise exec -- node automation/editorial/tests/browser-server.mjs"
+      ],
+      "port": 3356
+    },
+    {
+      "name": "fixture-ui",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "EDITORIAL_DEV_API_URL=http://127.0.0.1:3356 node_modules/.bin/vite --host 127.0.0.1 --port 5183 --strictPort"
+      ],
+      "port": 5183
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "node_modules/.bin/storybook",
+      "runtimeArgs": ["dev", "-p", "6006", "--host", "127.0.0.1", "--no-open"],
+      "port": 6006
+    }
+  ]
+}
