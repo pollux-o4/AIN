@@ -10,6 +10,7 @@ import (
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
+	"github.com/pollux-o4/AIN/backend/internal/promptframe"
 )
 
 type Model struct {
@@ -88,9 +89,9 @@ type actionInput struct {
 	} `json:"style"`
 }
 
-func parseAction(action contract.Action) (actionInput, object, error) {
+func parseAction(action contract.Action) (actionInput, map[string]json.RawMessage, error) {
 	var input actionInput
-	var fields object
+	var fields map[string]json.RawMessage
 	invalid := errors.New("invalid figure action")
 	if action.Kind != "request_figure" || action.StateVersion < 1 ||
 		json.Unmarshal(action.Input, &input) != nil || json.Unmarshal(action.Input, &fields) != nil ||
@@ -144,21 +145,25 @@ func (builder *Builder) BuildTurn(run contract.Run, action contract.Action) (con
 		record.State.Version != action.StateVersion {
 		return spec, errors.New("stale figure action")
 	}
-	contextData := object{"idea": record.State.Idea}
-	artifacts := map[string]json.RawMessage{}
-	for _, stage := range []string{"audience", "value", "outline", "draft"} {
-		if output := record.State.Artifacts[stage].Output; len(output) > 0 {
-			artifacts[stage] = output
-		}
-	}
 	var draft struct {
 		Text string `json:"text"`
 	}
-	if json.Unmarshal(artifacts["draft"], &draft) != nil || strings.TrimSpace(draft.Text) == "" {
+	if json.Unmarshal(record.State.Artifacts["draft"].Output, &draft) != nil || strings.TrimSpace(draft.Text) == "" {
 		return spec, errors.New("figure action requires a finished draft")
 	}
-	artifacts["draft"], _ = json.Marshal(object{"text": draft.Text})
-	contextData["artifacts"] = artifacts
+	// Node figureContext와 같은 키 순서 · 비어 있는 값은 싣지 않는다
+	var artifacts fieldList
+	for _, stage := range []string{"audience", "value", "outline"} {
+		artifacts.add(stage, record.State.Artifacts[stage].Output)
+	}
+	artifacts.add("draft", promptframe.Encode(object{"text": draft.Text}))
+	var contextData fieldList
+	contextData.add("idea", promptframe.Encode(record.State.Idea))
+	contextData.add("artifacts", artifacts.raw())
+	contextData.add("placementNote", fields["note"])
+	for _, key := range []string{"units", "candidates", "style", "look", "motifs", "world", "recompose", "feedback", "progress", "pass"} {
+		contextData.add(key, fields[key])
+	}
 	model := builder.config.Default
 	if override, exists := builder.config.StageModels[input.Stage]; exists {
 		model = override
@@ -184,21 +189,10 @@ func (builder *Builder) BuildTurn(run contract.Run, action contract.Action) (con
 			if err != nil {
 				return spec, err
 			}
-			contextData["previous"] = []object{previous}
+			contextData.add("previous", promptframe.Encode([]object{previous}))
 		}
 	}
-	for _, key := range []string{"units", "candidates", "style", "look", "motifs", "world", "recompose", "feedback", "progress", "pass"} {
-		if value := fields[key]; value != nil {
-			contextData[key] = value
-		}
-	}
-	if note := text(fields["note"]); note != "" {
-		contextData["placementNote"] = note
-	}
-	prompt, err := builder.prompt(input, contextData)
-	if err != nil {
-		return spec, err
-	}
+	prompt := builder.prompt(input, contextData.raw())
 	return contract.SessionSpec{
 		Provider: model.Provider, Model: model.Model, Thinking: model.Thinking, Mode: model.Mode,
 		WorkDir: workDir, Prompt: prompt,

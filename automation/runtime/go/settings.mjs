@@ -62,6 +62,8 @@ export function config(env = process.env) {
       model,
       "-outbox",
       outbox,
+      "-figure-tools",
+      join(root, "automation/paseo/figure-tools"),
       ...(thinking ? ["-thinking", thinking] : []),
       ...(reviewThinking ? ["-review-thinking", reviewThinking] : []),
     ],

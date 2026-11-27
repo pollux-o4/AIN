@@ -40,6 +40,7 @@ func run(ctx context.Context) error {
 	reviewThinking := flag.String("review-thinking", "", "Paseo thinking option for review and revisions")
 	outbox := flag.String("outbox", "", "absolute publication outbox directory")
 	labPolicyFile := flag.String("lab-policy", "", "private figure lab policy JSON")
+	figureTools := flag.String("figure-tools", "", "directory holding layout-check.mjs and kit-index.mjs for figure turns")
 	flag.Parse()
 	if *data == "" || *home == "" || *provider == "" || *model == "" {
 		return fmt.Errorf("data, paseo-home, provider and model are required")
@@ -100,10 +101,16 @@ func run(ctx context.Context) error {
 		high = contract.SessionSpec{Provider: *provider, Model: *model, Thinking: *reviewThinking}
 	}
 	builder := writingai.New(writingai.Config{Base: base, High: high})
+	layoutCheck, kitIndex, err := figureToolPaths(*figureTools)
+	if err != nil {
+		return err
+	}
 	draw, err := figureai.New(figureai.Config{
-		WorkRoot:  filepath.Join(root, "workspaces"),
-		LabPolicy: policy,
-		Default:   figureai.Model{Provider: *provider, Model: *model, Thinking: *thinking},
+		WorkRoot:    filepath.Join(root, "workspaces"),
+		LabPolicy:   policy,
+		Default:     figureai.Model{Provider: *provider, Model: *model, Thinking: *thinking},
+		LayoutCheck: layoutCheck,
+		KitIndex:    kitIndex,
 	})
 	if err != nil {
 		return err

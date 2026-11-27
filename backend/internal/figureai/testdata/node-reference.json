@@ -1,0 +1,339 @@
+{
+  "state": {
+    "articleId": "article",
+    "idea": "비교 🧪 </자료>",
+    "version": 7,
+    "revision": 3,
+    "artifacts": {
+      "audience": {
+        "revision": 1,
+        "output": {
+          "reader": "독자",
+          "intent": "하기"
+        }
+      },
+      "value": {
+        "revision": 1,
+        "output": {
+          "promise": "약속",
+          "preserve": ["조건"]
+        }
+      },
+      "outline": {
+        "revision": 1,
+        "output": {
+          "title": "제목",
+          "sections": [
+            {
+              "title": "첫 구간"
+            }
+          ]
+        }
+      },
+      "draft": {
+        "revision": 3,
+        "output": {
+          "text": "# 제목\n\n도입 <b>&</b>입니다.\n\n## 첫 구간\n\n끝입니다."
+        }
+      }
+    }
+  },
+  "prompts": [
+    {
+      "name": "plan",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure_plan",
+        "units": ["도입부", "첫 구간"],
+        "note": "첫 구간에 하나"
+      },
+      "digest": "2763e3baaeb3640be3435c340d3cb72cd935019c1365a0086327fceee26c039c"
+    },
+    {
+      "name": "compose",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure_compose",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "look": "manual",
+        "feedback": "더 단순하게"
+      },
+      "digest": "d0b76eb47baeb9cd1e1ca91b72dd3438cf7927217bcb91e7fcb5eb71fd7b9d82"
+    },
+    {
+      "name": "recompose",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure_compose",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "world": "세계",
+        "style": {
+          "look": "manual",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "motifs": [
+          {
+            "name": "통행증",
+            "look": "카드"
+          }
+        ],
+        "recompose": ["f1"]
+      },
+      "digest": "0be074c39d30c084cc7e2022ec58e50167082764539ad4cd7972eef4957d0417"
+    },
+    {
+      "name": "draw anatomy",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "anatomy",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "258f0ce09814d773f2976083aada0752333864150c6eff3544a91d27cb2b5dc8"
+    },
+    {
+      "name": "draw sketchnote",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "sketchnote",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "28fb876b58cb8e9275888ddb3ce85e19b129a64ea2bbb89b670be78131cdb415"
+    },
+    {
+      "name": "draw tablet",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "tablet",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "a42ec9e915374a9b729b219064e82964496c10cc6252402bdf67904675f41a30"
+    },
+    {
+      "name": "draw stick",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "stick",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "8253423c79493176dccb66d770fc85a03b558d812dfe3a090691c36c12f630da"
+    },
+    {
+      "name": "draw manual",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "manual",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "0f66beb7aae7e2a3d87cbbfd07d5b38d4e06cb1b5ba63d2d9a2e032113344e12"
+    },
+    {
+      "name": "draw unknown",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "draw",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기"
+          }
+        ],
+        "style": {
+          "look": "unknown",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        }
+      },
+      "digest": "60cca90bbdd3d986c19522dd0492d5c8113704f0270bd68e6f0c497d23de33af"
+    },
+    {
+      "name": "fix",
+      "action": {
+        "type": "request_figure",
+        "revision": 3,
+        "stage": "figure",
+        "figureId": "f1",
+        "pass": "fix",
+        "candidates": [
+          {
+            "id": "f1",
+            "anchor": "끝입니다.",
+            "claim": "관계",
+            "kind": "flow",
+            "scene": "장면",
+            "analogy": "자판기",
+            "fix": "라벨"
+          }
+        ],
+        "style": {
+          "look": "manual",
+          "accent": "노랑",
+          "base": "흰",
+          "labels": "짧게"
+        },
+        "world": "세계",
+        "progress": {
+          "index": 1,
+          "total": 2
+        },
+        "previous": [
+          {
+            "id": "f1",
+            "svg": "<svg viewBox=\"0 0 4 4\"><rect width=\"4\" height=\"4\"/></svg>"
+          }
+        ]
+      },
+      "digest": "a2a191a4217d28f6c88ea0a509203af8ad52791e9b5db46c382e64e99ebf2f41"
+    }
+  ]
+}
