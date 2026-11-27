@@ -12,6 +12,7 @@ import { chromium, expect } from "@playwright/test";
 import { AGENT_TOKEN_FILE } from "../../automation/contracts/runtime.mjs";
 import { readAsset } from "../../automation/editorial/assets.mjs";
 import { makeRun } from "../../automation/editorial/ui/stories/fixtures.ts";
+import { clickAction, downloadedBytes } from "../writing.ts";
 import { completionDelayMs, idea } from "./perf/fixture.mjs";
 import { start } from "./perf/go-runtime.mjs";
 
@@ -182,7 +183,7 @@ test("Go 응답 fixture의 화면·CLI 변경과 이전 회차를 제외하는 S
   await assert.rejects(() => fixture.cli("unrecognized"), { code: 2 });
 });
 
-test("Go 런타임의 초안을 PC·모바일 화면과 CLI에서 조회", { timeout: 30000 }, async (t) => {
+test("Go 런타임의 초안·승인·TXT를 PC·모바일과 CLI에서 검증", { timeout: 30000 }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), "ain-go-browser-"));
   t.after(() => rm(root, { recursive: true }));
   const runtime = await start({ root, completionDelayMs, historyCount: 1, historyBytes: 1024 });
@@ -197,11 +198,6 @@ test("Go 런타임의 초안을 PC·모바일 화면과 CLI에서 조회", { tim
     return JSON.parse(stdout);
   };
 
-  const created = await cli("new", "--idea", idea);
-  const completed = await cli("wait", created.id, "--timeout", "8");
-  assert.equal(completed.status, "awaiting_user");
-  assert.equal((await cli("list"))[0].id, created.id);
-
   const browser = await chromium.launch();
   t.after(() => browser.close());
   const profiles = {
@@ -210,7 +206,10 @@ test("Go 런타임의 초안을 PC·모바일 화면과 CLI에서 조회", { tim
   };
   await Promise.all(
     Object.entries(profiles).map(async ([name, options]) => {
-      const page = await browser.newPage(options);
+      const created = await cli("new", "--idea", idea);
+      const completed = await cli("wait", created.id, "--timeout", "8");
+      assert.equal(completed.status, "awaiting_user");
+      const page = await browser.newPage({ ...options, baseURL: runtime.url });
       try {
         const response = await page.goto(`${runtime.url}/write/#${created.id}`);
         assert.equal(response.status(), 200, name);
@@ -218,9 +217,17 @@ test("Go 런타임의 초안을 PC·모바일 화면과 CLI에서 조회", { tim
           "주문은 고객이 무엇을 샀는지 기록하는 책임을 집니다.",
         );
         await expect(page.locator("#work-title")).toHaveText("쇼핑몰의 책임");
+        const download = page.waitForEvent("download");
+        await page.getByRole("link", { name: "TXT 내려받기", exact: true }).click();
+        assert.match((await downloadedBytes(await download)).toString("utf8"), /쇼핑몰의 책임/);
+        const confirmed = await clickAction(page, "초안 확정", "satisfy");
+        assert.equal(confirmed.after.status, "satisfied");
+        const approved = await clickAction(page, "발행 준비 승인", "authorize_publication");
+        assert.equal(approved.after.status, "publication_ready");
       } finally {
         await page.close();
       }
     }),
   );
+  assert.equal((await cli("list", "--ready")).length, 2);
 });
