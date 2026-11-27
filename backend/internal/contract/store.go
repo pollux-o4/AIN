@@ -36,6 +36,7 @@ type RunSummary struct {
 	Status    string
 	Idea      string
 	Title     string
+	Monitor   string
 	Revision  int64
 	UpdatedAt string
 	Archived  bool
