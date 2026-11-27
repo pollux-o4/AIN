@@ -51,3 +51,12 @@ type Store interface {
 	Bind(context.Context, string, RemoteRef) error
 	Commit(context.Context, int64, string, Run) error
 }
+
+// BatchChild is a durable figure task. Once Started is true, recovery must
+// reconcile the remote identity before considering any new dispatch.
+type BatchChild struct {
+	Intent
+	Started bool
+	Result  *Event
+	Failure string
+}
