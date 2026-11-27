@@ -5,3 +5,8 @@ run = ["go -C backend vet ./...", "go -C backend test -race ./..."]
 ["go:build"]
 description = "Go 편집 런타임 실행 파일 빌드"
 run = "CGO_ENABLED=0 go -C backend build -trimpath -o ../.local/ain-go ./cmd/ain"
+
+["go:serve"]
+description = "명시한 데이터 경로에서 Go 편집 런타임 실행"
+depends = ["go:build", "build"]
+run = "exec .local/ain-go"
