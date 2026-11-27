@@ -27,14 +27,17 @@ func credential(root, name, override string) (string, error) {
 			return "", err
 		}
 		token := hex.EncodeToString(secret[:])
-		f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		f, err := os.CreateTemp(root, ".credential-*")
 		if err != nil {
 			return "", err
 		}
+		defer os.Remove(f.Name())
 		_, writeErr := f.WriteString(token + "\n")
-		err = errors.Join(writeErr, f.Close())
+		err = errors.Join(writeErr, f.Sync(), f.Close())
 		if err != nil {
-			_ = os.Remove(path)
+			return "", err
+		}
+		if err := os.Link(f.Name(), path); err != nil {
 			return "", err
 		}
 		return token, nil
