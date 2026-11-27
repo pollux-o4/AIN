@@ -29,6 +29,7 @@ type publicRunRecord struct {
 		Source            string
 		Status            string
 		SatisfiedRevision int64
+		Artifacts         map[string]json.RawMessage
 		History           []revisionView
 	}
 	Operations map[string]string
@@ -49,7 +50,8 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	}
 
 	s := run.State
-	draft := s.Artifacts.Draft
+	var draft *draftArtifact
+	_ = json.Unmarshal(s.Artifacts["draft"], &draft)
 	previous := make([]map[string]any, 0, len(s.History))
 	for _, version := range s.History {
 		text := ""
@@ -85,10 +87,11 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 	sort.Strings(operations)
 	pending := s.Status == "waiting_ai" || s.Status == "waiting_route" || s.Status == "waiting_figure"
 	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
+	artifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
 	return json.Marshal(map[string]any{
 		"id": id, "version": s.Version, "revision": s.Revision, "idea": s.Idea, "title": title,
 		"source": s.Source, "status": s.Status, "issue": run.Issue, "text": text, "textRevision": textRevision,
-		"previous": previous, "findings": []string{}, "artifacts": []any{}, "model": "",
+		"previous": previous, "findings": findings, "artifacts": artifacts, "model": "",
 		"needsCompletion": false, "completionReason": nil, "canCompleteRequirements": false,
 		"canDownload": text != "" && presented, "canFeedback": presented,
 		"canSatisfy": false, "canAuthorizePublication": false,
