@@ -22,6 +22,10 @@ func Serve(ctx context.Context, address string, handler http.Handler) error {
 	if err != nil {
 		return err
 	}
+	return serveListener(ctx, listener, handler)
+}
+
+func serveListener(ctx context.Context, listener net.Listener, handler http.Handler) error {
 	server := &http.Server{
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
