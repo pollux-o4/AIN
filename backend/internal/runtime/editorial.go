@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"context"
+	"errors"
 	"io/fs"
 	"net/http"
 
@@ -38,4 +40,29 @@ func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBu
 		return nil, nil, err
 	}
 	return handler, scheduler, nil
+}
+
+// ServeEditorial gives the HTTP listener and scheduler a shared lifetime.
+func ServeEditorial(ctx context.Context, address string, store contract.Store, paseo contract.Paseo, turns contract.TurnBuilder, cfg EditorialConfig) error {
+	handler, scheduler, err := Editorial(store, paseo, turns, cfg)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	results := make(chan error, 2)
+	go func() { results <- scheduler.Run(ctx) }()
+	go func() { results <- Serve(ctx, address, handler) }()
+
+	first := <-results
+	cancel()
+	second := <-results
+	if errors.Is(first, context.Canceled) {
+		first = nil
+	}
+	if errors.Is(second, context.Canceled) {
+		second = nil
+	}
+	return errors.Join(first, second)
 }
