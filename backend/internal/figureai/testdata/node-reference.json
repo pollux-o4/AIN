@@ -134,7 +134,7 @@
           "total": 2
         }
       },
-      "digest": "258f0ce09814d773f2976083aada0752333864150c6eff3544a91d27cb2b5dc8"
+      "digest": "d8ad2c520b6eec11fba78aad13fcf1fbd19129f060d4e54e6674c262848f011d"
     },
     {
       "name": "draw sketchnote",
@@ -166,7 +166,7 @@
           "total": 2
         }
       },
-      "digest": "28fb876b58cb8e9275888ddb3ce85e19b129a64ea2bbb89b670be78131cdb415"
+      "digest": "68ea0d0659a31fe42c16c7e40a16c339a6d3f45a6cd3aadd2763f99584bab5c5"
     },
     {
       "name": "draw tablet",
@@ -198,7 +198,7 @@
           "total": 2
         }
       },
-      "digest": "a42ec9e915374a9b729b219064e82964496c10cc6252402bdf67904675f41a30"
+      "digest": "3741077d4d2ca0280762ee18936248eae8d1a2eab9fdcf01d5952f78a977c80b"
     },
     {
       "name": "draw stick",
@@ -230,7 +230,7 @@
           "total": 2
         }
       },
-      "digest": "8253423c79493176dccb66d770fc85a03b558d812dfe3a090691c36c12f630da"
+      "digest": "1c981dd3153920f6e3c728308424ace813d8f623ce8c7f60cf923a268114c102"
     },
     {
       "name": "draw manual",
@@ -262,7 +262,7 @@
           "total": 2
         }
       },
-      "digest": "0f66beb7aae7e2a3d87cbbfd07d5b38d4e06cb1b5ba63d2d9a2e032113344e12"
+      "digest": "2bb0c7f91d58b08875158149d5216b884e21c0d23bc2095b2988a7b5b20091cd"
     },
     {
       "name": "draw unknown",
@@ -294,7 +294,7 @@
           "total": 2
         }
       },
-      "digest": "60cca90bbdd3d986c19522dd0492d5c8113704f0270bd68e6f0c497d23de33af"
+      "digest": "6487dcda353e4e6d54b1b17d8858f3f5cdd85d7a30531a8ed8f6a88855c74703"
     },
     {
       "name": "fix",
@@ -333,7 +333,7 @@
           }
         ]
       },
-      "digest": "a2a191a4217d28f6c88ea0a509203af8ad52791e9b5db46c382e64e99ebf2f41"
+      "digest": "b59a70354a016b9e5cc19227bf67ff3095ef0f653fc35c62f2bba2cefc1c2390"
     }
   ]
 }
