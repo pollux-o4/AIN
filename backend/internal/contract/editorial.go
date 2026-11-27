@@ -8,10 +8,12 @@ import (
 // Action describes a next transition. Kind is empty when the run is waiting
 // for a person's decision or has reached a terminal state.
 type Action struct {
-	Kind     string
-	Stage    string
-	FigureID string
-	Input    json.RawMessage
+	// StateVersion fences results against the user-visible editorial version.
+	StateVersion int64
+	Kind         string
+	Stage        string
+	FigureID     string
+	Input        json.RawMessage
 }
 
 type Event struct {

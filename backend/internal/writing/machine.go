@@ -152,7 +152,7 @@ func (rules *Rules) Next(run contract.Run) (contract.Action, error) {
 	if kind == "request_route" {
 		stage = "route"
 	}
-	return contract.Action{Kind: kind, Stage: stage, FigureID: str(body["figureId"]), Input: input}, nil
+	return contract.Action{StateVersion: intValue(state["version"]), Kind: kind, Stage: stage, FigureID: str(body["figureId"]), Input: input}, nil
 }
 
 func (rules *Rules) action(state object) object {
