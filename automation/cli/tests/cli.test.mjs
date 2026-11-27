@@ -97,6 +97,10 @@ test("agent_001 CLI drives the write API with a separate token", async (t) => {
   assert.equal(f.calls.at(-1)[2].feedback, "사례를 추가");
   assert.equal(f.calls.at(-1)[3], "agent");
   assert.equal(f.calls.at(-1)[2].expectedVersion, 7);
+  assert.equal(f.calls.at(-1)[2].delegated, undefined);
+  // 사용자가 대화에서 맡긴 요청은 위임 표시 · 한도 판정은 서버 · ADR-0006
+  await run(["feedback", ID, "맡긴", "수정", "--delegated"]);
+  assert.deepEqual([f.calls.at(-1)[2].feedback, f.calls.at(-1)[2].delegated], ["맡긴 수정", true]);
   // 구조 입력은 --input · 화면의 위치·스타일 선택과 같은 동작
   await run(["select-figures", ID, "--input", '{"figures":["f1"],"look":"manual"}']);
   assert.deepEqual(

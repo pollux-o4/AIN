@@ -18,6 +18,7 @@ export const USAGE = `ain <명령> [인자] · 출력 JSON(download는 TXT)
   new --idea <글감> [--mode m] [--level l] [--length 4500|4000-5000] [--source t | --source-file f]   초안 요청(AI 비용)
   wait <id> [--timeout 초]               진행 종료까지 대기 후 본문 포함 요약
 ${actionUsage()}
+                                         --delegated: 사용자가 대화에서 맡긴 요청(에이전트 수정 한도에 세지 않음)
                                          구조 입력은 --input '{"figures":["f1"],"look":"manual"}'
                                          자리 추가는 --input '{"quote":{"exact":"문장"},"claim":"보여 줄 것"}'
   download <id> [--revision n]           TXT 출력
@@ -51,6 +52,7 @@ export async function main(argv, io) {
           ["text", { type: "boolean" }],
           ["json", { type: "boolean" }],
           ["ready", { type: "boolean" }],
+          ["delegated", { type: "boolean" }],
         ]),
     ),
     strict: false,

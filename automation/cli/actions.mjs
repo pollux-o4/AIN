@@ -28,6 +28,7 @@ export function actionCommands(summary) {
         const result = await client.action(id, {
           ...payload(options.input),
           ...(text ? { feedback: text } : {}),
+          ...(options.delegated ? { delegated: true } : {}),
           operationId: randomUUID(),
           expectedVersion: run.version,
           type,
