@@ -58,6 +58,7 @@ func (p cjkDelimiter) Parse(_ ast.Node, block text.Reader, context parser.Contex
 	return node
 }
 
+// shortcut: 한중일 문자·문장부호 범위로 강조를 처리한다. 변형 선택자나 모호한 전각 문자가 기준 출력에 추가되면 CJK 규칙을 대조한다.
 func isCJK(r rune) bool {
 	return unicode.In(r, unicode.Hangul, unicode.Han, unicode.Hiragana, unicode.Katakana, unicode.Bopomofo) ||
 		r >= 0x3000 && r <= 0x303f || r >= 0xff01 && r <= 0xffee

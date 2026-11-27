@@ -80,6 +80,7 @@ type figure struct {
 	Caption                     *string
 }
 type figureGroup struct {
+	Revision          int
 	Phase             string
 	Candidates, Items []figure
 	Selected          []string
@@ -143,12 +144,19 @@ func (s *Service) read(ctx context.Context, id string) (contract.Run, record, er
 	return run, saved, err
 }
 
+func (s state) currentFigures() *figureGroup {
+	if s.Figure != nil && s.Figure.Revision == s.Revision {
+		return s.Figure
+	}
+	return nil
+}
+
 func (s state) presented() bool {
 	switch s.Status {
 	case "awaiting_user", "satisfied", "publication_ready":
 		return true
 	default:
-		return s.Figure != nil && s.SatisfiedRevision == s.Revision
+		return s.currentFigures() != nil && s.SatisfiedRevision == s.Revision
 	}
 }
 
@@ -212,8 +220,8 @@ func (s *Service) Export(ctx context.Context, id string, options Options) (File,
 	}
 	if current {
 		text = state.Artifacts.Draft.Output.Text
-		if state.Figure != nil && state.Figure.Phase == "confirmed" {
-			figures = state.Figure.Items
+		if group := state.currentFigures(); group != nil && group.Phase == "confirmed" {
+			figures = group.Items
 		}
 	} else {
 		for _, entry := range state.History {
@@ -253,7 +261,7 @@ func (s *Service) FigureAt(ctx context.Context, id, requested string, still bool
 	if version != nil && *version != saved.State.Version {
 		return File{}, &Error{http.StatusNotFound, "시각자료를 찾을 수 없습니다."}
 	}
-	for _, spot := range spots(saved.State.Figure, false) {
+	for _, spot := range spots(saved.State.currentFigures(), false) {
 		if spot.figure.ID == requested && spot.drawn {
 			document, err := parseSVG(spot.figure.SVG)
 			if err != nil {

@@ -215,9 +215,10 @@ func PreviewRun(run contract.Run) (string, error) {
 func previewRecord(run contract.Run, saved record) (string, error) {
 	state := saved.State
 	text, _ := state.displayedDraft()
-	pending := state.Figure != nil && state.Figure.Phase != "confirmed"
+	group := state.currentFigures()
+	pending := group != nil && group.Phase != "confirmed"
 	busy := state.Status == "waiting_figure" && saved.Issue == ""
-	return renderArticle(state.title(), text, spots(state.Figure, busy), func(spot spot) string {
+	return renderArticle(state.title(), text, spots(group, busy), func(spot spot) string {
 		item := spot.figure
 		if !figureID.MatchString(item.ID) {
 			return ""

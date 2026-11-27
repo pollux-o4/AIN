@@ -68,7 +68,7 @@ func fixtureRun(t *testing.T, golden golden, status, phase string, approvedRevis
 		"status": status, "satisfiedRevision": a.Revision,
 		"artifacts": map[string]any{"draft": map[string]any{"revision": a.Revision, "output": map[string]any{"text": a.Text}}},
 		"history":   []any{map[string]any{"revision": 1, "artifacts": map[string]any{"draft": map[string]any{"revision": 1, "output": map[string]any{"text": "# 이전\r\n\r\n원래 문단\r\n"}}}}},
-		"figure":    map[string]any{"phase": phase, "items": a.Figures, "candidates": a.Figures, "selected": []string{"f1", "f2"}},
+		"figure":    map[string]any{"phase": phase, "revision": a.Revision, "items": a.Figures, "candidates": a.Figures, "selected": []string{"f1", "f2"}},
 		"approval":  map[string]any{"revision": approvedRevision, "figures": []string{"f1"}},
 	}
 	raw, err := json.Marshal(map[string]any{
@@ -166,6 +166,16 @@ func TestNodeExportGolden(t *testing.T) {
 	equalZIP(t, file.Body, expected.ZIP.Body)
 	if sum := fmt.Sprintf("%x", sha256.Sum256(file.Body)); sum != expected.ZIP.SHA256 {
 		t.Errorf("ZIP bytes differ from Node: %s", sum)
+	}
+	staticBundle, err := service.Export(ctx, run.ID, Options{Format: "zip", Motion: "static"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	staticFiles := fileContents(t, staticBundle.Body)
+	if !strings.Contains(staticFiles["article-body.html"], `src="figures/f1.static.svg"`) ||
+		!strings.Contains(staticFiles["manifest.json"], `"motion": "static"`) ||
+		strings.Contains(staticFiles["figures/f1.static.svg"], "<animate") {
+		t.Fatal("static bundle must link to the frozen figure and retain both versions")
 	}
 	staleVersion := 11
 	if _, err := service.FigureAt(ctx, run.ID, "f1", true, &staleVersion); err == nil {
@@ -281,6 +291,23 @@ func TestArtifactPathAndSVGGuards(t *testing.T) {
 	data, err := os.ReadFile(external)
 	if err != nil || string(data) != "기존 데이터" {
 		t.Fatalf("external file changed: %v", err)
+	}
+	var stale map[string]any
+	if err := json.Unmarshal(run.Value, &stale); err != nil {
+		t.Fatal(err)
+	}
+	stale["state"].(map[string]any)["figure"].(map[string]any)["revision"] = 1
+	run.Value, err = json.Marshal(stale)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status *Error
+	staleService, err := New(runFixture{run}, destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := staleService.Figure(ctx, run.ID, "f1", false); !errors.As(err, &status) || status.Status != http.StatusNotFound {
+		t.Fatalf("expected a stale figure to be hidden, got %v", err)
 	}
 	for index, svg := range []string{
 		`<svg><x:script xmlns:x="http://www.w3.org/2000/svg"/></svg>`,

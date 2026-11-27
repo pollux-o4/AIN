@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 
+	"github.com/pollux-o4/AIN/backend/internal/artifacts"
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 	"github.com/pollux-o4/AIN/backend/internal/editorial"
 	"github.com/pollux-o4/AIN/backend/internal/figuredomain"
@@ -18,6 +19,7 @@ type EditorialConfig struct {
 	Assets     fs.FS
 	SessionKey string
 	AgentToken string
+	Outbox     string
 	Runner     runner.Config
 }
 
@@ -30,6 +32,11 @@ func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBu
 		return nil, nil, err
 	}
 	routes := http.NewServeMux()
+	files, err := artifacts.New(store, cfg.Outbox)
+	if err != nil {
+		return nil, nil, err
+	}
+	httpapi.ArtifactRoutes(routes, files)
 	views := editorial.Queries{Store: store}
 	httpapi.ReadRoutes(routes, views)
 	httpapi.CreateRoute(routes, editorial.Creator{Store: store, Rules: rules, Scheduler: scheduler}, views)

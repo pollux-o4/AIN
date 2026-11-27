@@ -36,8 +36,8 @@ func (s *Service) Handoff(ctx context.Context, id string) (Delivery, error) {
 	for _, id := range approval.Figures {
 		approved[id] = true
 	}
-	if state.Figure != nil && state.Figure.Phase == "confirmed" {
-		for _, item := range state.Figure.Items {
+	if group := state.currentFigures(); group != nil && group.Phase == "confirmed" {
+		for _, item := range group.Items {
 			if approved[item.ID] {
 				figures = append(figures, item)
 				delete(approved, item.ID)
@@ -105,6 +105,7 @@ func writeOutbox(ctx context.Context, dir string, bundle File) (string, error) {
 		return "", err
 	}
 	// A sibling hard link publishes only complete bytes, without replacing an existing path.
+	// shortcut: 하드 링크와 디렉터리 동기화를 지원하는 파일시스템 사용, 다른 파일시스템에 배포하기 전에 원자적 게시를 검증한다.
 	if err := root.Link(temporary, bundle.Filename); err != nil {
 		if !errors.Is(err, fs.ErrExist) {
 			return "", err
