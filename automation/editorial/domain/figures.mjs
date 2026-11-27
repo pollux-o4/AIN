@@ -160,14 +160,15 @@ const withLook = (candidates, ids, look) =>
 // 구성 작업 입력: 고른 자리 전부 · 다시 구성이면 유지할 자리의 구성과 세계·계약도 함께 · ADR-0026
 function composeAction(state) {
   const figure = state.figure;
-  const targets = figure.recompose ?? figure.selected;
+  const selected = new Set(figure.selected);
+  const targets = new Set(figure.recompose ?? figure.selected);
   return {
     type: "request_figure",
     stage: "figure_compose",
     revision: state.revision,
     candidates: figure.candidates
-      .filter((c) => figure.selected.includes(c.id))
-      .map((c) => (targets.includes(c.id) ? withoutDesign(c) : c)),
+      .filter((c) => selected.has(c.id))
+      .map((c) => (targets.has(c.id) ? withoutDesign(c) : c)),
     ...(figure.recompose
       ? {
           recompose: figure.recompose,
@@ -281,11 +282,11 @@ const acceptMapping = (mapping) =>
 // 구성 결과: 대상 자리마다 구성 하나가 있어야 함 · 전체 구성이면 세계·계약을 새로 묶고,
 // 일부 다시 구성이면 기존 세계·계약을 유지하고 계약에 있는 반복 대상 이름만 잇는다 · ADR-0022·0026
 function acceptDesigns(figure, output) {
-  const targets = figure.recompose ?? figure.selected;
+  const targets = new Set(figure.recompose ?? figure.selected);
   const byId = new Map(output.designs.map((design) => [design.id, design]));
   for (const id of targets) requireThat(byId.has(id), `Missing design for selected figure: ${id}`);
   const designed = figure.candidates.map((candidate) => {
-    if (!targets.includes(candidate.id)) return candidate;
+    if (!targets.has(candidate.id)) return candidate;
     const { analogy, scene, mapping, motifs, look } = byId.get(candidate.id);
     const kept = withoutDesign(candidate);
     return {
@@ -303,7 +304,7 @@ function acceptDesigns(figure, output) {
     return {
       ...rest,
       candidates: designed.map((c) =>
-        targets.includes(c.id) && c.motifs
+        targets.has(c.id) && c.motifs
           ? { ...c, motifs: c.motifs.map((n) => n.trim()).filter((n) => names.has(n)) }
           : c,
       ),
@@ -322,10 +323,15 @@ function acceptDesigns(figure, output) {
     ...(output.world?.trim() ? { world: output.world.trim() } : {}),
   };
 }
-function acceptFigure(figure, id, output, { keepNotes }) {
-  const made = output.figures.find((item) => item.id === id);
+// 결과 검증과 조립에 필요한 후보와 출력만 id로 색인한다.
+function firstById(items) {
+  const index = new Map();
+  for (const item of items) if (!index.has(item.id)) index.set(item.id, item);
+  return index;
+}
+function acceptFigure(candidate, id, made, { keepNotes }) {
   requireThat(made, `Missing figure for selected candidate: ${id}`);
-  const { anchor, claim } = figure.candidates.find((c) => c.id === id);
+  const { anchor, claim } = candidate;
   return {
     id,
     anchor,
@@ -363,22 +369,20 @@ function advanceFigure(state, output, failures = new Map()) {
   const nextPass =
     pass === FIGURE_FIX_PASS ? undefined : FIGURE_PASSES[FIGURE_PASSES.indexOf(pass) + 1];
   const rest = withFailures(omit(figure, PROGRESS_KEYS), failed);
+  const candidates = firstById(figure.candidates);
+  const figures = firstById(output.figures);
+  const accepted = ids.map((id) =>
+    acceptFigure(candidates.get(id), id, figures.get(id), { keepNotes: Boolean(nextPass) }),
+  );
   if (nextPass) {
     state.figure = {
       ...rest,
       current: { ids, pass: nextPass },
-      passDrafts: Object.fromEntries(
-        ids.map((id) => [id, acceptFigure(figure, id, output, { keepNotes: true })]),
-      ),
+      passDrafts: Object.fromEntries(accepted.map((item) => [item.id, item])),
     };
     return;
   }
-  const made = new Map(
-    [
-      ...(figure.items ?? []),
-      ...ids.map((id) => acceptFigure(figure, id, output, { keepNotes: false })),
-    ].map((item) => [item.id, item]),
-  );
+  const made = new Map([...(figure.items ?? []), ...accepted].map((item) => [item.id, item]));
   const items = figure.selected.flatMap((id) => (made.has(id) ? [made.get(id)] : []));
   const next = pendingIds(figure, items).filter((id) => !failed[id]);
   if (next.length) {
