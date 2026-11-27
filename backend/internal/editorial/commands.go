@@ -39,7 +39,10 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 		return contract.Run{}, err
 	}
 	var journal struct {
-		State      struct{ Version, Revision int64 }
+		State struct {
+			Version, Revision int64
+			Status            string
+		}
 		Operations map[string]string
 	}
 	if err := json.Unmarshal(run.Value, &journal); err != nil {
@@ -101,11 +104,16 @@ func (c Commands) Apply(ctx context.Context, id, actor string, input json.RawMes
 			delete(body, "note")
 		}
 	}
+	eventKind := kind
+	if kind == "resume" && journal.State.Status == "failed" {
+		eventKind = "retry"
+	}
+	delete(body, "type")
 	eventBody, err := json.Marshal(body)
 	if err != nil {
 		return contract.Run{}, err
 	}
-	next, err := c.Rules.Reduce(run, contract.Event{ID: operation, Actor: "user", Kind: kind, Body: eventBody})
+	next, err := c.Rules.Reduce(run, contract.Event{ID: operation, Actor: "user", Kind: eventKind, Body: eventBody})
 	if err != nil {
 		return contract.Run{}, err
 	}
