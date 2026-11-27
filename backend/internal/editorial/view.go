@@ -89,7 +89,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		operations = append(operations, id)
 	}
 	sort.Strings(operations)
-	pending := s.Status == "waiting_ai" || s.Status == "waiting_route" || s.Status == "waiting_figure"
+	pending := isPending(s.Status)
 	presented := s.Status == "awaiting_user" || s.Status == "satisfied" || s.Status == "publication_ready"
 	stageArtifacts, findings := projectArtifacts(s.Artifacts, s.Revision, presented)
 	saved := contract.Run{ID: id, Value: data}
@@ -110,7 +110,7 @@ func (q Queries) RunView(ctx context.Context, id string) (json.RawMessage, error
 		"canDownload": text != "" && presented, "canFeedback": presented,
 		"canSatisfy": approvals.Satisfy, "canAuthorizePublication": approvals.Authorize,
 		"callsUsed": run.CallsUsed, "maxCalls": run.MaxCalls, "appliedOperations": operations,
-		"archived": len(run.ArchivedAt) > 0 && string(run.ArchivedAt) != "null",
+		"archived": isArchived(run.ArchivedAt),
 		"html":     html,
 		"monitor": map[string]any{
 			"kind": s.Status, "label": stateLabel(s.Status), "now": time.Now().UnixMilli(),

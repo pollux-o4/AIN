@@ -49,7 +49,9 @@ func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBu
 	views := editorial.Queries{Store: store, Rules: rules}
 	httpapi.ReadRoutes(routes, views)
 	httpapi.CreateRoute(routes, editorial.Creator{Store: store, Rules: rules, Scheduler: scheduler}, views)
-	httpapi.ActionRoute(routes, editorial.Commands{Store: store, Rules: rules, Scheduler: scheduler}, views)
+	commands := editorial.Commands{Store: store, Rules: rules, Scheduler: scheduler}
+	httpapi.ActionRoute(routes, commands, views)
+	httpapi.ArchiveRoutes(routes, commands)
 
 	handler, err := httpapi.New(cfg.Assets, cfg.SessionKey, cfg.AgentToken, routes)
 	if err != nil {
