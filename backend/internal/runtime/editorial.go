@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/fs"
 	"net/http"
+	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/artifacts"
 	"github.com/pollux-o4/AIN/backend/internal/contract"
@@ -27,6 +28,14 @@ type EditorialConfig struct {
 // loop to the same durable store. Its caller owns shutdown and the store.
 func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBuilder, cfg EditorialConfig) (http.Handler, *runner.Runner, error) {
 	rules := writing.NewWithFigures(figuredomain.New())
+	if cfg.Runner.Reserve == nil {
+		cfg.Runner.Reserve = func(run contract.Run, action contract.Action) (contract.Run, error) {
+			return editorial.ReserveTurn(time.Now(), run, action)
+		}
+	}
+	if cfg.Runner.Paused == nil {
+		cfg.Runner.Paused = editorial.PauseTransition(rules)
+	}
 	scheduler, err := runner.New(store, paseo, rules, turns, cfg.Runner)
 	if err != nil {
 		return nil, nil, err
