@@ -86,17 +86,16 @@ func completePlan() []any {
 	return result
 }
 
-func decodeRecord(run contract.Run) (object, object, error) {
-	record := object{}
+func decodeRecord(run contract.Run) (map[string]json.RawMessage, object, error) {
+	record := map[string]json.RawMessage{}
 	if len(run.Value) == 0 {
 		return record, nil, nil
 	}
 	if err := json.Unmarshal(run.Value, &record); err != nil || record == nil {
 		return nil, nil, errors.New("Invalid run record")
 	}
-	raw, exists := record["state"]
-	state := obj(raw)
-	if exists && raw != nil && state == nil {
+	var state object
+	if raw, exists := record["state"]; exists && json.Unmarshal(raw, &state) != nil {
 		return nil, nil, errors.New("Invalid state envelope")
 	}
 	return record, state, nil
@@ -212,6 +211,9 @@ func (rules *Rules) Reduce(run contract.Run, event contract.Event) (contract.Run
 		if err != nil {
 			return run, err
 		}
+		if run.RequestID == "" {
+			run.RequestID = eventID
+		}
 		return withState(run, record, state)
 	}
 
@@ -246,14 +248,18 @@ func (rules *Rules) Reduce(run contract.Run, event contract.Event) (contract.Run
 	return withState(run, record, state)
 }
 
-func withState(run contract.Run, record, state object) (contract.Run, error) {
-	record["state"] = state
+func withState(run contract.Run, record map[string]json.RawMessage, state object) (contract.Run, error) {
+	rawState, err := json.Marshal(state)
+	if err != nil {
+		return run, err
+	}
+	record["state"] = rawState
 	raw, err := json.Marshal(record)
 	if err != nil {
 		return run, err
 	}
 	run.Value = raw
-	run.Version = intValue(state["version"])
+	run.Version = max(run.Version+1, intValue(state["version"]))
 	if run.ID == "" {
 		run.ID = str(state["articleId"])
 	}
