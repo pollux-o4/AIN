@@ -20,7 +20,7 @@
 | 릴리스 | MIG-051 | PERF-001, `go-candidate.md`의 같은 부하 비교와 후속 재측정 |
 | 릴리스 | MIG-052 | `TestFLOW001HTTPToHandoff`, `go:client-check`, `liveprobe` 합성 글쓰기 |
 | 릴리스 | MIG-053 | `TestOfflineMigrationAndRollback`, 합성 후보 Go 기동과 원본 바이트 일치. 운영 이관은 별도 승인 대상 |
-| 릴리스 | MIG-054 | 빈 서버 PATH에서 배포 검증본 기동, 자산·CLI·Paseo 고지 검증. 최종 전체 검증 통과, MIT 저작권자 확인 대기 |
+| 릴리스 | MIG-054 | 빈 서버 PATH에서 배포 검증본 기동, 자산·CLI·Paseo 고지 검증. 최종 전체 검증과 MIT 공개 후보 패키지 기동 검사 통과 |
 
 실제 모델을 이용한 agy 전송·중단의 확인은 합성 시험과 별개다. 승인된 실제 실행이 있으면 OPS-003에 따라 증거를 남긴다.
 

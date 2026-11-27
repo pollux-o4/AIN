@@ -22,6 +22,6 @@ linux/amd64 검증에서 패키지를 임시 디렉터리로 옮긴 뒤 서버 P
 | Tailwind CSS, Vite의 모듈 로딩 보조 코드 | 설치된 버전의 MIT 라이선스 |
 | Galmuri 웹폰트 | 배포본의 SIL Open Font License 1.1와 저작권 고지 |
 
-AIN 외부 배포에는 승인된 저작권자가 기재된 루트 MIT `LICENSE`가 필요하다. 검증 시점의 저장소에는 AIN 라이선스 파일 및 패키지 라이선스 필드가 없었다. Git 작성자 표시는 권리 귀속 증빙으로 삼지 않았다.
+AIN 자체 코드는 루트 `LICENSE`의 MIT 조건을 적용하며, 저작권자는 확인한 GitHub 계정 `pollux-o4`로 표기한다.
 
 MIG-002에서 참고한 Paseo 0.17.5 공식 패키지는 Apache-2.0이며 패키지의 원본 고지에는 Mohamed Boudra가 기재되어 있다. 이 배포본에는 데몬과 JS SDK가 들어가지 않는다. Go 프로토콜 구현이 참조한 client·protocol 0.17.5의 원본 라이선스와 출처 고지를 패키지의 `protocol-references/paseo`에 포함한다.
