@@ -360,11 +360,16 @@ export class Jobs {
             ? { ...action, previous: await writeFigureInputs(cwd, action.previous) }
             : action;
           const context = promptContext(state, promptAction);
+          // 생성 구간별 소요(재사용 확인·새 세션 생성) · 초안까지 시간 예산의 병목 관찰용
+          const startedAt = Date.now();
           if ((await this.#sessions.acquire(job, context)).reused) {
+            job.timing = { acquireMs: Date.now() - startedAt };
             job.status = "running";
             return await this.save(job);
           }
+          const acquiredAt = Date.now();
           await this.#spawn(job, cwd, buildPrompt(state, promptAction, ai), context);
+          job.timing = { acquireMs: acquiredAt - startedAt, spawnMs: Date.now() - acquiredAt };
           job.status = "running";
           return await this.save(job);
         } catch (error) {
