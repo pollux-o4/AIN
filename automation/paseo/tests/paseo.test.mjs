@@ -5,6 +5,7 @@ import test, { after } from "node:test";
 import { transition } from "../../editorial/domain/index.mjs";
 import { scratchDir } from "../../runtime/scratch.mjs";
 import { makeServer } from "../../runtime/server.mjs";
+import { JobStore } from "../job-store.mjs";
 import { Jobs } from "../jobs.mjs";
 import { GUARD } from "../prompts/frame.mjs";
 
@@ -219,23 +220,20 @@ test("deadline watchdog stops an owned job once even if n8n stops polling", asyn
 test("감시 주기는 처음 한 번만 기록을 훑고 이후에는 다시 읽지 않는다", async () => {
   const t = await setup();
   await t.jobs.create({ state: start(), ai: { provider: "antigravity", model: "fixture-model" } });
-  const reopened = new Jobs({
-    client: t.client,
-    root: join(t.root, "jobs"),
-    workRoot: join(t.root, "work"),
-  });
+  const store = new JobStore(join(t.root, "jobs"));
   let reads = 0;
-  const read = reopened.read.bind(reopened);
-  reopened.read = (id) => {
+  const read = store.read.bind(store);
+  store.read = (id) => {
     reads += 1;
     return read(id);
   };
-  await reopened.expire();
-  const first = reads;
-  await reopened.expire();
-  await reopened.expire();
-  assert.equal(first, 1);
-  assert.equal(reads, first);
+  const [first, second] = await Promise.all([store.activeJobs(), store.activeJobs()]);
+  assert.equal(first.length, 1);
+  assert.deepEqual(second, first);
+  assert.equal(reads, 1);
+  await store.save({ ...(await read(first[0].id)), status: "completed" });
+  assert.deepEqual(await store.activeJobs(), []);
+  assert.equal(reads, 1);
 });
 test("a completed response is recovered at the deadline instead of discarded", async () => {
   const t = await setup();

@@ -24,7 +24,7 @@ export function Article({
   }, [html]);
   return (
     <>
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: 동일 출처 서버가 markdown-it html:false로 렌더링한 HTML만 사용 */}
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: 동일 출처 서버가 원시 HTML을 비활성화하여 렌더링한 결과만 사용 */}
       <article id="article" ref={article} dangerouslySetInnerHTML={{ __html: html }} />
       {children?.(article)}
     </>

@@ -1,19 +1,19 @@
 [task_config]
 # 검증 작업: 모듈별·캐시(sources 변경 없으면 생략) · TEST-RUN 참조
-includes = ["mise-tasks/test.toml"]
+includes = ["mise-tasks/test.toml", "mise-tasks/go.toml"]
 
 [tools]
+go = "1.27.1"
 node = "24.12.0"
 "npm:pnpm" = "11.19.0"
-"npm:n8n" = "2.44.6"
 gitleaks = "8.30.0"
 
 [tasks.setup]
-run = "pnpm install --frozen-lockfile && pnpm build"
+run = ["pnpm install --frozen-lockfile", "pnpm build", "mise run go:build"]
 
 [tasks.n8n]
-description = "블로그 글 다듬기 워크플로용 n8n"
-run = "n8n start"
+description = "이전 Node 편집 환경용 n8n · 기본 Go 서비스에는 필요하지 않음"
+run = "mise exec npm:n8n@2.44.6 -- n8n start"
 [tasks.n8n.env]
 N8N_USER_FOLDER = "{{config_root}}/.local/n8n"
 N8N_LISTEN_ADDRESS = "127.0.0.1"
@@ -29,19 +29,25 @@ N8N_DIAGNOSTICS_ENABLED = "false"
 run = "node automation/n8n/build-workflow.mjs"
 
 [tasks."ai:setup"]
+description = "이전 Node/n8n 브리지 전용 인증 파일 준비"
 run = "node automation/paseo/setup.mjs"
 
 [tasks.paseo]
 run = "paseo daemon run"
 
 [tasks."ai:bridge"]
-run = "node automation/runtime/server.mjs"
+description = "이전 Node 브리지 · 별도 호환 실행"
+run = "node automation/runtime/go-control.mjs legacy-bridge"
 
 [tasks."ai:providers"]
-run = "node automation/paseo/providers.mjs"
+run = "node automation/runtime/go-control.mjs providers"
 
 [tasks."ai:prune"]
 description = "쓰지 않는 AIN Paseo 세션 보관(제공자 프로세스 종료) · --all: 대기 담당까지 · ADR-0015"
+run = "node automation/runtime/go-control.mjs prune"
+
+[tasks."ai:prune:legacy"]
+description = "이전 Node 런타임의 명시적 세션 정리"
 run = "node automation/paseo/prune.mjs"
 
 [tasks."ai:pilot"]
@@ -51,29 +57,49 @@ run = "node automation/paseo/pilot.mjs"
 run = "node automation/paseo/article-e2e.mjs"
 
 [tasks.editorial]
-description = "글쓰기 화면과 n8n 실행 환경"
-run = "pnpm build && node automation/runtime/start.mjs"
+description = "Go 글쓰기 화면 포그라운드 실행"
+run = "node automation/runtime/go-control.mjs foreground"
 
 [tasks."editorial:start"]
-description = "글쓰기 서비스 백그라운드 기동 · 이전 코드면 재시작"
-run = "node automation/runtime/control.mjs start"
+description = "Go 글쓰기 서비스 백그라운드 기동 · 이전 빌드면 안전하게 재시작"
+run = "node automation/runtime/go-control.mjs start"
 
 [tasks."editorial:stop"]
-description = "글쓰기 서비스 종료 · 진행 중 AI 작업이 있으면 거부 (--force)"
-run = "node automation/runtime/control.mjs stop"
+description = "이 저장소의 Go 서비스 종료 · 영속 AI 작업이 있으면 거부 (--force)"
+run = "node automation/runtime/go-control.mjs stop"
 
 [tasks."editorial:restart"]
-run = "node automation/runtime/control.mjs restart"
+run = "node automation/runtime/go-control.mjs restart"
 
 [tasks."editorial:status"]
-run = "node automation/runtime/control.mjs status"
+run = "node automation/runtime/go-control.mjs status"
 
 [tasks."editorial:build"]
+description = "Go 글쓰기 실행 파일과 화면 자산 빌드"
+depends = ["build", "go:build"]
+
+[tasks."editorial:legacy"]
+description = "이전 Node/n8n 편집 환경 포그라운드 실행"
+run = "pnpm build && node automation/runtime/go-control.mjs legacy-foreground"
+
+[tasks."editorial:legacy:start"]
+run = "node automation/runtime/go-control.mjs legacy-start"
+
+[tasks."editorial:legacy:stop"]
+run = "node automation/runtime/go-control.mjs legacy-stop"
+
+[tasks."editorial:legacy:restart"]
+run = "node automation/runtime/go-control.mjs legacy-restart"
+
+[tasks."editorial:legacy:status"]
+run = "node automation/runtime/go-control.mjs legacy-status"
+
+[tasks."editorial:legacy:build"]
 run = "node automation/n8n/build-editorial-workflow.mjs"
 
 [tasks.ain]
 description = "에이전트용 글쓰기 CLI · AGENT-001"
-run = "node automation/cli/ain.mjs"
+run = 'AIN_RUNTIME_DIR="${AIN_RUNTIME_DIR:-${AIN_DATA_DIR:-.local/ai-runtime}}" AIN_URL="${AIN_URL:-http://${AIN_LISTEN:-127.0.0.1:3230}}" node automation/cli/ain.mjs'
 
 [tasks.secrets]
 description = "커밋 대상·Git 이력의 비밀값·개인정보 검사"
@@ -88,12 +114,12 @@ run = [
 run = "pnpm dev"
 
 [tasks."ai:test:contract"]
-description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델: 연결 1회 통과 후 합성 글 1편 검증 · 최대 31회 호출 · TIME-001"
-run = "node automation/n8n/build-workflow.mjs && node automation/paseo/contract-e2e.mjs"
+description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델: 연결 1회 통과 후 합성 글 1편 검증 · 기본 최대 31회 호출 · 수정 검증 포함 최대 61회 · TIME-001"
+run = "node automation/paseo/contract-e2e.mjs"
 
 [tasks."ai:eval"]
 description = "비용 발생 · 사람이 직접 실행 · 실제 기본 모델 평가: 글감 4종 × 1회(기본) · 멱등성은 --trials 3 · 예) mise run ai:eval -- --cases narrate --trials 3 · TIME-001"
-run = "node automation/n8n/build-workflow.mjs && node automation/paseo/eval.mjs"
+run = "node automation/paseo/eval.mjs"
 
 [tasks.lab]
 description = "시각자료 연구소 · 색인(index)·요약(summary)·판정(judge) · 예) mise run lab -- judge algo-f3 res010 figure 1 fail \"모두 갖춰야가 안 보임\" · 화면은 Storybook 연구소 · LAB-001"

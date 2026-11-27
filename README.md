@@ -1,11 +1,11 @@
 # AIN
 
-AIN은 독립 글쓰기 자동화 도구이다. 글감 입력부터 초안 검토, 수정, 내보내기(TXT·HTML·ZIP)까지의 과정을 처리한다. n8n은 작업 전달과 대기를 맡고, 서비스는 상태·정책·복구를 담당한다.
+AIN은 독립 글쓰기 자동화 도구이다. 글감 입력부터 초안 검토, 수정, 내보내기(TXT·HTML·ZIP)까지의 과정을 처리한다. Go 서버가 로컬 화면·API·SQLite·실행 복구를 맡고, 공통 Paseo 데몬에 직접 연결한다.
 
 - 설치: `mise trust`, `mise install`, `mise run setup` 순서로 실행한다.
-- AI 실행 도구: 인접한 공통 `paseo/`의 설치와 인증이 필요하다. 연결 관련 내용은 `automation/paseo/`에서 확인한다.
-- 자격증명: `mise run ai:setup`으로 설정한다. 최초 실행 시에는 `mise run n8n`으로 n8n 소유자 계정을 생성한다(`OPS-001`).
-- 실행: `mise run editorial`로 실행한다. 글쓰기 화면은 http://localhost:3230/write/, n8n은 http://localhost:5678, AI 실행 관찰 화면은 http://127.0.0.1:6767/ 에서 확인한다.
+- AI 실행 도구: 공통 Paseo의 설치·인증·데몬 기동은 OPS-003을 따른다. Go 서버가 읽을 Paseo 홈은 `PASEO_HOME`으로 지정할 수 있다.
+- 실행: `mise run editorial:start`로 기동하고 [글쓰기 화면](http://127.0.0.1:3230/write/)을 연다. `editorial:status`와 `editorial:stop`으로 상태 확인과 종료를 한다. AI 실행은 [Paseo 관찰 화면](http://127.0.0.1:6767/)에서 확인할 수 있다.
+- 배포: 서버 패키지는 Go 바이너리와 빌드된 화면을 포함한다(MIG-054). 기존 Node·n8n 데이터가 있으면 MIG-053 절차를 먼저 따른다.
 - 개발: `mise run editorial`로 서비스를 시작한 뒤, 별도 터미널에서 `mise run editorial:dev`를 실행하여 Vite 주소에서 같은 로컬 API를 사용한다.
 - AI 대행: `mise run ain`을 통해 대화형 AI가 사용자 대신 작업을 의뢰·수정·삭제한다. 사용 절차는 스킬 `ain-write`와 AGENT-001을 따른다.
 - 정적 검사: `mise run check`로 캐시를 활용해 TypeScript·Biome·dependency-cruiser·Knip·gitleaks 검사를 실행한다.

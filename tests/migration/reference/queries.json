@@ -1,0 +1,3974 @@
+{
+  "now": 1780000000000,
+  "jobs": {
+    "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927": {
+      "id": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927",
+      "providerModel": "fixture/model",
+      "state": {
+        "source": "이전 참고 자료",
+        "artifacts": {
+          "diagnose": {
+            "revision": 1,
+            "output": {
+              "purpose": "経験と判断の共有",
+              "audience": "同じ課題の開発者",
+              "sectionModes": ["experience", "explanation"],
+              "preserveVoice": "一人称の迷いを保持",
+              "strategy": "経験→判断→結果; 分類表を強制しない"
+            }
+          }
+        },
+        "history": []
+      },
+      "action": {
+        "type": "request_ai",
+        "stage": "topic"
+      },
+      "inputSummary": {
+        "source": true,
+        "feedback": false,
+        "stages": ["diagnose"],
+        "baseline": false
+      },
+      "event": {
+        "output": {
+          "problem": "실행 시점 문제",
+          "scope": "기록 범위",
+          "internal": "SYNTHETIC_PRIVATE_MARKER"
+        }
+      },
+      "status": "completed",
+      "usage": {
+        "inputTokens": 91,
+        "outputTokens": 9
+      },
+      "steps": [
+        {
+          "kind": "note",
+          "text": "합성 근거를 읽었습니다.",
+          "at": 1779999938200
+        }
+      ]
+    },
+    "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf": {
+      "id": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf",
+      "providerModel": "fixture/model",
+      "status": "completed",
+      "state": {
+        "source": "",
+        "feedback": "순서 조정",
+        "artifacts": {
+          "review": {
+            "revision": 1,
+            "output": {
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
+              "preservationCheck": "条件・語り口を保持"
+            }
+          }
+        },
+        "history": []
+      },
+      "action": {
+        "type": "request_route"
+      },
+      "event": {
+        "target": "draft",
+        "reason": "문장 수정"
+      },
+      "usage": {
+        "inputTokens": 10,
+        "outputTokens": 2
+      }
+    },
+    "8429e6f1dc6f9e025fefbfd5b8c3aa0fad33ecd439ad72d2a86373495de98b90": {
+      "id": "8429e6f1dc6f9e025fefbfd5b8c3aa0fad33ecd439ad72d2a86373495de98b90",
+      "providerModel": "fixture/model",
+      "status": "failed",
+      "failureKind": "invalid_output",
+      "state": {
+        "source": "",
+        "artifacts": {},
+        "history": []
+      },
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "section": {
+          "index": 0,
+          "total": 2
+        }
+      },
+      "inputSummary": {
+        "source": false,
+        "feedback": false,
+        "stages": [],
+        "baseline": false
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 3
+      },
+      "diagnostic": "SYNTHETIC_PRIVATE_MARKER",
+      "steps": [
+        {
+          "kind": "tool",
+          "text": "자료 읽기",
+          "status": "failed",
+          "at": 1779999957100
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "queued",
+      "record": {
+        "updatedAt": 1779999998000,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "id": "d36be649-4248-ee06-ac18-f38ea1119dfe",
+        "requestId": "req-queued",
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "d36be649-4248-ee06-ac18-f38ea1119dfe",
+          "version": 1,
+          "revision": 1,
+          "status": "waiting_ai",
+          "stage": "diagnose",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {},
+          "history": [],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": []
+        }
+      },
+      "detail": {
+        "id": "d36be649-4248-ee06-ac18-f38ea1119dfe",
+        "version": 1,
+        "revision": 1,
+        "idea": "접속 장애에서 배운 점",
+        "title": "접속 장애에서 배운 점",
+        "source": "합성 원문",
+        "design": {
+          "mode": null,
+          "modeBy": null,
+          "readerLevel": null,
+          "levelBy": null,
+          "sections": []
+        },
+        "status": "waiting_ai",
+        "busy": true,
+        "stage": "diagnose",
+        "label": "진단 대기",
+        "monitor": {
+          "kind": "queued",
+          "label": "진단 대기",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": true,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "active",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "",
+        "textRevision": null,
+        "artifacts": [],
+        "findings": [],
+        "unmetRequirements": [],
+        "brief": null,
+        "requirements": [],
+        "changes": [],
+        "previous": [],
+        "canDownload": false,
+        "canFeedback": false,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999998000,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [],
+            "summary": null,
+            "findings": [],
+            "hasDraft": false
+          }
+        ],
+        "usage": {
+          "ms": 0,
+          "tokens": null,
+          "calls": 0,
+          "wasted": 0,
+          "revisions": [],
+          "hotspots": []
+        }
+      }
+    },
+    {
+      "name": "working",
+      "record": {
+        "updatedAt": 1779999998000,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 1,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "pending": {
+          "jobId": "live-job"
+        },
+        "worker": {
+          "confirmedAt": 1779999999500,
+          "executionId": "running-43"
+        },
+        "events": [
+          {
+            "at": 1779999998400,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "diagnose",
+            "executionId": null,
+            "jobId": "281cf16f01a8eb6213977ed56856a4baefb4f409c651400a7967a776ebc7a08e"
+          }
+        ],
+        "id": "dd5ace9e-018d-bd62-336c-be039916ad7c",
+        "requestId": "req-working",
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "dd5ace9e-018d-bd62-336c-be039916ad7c",
+          "version": 1,
+          "revision": 1,
+          "status": "waiting_ai",
+          "stage": "diagnose",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {},
+          "history": [],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": []
+        }
+      },
+      "detail": {
+        "id": "dd5ace9e-018d-bd62-336c-be039916ad7c",
+        "version": 1,
+        "revision": 1,
+        "idea": "접속 장애에서 배운 점",
+        "title": "접속 장애에서 배운 점",
+        "source": "합성 원문",
+        "design": {
+          "mode": null,
+          "modeBy": null,
+          "readerLevel": null,
+          "levelBy": null,
+          "sections": []
+        },
+        "status": "waiting_ai",
+        "busy": true,
+        "stage": "diagnose",
+        "label": "진단 중",
+        "monitor": {
+          "kind": "working",
+          "label": "진단 중",
+          "lastConfirmedAt": 1779999999500,
+          "needsAiAttention": false,
+          "canPause": true,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [
+            {
+              "at": 1779999998400,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 1,
+              "stage": "diagnose",
+              "executionId": null,
+              "jobId": "281cf16f01a8eb6213977ed56856a4baefb4f409c651400a7967a776ebc7a08e"
+            }
+          ],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "active",
+              "startedAt": 1779999998400,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": "running-43"
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "",
+        "textRevision": null,
+        "artifacts": [],
+        "findings": [],
+        "unmetRequirements": [],
+        "brief": null,
+        "requirements": [],
+        "changes": [],
+        "previous": [],
+        "canDownload": false,
+        "canFeedback": false,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999998000,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 1,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "",
+        "executionLinks": [
+          {
+            "id": "running-43",
+            "url": "http://localhost:5678/workflow/blogEditorialServiceV1/executions/running-43"
+          }
+        ]
+      },
+      "history": {
+        "records": [
+          {
+            "key": "0",
+            "at": 1779999998400,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "diagnose",
+            "name": "진단",
+            "goal": "글의 목적·독자·문체와 작성 방향을 정합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          }
+        ],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [],
+            "summary": null,
+            "findings": [],
+            "hasDraft": false
+          }
+        ],
+        "usage": {
+          "ms": 1600,
+          "tokens": null,
+          "calls": 1,
+          "wasted": 0,
+          "revisions": [
+            {
+              "revision": 1,
+              "ms": 1600,
+              "tokens": null,
+              "calls": 1,
+              "wasted": 0,
+              "stages": [
+                {
+                  "stage": "diagnose",
+                  "name": "진단",
+                  "ms": 1600,
+                  "tokens": null,
+                  "calls": 1,
+                  "wasted": 0,
+                  "attempts": [
+                    {
+                      "jobId": "281cf16f01a8eb6213977ed56856a4baefb4f409c651400a7967a776ebc7a08e",
+                      "revision": 1,
+                      "stage": "diagnose",
+                      "section": null,
+                      "figure": null,
+                      "ms": 1600,
+                      "tokens": null,
+                      "chars": null,
+                      "outcome": "running",
+                      "label": "회차 1 · 진단"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "hotspots": [
+            {
+              "label": "회차 1 · 진단",
+              "ms": 1600,
+              "tokens": null,
+              "outcome": "running"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "stale",
+      "record": {
+        "updatedAt": 1779999998000,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "pending": {
+          "jobId": "stale-job"
+        },
+        "worker": {
+          "confirmedAt": 1779999972000
+        },
+        "events": [
+          {
+            "at": 1779999970000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "diagnose",
+            "executionId": null,
+            "jobId": "27ddd303754f01622447f4e5b14c22f5f9f982442c318205d398bcc2f2532e27"
+          }
+        ],
+        "id": "a03f2386-ae06-b211-0957-7020844df367",
+        "requestId": "req-stale",
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "a03f2386-ae06-b211-0957-7020844df367",
+          "version": 1,
+          "revision": 1,
+          "status": "waiting_ai",
+          "stage": "diagnose",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {},
+          "history": [],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": []
+        }
+      },
+      "detail": {
+        "id": "a03f2386-ae06-b211-0957-7020844df367",
+        "version": 1,
+        "revision": 1,
+        "idea": "접속 장애에서 배운 점",
+        "title": "접속 장애에서 배운 점",
+        "source": "합성 원문",
+        "design": {
+          "mode": null,
+          "modeBy": null,
+          "readerLevel": null,
+          "levelBy": null,
+          "sections": []
+        },
+        "status": "waiting_ai",
+        "busy": false,
+        "stage": "diagnose",
+        "label": "진행 확인 지연",
+        "monitor": {
+          "kind": "stale",
+          "label": "진행 확인 지연",
+          "lastConfirmedAt": 1779999972000,
+          "needsAiAttention": false,
+          "canPause": true,
+          "canResume": true,
+          "resumeLabel": "진행 다시 연결",
+          "events": [
+            {
+              "at": 1779999970000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 1,
+              "stage": "diagnose",
+              "executionId": null,
+              "jobId": "27ddd303754f01622447f4e5b14c22f5f9f982442c318205d398bcc2f2532e27"
+            }
+          ],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "active",
+              "startedAt": 1779999970000,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "",
+        "textRevision": null,
+        "artifacts": [],
+        "findings": [],
+        "unmetRequirements": [],
+        "brief": null,
+        "requirements": [],
+        "changes": [],
+        "previous": [],
+        "canDownload": false,
+        "canFeedback": false,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999998000,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [
+          {
+            "key": "0",
+            "at": 1779999970000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "diagnose",
+            "name": "진단",
+            "goal": "글의 목적·독자·문체와 작성 방향을 정합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          }
+        ],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [],
+            "summary": null,
+            "findings": [],
+            "hasDraft": false
+          }
+        ],
+        "usage": {
+          "ms": 30000,
+          "tokens": null,
+          "calls": 1,
+          "wasted": 0,
+          "revisions": [
+            {
+              "revision": 1,
+              "ms": 30000,
+              "tokens": null,
+              "calls": 1,
+              "wasted": 0,
+              "stages": [
+                {
+                  "stage": "diagnose",
+                  "name": "진단",
+                  "ms": 30000,
+                  "tokens": null,
+                  "calls": 1,
+                  "wasted": 0,
+                  "attempts": [
+                    {
+                      "jobId": "27ddd303754f01622447f4e5b14c22f5f9f982442c318205d398bcc2f2532e27",
+                      "revision": 1,
+                      "stage": "diagnose",
+                      "section": null,
+                      "figure": null,
+                      "ms": 30000,
+                      "tokens": null,
+                      "chars": null,
+                      "outcome": "running",
+                      "label": "회차 1 · 진단"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "hotspots": [
+            {
+              "label": "회차 1 · 진단",
+              "ms": 30000,
+              "tokens": null,
+              "outcome": "running"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "presented",
+      "record": {
+        "updatedAt": 1779999998000,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 3,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "cab80b30-7989-8c66-79be-9a923ffb4edf",
+          "version": 12,
+          "revision": 2,
+          "status": "awaiting_user",
+          "stage": "review",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {
+            "diagnose": {
+              "revision": 2,
+              "output": {
+                "purpose": "経験と判断の共有",
+                "audience": "同じ課題の開発者",
+                "sectionModes": ["experience", "explanation"],
+                "preserveVoice": "一人称の迷いを保持",
+                "strategy": "経験→判断→結果; 分類表を強制しない"
+              },
+              "reusedFromRevision": 1
+            },
+            "topic": {
+              "revision": 2,
+              "output": {
+                "problem": "接続障害",
+                "scope": "原因の切り分け"
+              }
+            },
+            "audience": {
+              "revision": 2,
+              "output": {
+                "reader": "입문 독자",
+                "intent": "절차를 따라 하기"
+              }
+            },
+            "value": {
+              "revision": 2,
+              "output": {
+                "outcome": "判断を再現",
+                "preserve": ["失敗条件"]
+              }
+            },
+            "research": {
+              "revision": 2,
+              "output": {
+                "evidence": [],
+                "uncertainties": ["출처 다시 확인"]
+              }
+            },
+            "outline": {
+              "revision": 2,
+              "output": {
+                "sections": [
+                  {
+                    "title": "설정 확인",
+                    "mode": "procedure",
+                    "keyPoint": "기준을 찾는다"
+                  },
+                  {
+                    "title": "현상 분리",
+                    "mode": "procedure",
+                    "keyPoint": "조건을 하나씩 대조한다"
+                  }
+                ],
+                "rationale": "점검한 순서를 유지"
+              }
+            },
+            "draft": {
+              "revision": 2,
+              "output": {
+                "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+                "changeSummary": "순서를 짧게 정리",
+                "edits": [
+                  {
+                    "find": "이전 회차",
+                    "replace": "새 회차"
+                  }
+                ]
+              }
+            },
+            "review": {
+              "revision": 2,
+              "output": {
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
+                "preservationCheck": "条件・語り口を保持"
+              }
+            }
+          },
+          "history": [
+            {
+              "revision": 1,
+              "artifacts": {
+                "diagnose": {
+                  "revision": 1,
+                  "output": {
+                    "purpose": "経験と判断の共有",
+                    "audience": "同じ課題の開発者",
+                    "sectionModes": ["experience", "explanation"],
+                    "preserveVoice": "一人称の迷いを保持",
+                    "strategy": "経験→判断→結果; 分類表を強制しない"
+                  }
+                },
+                "topic": {
+                  "revision": 1,
+                  "output": {
+                    "problem": "接続障害",
+                    "scope": "原因の切り分け"
+                  }
+                },
+                "audience": {
+                  "revision": 1,
+                  "output": {
+                    "reader": "運用担当",
+                    "intent": "復旧したい"
+                  }
+                },
+                "value": {
+                  "revision": 1,
+                  "output": {
+                    "outcome": "判断を再現",
+                    "preserve": ["失敗条件"]
+                  }
+                },
+                "research": {
+                  "revision": 1,
+                  "output": {
+                    "evidence": [],
+                    "uncertainties": ["출처 다시 확인"]
+                  }
+                },
+                "outline": {
+                  "revision": 1,
+                  "output": {
+                    "sections": ["体験", "判断", "結果"],
+                    "rationale": "時間順で因果を説明"
+                  }
+                },
+                "draft": {
+                  "revision": 1,
+                  "output": {
+                    "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+                    "changeSummary": "첫 회차 요약"
+                  }
+                },
+                "review": {
+                  "revision": 1,
+                  "output": {
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
+                    "preservationCheck": "条件・語り口を保持"
+                  }
+                }
+              },
+              "stage": "review",
+              "status": "awaiting_user",
+              "feedback": "구성을 간결하게",
+              "reviewed": true
+            }
+          ],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}",
+            "result-1": "{\"id\":\"result-1\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":1,\"revision\":1,\"stage\":\"diagnose\",\"output\":{\"purpose\":\"経験と判断の共有\",\"audience\":\"同じ課題の開発者\",\"sectionModes\":[\"experience\",\"explanation\"],\"preserveVoice\":\"一人称の迷いを保持\",\"strategy\":\"経験→判断→結果; 分類表を強制しない\"}}",
+            "result-2": "{\"id\":\"result-2\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":2,\"revision\":1,\"stage\":\"topic\",\"output\":{\"problem\":\"接続障害\",\"scope\":\"原因の切り分け\"}}",
+            "result-3": "{\"id\":\"result-3\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":3,\"revision\":1,\"stage\":\"audience\",\"output\":{\"reader\":\"運用担当\",\"intent\":\"復旧したい\"}}",
+            "result-4": "{\"id\":\"result-4\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":4,\"revision\":1,\"stage\":\"value\",\"output\":{\"outcome\":\"判断を再現\",\"preserve\":[\"失敗条件\"]}}",
+            "result-5": "{\"id\":\"result-5\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":5,\"revision\":1,\"stage\":\"research\",\"output\":{\"evidence\":[],\"uncertainties\":[\"ログ未確認\"]}}",
+            "result-6": "{\"id\":\"result-6\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":6,\"revision\":1,\"stage\":\"outline\",\"output\":{\"sections\":[\"体験\",\"判断\",\"結果\"],\"rationale\":\"時間順で因果を説明\"}}",
+            "result-7": "{\"id\":\"result-7\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":7,\"revision\":1,\"stage\":\"draft\",\"output\":{\"text\":\"# 体験\\n\\n実体験の本文。\",\"changeSummary\":\"因果関係を補足\"}}",
+            "result-8": "{\"id\":\"result-8\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":8,\"revision\":1,\"stage\":\"review\",\"output\":{\"findings\":[\"出典未確認を表示\"],\"preservationCheck\":\"条件・語り口を保持\"}}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": [
+            {
+              "revision": 2,
+              "source": "feedback",
+              "changes": [
+                {
+                  "kind": "mode",
+                  "op": "set",
+                  "value": "procedure",
+                  "quote": "따라 하게"
+                },
+                {
+                  "kind": "readerLevel",
+                  "op": "set",
+                  "value": "beginner",
+                  "quote": "처음 보는 독자"
+                },
+                {
+                  "kind": "tone",
+                  "op": "set",
+                  "value": "차분하게",
+                  "quote": "차분한 문장으로"
+                }
+              ]
+            }
+          ],
+          "lastTransition": {
+            "event": "complete",
+            "from": "waiting_ai",
+            "to": "awaiting_user"
+          },
+          "brief": {
+            "intent": "간결하게 정리",
+            "target": "draft",
+            "level": "line",
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
+            "requirementChanges": [
+              {
+                "kind": "length",
+                "op": "lift",
+                "quote": "분량 제한 없음"
+              }
+            ]
+          }
+        },
+        "events": [
+          {
+            "at": 1779999938000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "topic",
+            "executionId": "legacy/42",
+            "jobId": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927"
+          },
+          {
+            "at": 1779999939000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 1,
+            "stage": "topic",
+            "executionId": "legacy/42",
+            "jobId": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927"
+          },
+          {
+            "at": 1779999941000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "topic",
+            "executionId": null,
+            "jobId": "b839d32c18db8ce867fa37b0b393c888f94d5ebe5d1f7fb61de03850022441d6"
+          },
+          {
+            "at": 1779999943000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 1,
+            "stage": "topic",
+            "executionId": null,
+            "jobId": "b839d32c18db8ce867fa37b0b393c888f94d5ebe5d1f7fb61de03850022441d6"
+          },
+          {
+            "at": 1779999948000,
+            "kind": "feedback",
+            "label": "feedback",
+            "revision": 2,
+            "stage": "route",
+            "executionId": null,
+            "reason": "순서를 간결하게"
+          },
+          {
+            "at": 1779999950000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "route",
+            "executionId": null,
+            "jobId": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf"
+          },
+          {
+            "at": 1779999951000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 2,
+            "stage": "route",
+            "executionId": null,
+            "jobId": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf"
+          },
+          {
+            "at": 1779999957000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "draft",
+            "executionId": null,
+            "jobId": "8429e6f1dc6f9e025fefbfd5b8c3aa0fad33ecd439ad72d2a86373495de98b90"
+          },
+          {
+            "at": 1779999960000,
+            "kind": "failed",
+            "label": "failed",
+            "revision": 2,
+            "stage": "draft",
+            "executionId": null,
+            "reason": "다시 실행 필요"
+          },
+          {
+            "at": 1779999991000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "draft",
+            "executionId": null,
+            "jobId": "1cf625c427b4a030b8acc4f3a2492c3e9b3b64fce75da3e00a922941e339596d"
+          },
+          {
+            "at": 1779999995000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 2,
+            "stage": "draft",
+            "executionId": null,
+            "jobId": "1cf625c427b4a030b8acc4f3a2492c3e9b3b64fce75da3e00a922941e339596d"
+          },
+          {
+            "at": 1779999996000,
+            "kind": "ready",
+            "label": "ready",
+            "revision": 2,
+            "stage": "review",
+            "executionId": null
+          }
+        ],
+        "operations": {
+          "z-first": "original-signature",
+          "a-second": "another-signature"
+        },
+        "id": "cab80b30-7989-8c66-79be-9a923ffb4edf",
+        "requestId": "req-presented"
+      },
+      "detail": {
+        "id": "cab80b30-7989-8c66-79be-9a923ffb4edf",
+        "version": 12,
+        "revision": 2,
+        "idea": "접속 장애에서 배운 점",
+        "title": "수정한 실제 제목",
+        "source": "합성 원문",
+        "design": {
+          "mode": "procedure",
+          "modeBy": "user",
+          "readerLevel": "beginner",
+          "levelBy": "user",
+          "sections": [
+            {
+              "title": "설정 확인",
+              "mode": "procedure"
+            },
+            {
+              "title": "현상 분리",
+              "mode": "procedure"
+            }
+          ]
+        },
+        "status": "awaiting_user",
+        "busy": false,
+        "stage": "review",
+        "label": "초안 준비됨",
+        "monitor": {
+          "kind": "ready",
+          "label": "초안 준비됨",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": false,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [
+            {
+              "at": 1779999938000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 1,
+              "stage": "topic",
+              "executionId": "legacy/42",
+              "jobId": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927"
+            },
+            {
+              "at": 1779999939000,
+              "kind": "ai_completed",
+              "label": "ai_completed",
+              "revision": 1,
+              "stage": "topic",
+              "executionId": "legacy/42",
+              "jobId": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927"
+            },
+            {
+              "at": 1779999941000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 1,
+              "stage": "topic",
+              "executionId": null,
+              "jobId": "b839d32c18db8ce867fa37b0b393c888f94d5ebe5d1f7fb61de03850022441d6"
+            },
+            {
+              "at": 1779999943000,
+              "kind": "ai_completed",
+              "label": "ai_completed",
+              "revision": 1,
+              "stage": "topic",
+              "executionId": null,
+              "jobId": "b839d32c18db8ce867fa37b0b393c888f94d5ebe5d1f7fb61de03850022441d6"
+            },
+            {
+              "at": 1779999948000,
+              "kind": "feedback",
+              "label": "feedback",
+              "revision": 2,
+              "stage": "route",
+              "executionId": null,
+              "reason": "순서를 간결하게"
+            },
+            {
+              "at": 1779999950000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 2,
+              "stage": "route",
+              "executionId": null,
+              "jobId": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf"
+            },
+            {
+              "at": 1779999951000,
+              "kind": "ai_completed",
+              "label": "ai_completed",
+              "revision": 2,
+              "stage": "route",
+              "executionId": null,
+              "jobId": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf"
+            },
+            {
+              "at": 1779999957000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 2,
+              "stage": "draft",
+              "executionId": null,
+              "jobId": "8429e6f1dc6f9e025fefbfd5b8c3aa0fad33ecd439ad72d2a86373495de98b90"
+            },
+            {
+              "at": 1779999960000,
+              "kind": "failed",
+              "label": "failed",
+              "revision": 2,
+              "stage": "draft",
+              "executionId": null,
+              "reason": "다시 실행 필요"
+            },
+            {
+              "at": 1779999991000,
+              "kind": "ai_requested",
+              "label": "ai_requested",
+              "revision": 2,
+              "stage": "draft",
+              "executionId": null,
+              "jobId": "1cf625c427b4a030b8acc4f3a2492c3e9b3b64fce75da3e00a922941e339596d"
+            },
+            {
+              "at": 1779999995000,
+              "kind": "ai_completed",
+              "label": "ai_completed",
+              "revision": 2,
+              "stage": "draft",
+              "executionId": null,
+              "jobId": "1cf625c427b4a030b8acc4f3a2492c3e9b3b64fce75da3e00a922941e339596d"
+            },
+            {
+              "at": 1779999996000,
+              "kind": "ready",
+              "label": "ready",
+              "revision": 2,
+              "stage": "review",
+              "executionId": null
+            }
+          ],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "done",
+              "startedAt": 1779999991000,
+              "completedAt": 1779999995000
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+        "textRevision": 2,
+        "artifacts": [
+          {
+            "stage": "diagnose",
+            "name": "진단",
+            "revision": 2,
+            "output": {
+              "purpose": "経験と判断の共有",
+              "audience": "同じ課題の開発者",
+              "sectionModes": ["experience", "explanation"],
+              "preserveVoice": "一人称の迷いを保持",
+              "strategy": "経験→判断→結果; 分類表を強制しない"
+            },
+            "reusedFromRevision": 1
+          },
+          {
+            "stage": "topic",
+            "name": "주제 정리",
+            "revision": 2,
+            "output": {
+              "problem": "接続障害",
+              "scope": "原因の切り分け"
+            }
+          },
+          {
+            "stage": "audience",
+            "name": "독자 정리",
+            "revision": 2,
+            "output": {
+              "reader": "입문 독자",
+              "intent": "절차를 따라 하기"
+            }
+          },
+          {
+            "stage": "value",
+            "name": "핵심 정리",
+            "revision": 2,
+            "output": {
+              "outcome": "判断を再現",
+              "preserve": ["失敗条件"]
+            }
+          },
+          {
+            "stage": "research",
+            "name": "근거 정리",
+            "revision": 2,
+            "output": {
+              "evidence": [],
+              "uncertainties": ["출처 다시 확인"]
+            }
+          },
+          {
+            "stage": "outline",
+            "name": "구성",
+            "revision": 2,
+            "output": {
+              "sections": [
+                {
+                  "title": "설정 확인",
+                  "mode": "procedure",
+                  "keyPoint": "기준을 찾는다"
+                },
+                {
+                  "title": "현상 분리",
+                  "mode": "procedure",
+                  "keyPoint": "조건을 하나씩 대조한다"
+                }
+              ],
+              "rationale": "점검한 순서를 유지"
+            }
+          },
+          {
+            "stage": "draft",
+            "name": "초고 작성",
+            "revision": 2,
+            "output": {
+              "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+              "changeSummary": "순서를 짧게 정리",
+              "edits": [
+                {
+                  "find": "이전 회차",
+                  "replace": "새 회차"
+                }
+              ]
+            }
+          },
+          {
+            "stage": "review",
+            "name": "검토",
+            "revision": 2,
+            "output": {
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
+              "preservationCheck": "条件・語り口を保持"
+            }
+          }
+        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
+        "unmetRequirements": [],
+        "brief": {
+          "intent": "간결하게 정리",
+          "target": "draft",
+          "level": "line",
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
+        },
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
+        "changes": [
+          {
+            "find": "이전 회차",
+            "replace": "새 회차"
+          }
+        ],
+        "previous": [
+          {
+            "revision": 1,
+            "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+            "status": "awaiting_user",
+            "stage": "review",
+            "needsCompletion": false,
+            "reviewed": true
+          }
+        ],
+        "canDownload": true,
+        "canFeedback": true,
+        "canSatisfy": true,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999998000,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 3,
+        "maxCalls": 8,
+        "appliedOperations": ["z-first", "a-second"],
+        "html": "<p>새 회차 본문입니다.</p>\n",
+        "executionLinks": [
+          {
+            "id": "legacy/42",
+            "url": "http://localhost:5678/workflow/blogEditorialServiceV1/executions/legacy%2F42"
+          }
+        ]
+      },
+      "history": {
+        "records": [
+          {
+            "key": "0",
+            "at": 1779999938000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "topic",
+            "name": "주제 정리",
+            "goal": "다룰 문제와 주제의 범위를 정합니다.",
+            "inputs": ["글감", "참고 자료", "진단 결과"],
+            "inputsSource": "recorded",
+            "model": "fixture/model",
+            "executionId": "legacy/42",
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": false,
+            "steps": []
+          },
+          {
+            "key": "1",
+            "at": 1779999939000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 1,
+            "stage": "topic",
+            "name": "주제 정리",
+            "goal": "다룰 문제와 주제의 범위를 정합니다.",
+            "inputs": ["글감", "참고 자료", "진단 결과"],
+            "inputsSource": "recorded",
+            "model": "fixture/model",
+            "executionId": "legacy/42",
+            "output": {
+              "problem": "실행 시점 문제",
+              "scope": "기록 범위"
+            },
+            "resultSource": "job",
+            "target": null,
+            "reason": null,
+            "unavailable": false,
+            "steps": [
+              {
+                "kind": "note",
+                "text": "합성 근거를 읽었습니다.",
+                "at": 1779999938200
+              }
+            ]
+          },
+          {
+            "key": "2",
+            "at": 1779999941000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 1,
+            "stage": "topic",
+            "name": "주제 정리",
+            "goal": "다룰 문제와 주제의 범위를 정합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          },
+          {
+            "key": "3",
+            "at": 1779999943000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 1,
+            "stage": "topic",
+            "name": "주제 정리",
+            "goal": "다룰 문제와 주제의 범위를 정합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": {
+              "problem": "接続障害",
+              "scope": "原因の切り分け"
+            },
+            "resultSource": "artifact",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          },
+          {
+            "key": "4",
+            "at": 1779999948000,
+            "kind": "feedback",
+            "label": "feedback",
+            "revision": 2,
+            "stage": "route",
+            "name": "수정 위치 확인",
+            "goal": "",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": "순서를 간결하게",
+            "unavailable": false,
+            "steps": []
+          },
+          {
+            "key": "5",
+            "at": 1779999950000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "route",
+            "name": "수정 위치 확인",
+            "goal": "수정 의견을 반영할 시작 단계를 선택합니다.",
+            "inputs": ["글감", "수정 의견", "검토 결과"],
+            "inputsSource": "reconstructed",
+            "model": "fixture/model",
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": false,
+            "steps": []
+          },
+          {
+            "key": "6",
+            "at": 1779999951000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 2,
+            "stage": "route",
+            "name": "수정 위치 확인",
+            "goal": "수정 의견을 반영할 시작 단계를 선택합니다.",
+            "inputs": ["글감", "수정 의견", "검토 결과"],
+            "inputsSource": "reconstructed",
+            "model": "fixture/model",
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": "초고 작성",
+            "reason": "문장 수정",
+            "unavailable": false,
+            "steps": []
+          },
+          {
+            "key": "7",
+            "at": 1779999957000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "draft",
+            "name": "초고 작성",
+            "goal": "앞 단계의 결과와 사용자 요구를 반영해 본문을 작성합니다.",
+            "inputs": ["글감"],
+            "inputsSource": "recorded",
+            "model": "fixture/model",
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": "AI 응답이 약속한 결과 형식과 달라 쓰지 못했습니다.",
+            "unavailable": false,
+            "steps": [
+              {
+                "kind": "tool",
+                "text": "자료 읽기",
+                "status": "failed",
+                "at": 1779999957100
+              }
+            ]
+          },
+          {
+            "key": "8",
+            "at": 1779999960000,
+            "kind": "failed",
+            "label": "failed",
+            "revision": 2,
+            "stage": "draft",
+            "name": "초고 작성",
+            "goal": "",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": "다시 실행 필요",
+            "unavailable": false,
+            "steps": []
+          },
+          {
+            "key": "9",
+            "at": 1779999991000,
+            "kind": "ai_requested",
+            "label": "ai_requested",
+            "revision": 2,
+            "stage": "draft",
+            "name": "초고 작성",
+            "goal": "앞 단계의 결과와 사용자 요구를 반영해 본문을 작성합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          },
+          {
+            "key": "10",
+            "at": 1779999995000,
+            "kind": "ai_completed",
+            "label": "ai_completed",
+            "revision": 2,
+            "stage": "draft",
+            "name": "초고 작성",
+            "goal": "앞 단계의 결과와 사용자 요구를 반영해 본문을 작성합니다.",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": {
+              "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+              "changeSummary": "순서를 짧게 정리",
+              "edits": [
+                {
+                  "find": "이전 회차",
+                  "replace": "새 회차"
+                }
+              ]
+            },
+            "resultSource": "artifact",
+            "target": null,
+            "reason": null,
+            "unavailable": true,
+            "steps": []
+          },
+          {
+            "key": "11",
+            "at": 1779999996000,
+            "kind": "ready",
+            "label": "ready",
+            "revision": 2,
+            "stage": "review",
+            "name": "검토",
+            "goal": "",
+            "inputs": [],
+            "inputsSource": "unavailable",
+            "model": null,
+            "executionId": null,
+            "output": null,
+            "resultSource": "none",
+            "target": null,
+            "reason": null,
+            "unavailable": false,
+            "steps": []
+          }
+        ],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [
+              {
+                "label": "독자",
+                "text": "運用担当",
+                "reason": "復旧したい"
+              },
+              {
+                "label": "핵심",
+                "text": "判断を再現",
+                "reason": "原因の切り分け"
+              },
+              {
+                "label": "구성",
+                "text": "体験 → 判断 → 結果",
+                "reason": "時間順で因果を説明"
+              }
+            ],
+            "summary": "첫 회차 요약",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          },
+          {
+            "revision": 2,
+            "request": "순서를 간결하게",
+            "direction": [
+              {
+                "label": "독자",
+                "text": "입문 독자",
+                "reason": "절차를 따라 하기"
+              },
+              {
+                "label": "구성",
+                "text": "설정 확인 → 현상 분리",
+                "reason": "점검한 순서를 유지"
+              }
+            ],
+            "summary": "순서를 짧게 정리",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          }
+        ],
+        "usage": {
+          "ms": 11000,
+          "tokens": 135,
+          "calls": 5,
+          "wasted": 2,
+          "revisions": [
+            {
+              "revision": 1,
+              "ms": 3000,
+              "tokens": 100,
+              "calls": 2,
+              "wasted": 1,
+              "stages": [
+                {
+                  "stage": "topic",
+                  "name": "주제 정리",
+                  "ms": 3000,
+                  "tokens": 100,
+                  "calls": 2,
+                  "wasted": 1,
+                  "attempts": [
+                    {
+                      "jobId": "657f9eb0cd8356c620c4e2b674bb13886075723e7a33ac7275d231790a116927",
+                      "revision": 1,
+                      "stage": "topic",
+                      "section": null,
+                      "figure": null,
+                      "ms": 1000,
+                      "tokens": 100,
+                      "chars": null,
+                      "outcome": "rejected",
+                      "label": "회차 1 · 주제 정리"
+                    },
+                    {
+                      "jobId": "b839d32c18db8ce867fa37b0b393c888f94d5ebe5d1f7fb61de03850022441d6",
+                      "revision": 1,
+                      "stage": "topic",
+                      "section": null,
+                      "figure": null,
+                      "ms": 2000,
+                      "tokens": null,
+                      "chars": null,
+                      "outcome": "accepted",
+                      "label": "회차 1 · 주제 정리"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "revision": 2,
+              "ms": 8000,
+              "tokens": 35,
+              "calls": 3,
+              "wasted": 1,
+              "stages": [
+                {
+                  "stage": "route",
+                  "name": "수정 위치 확인",
+                  "ms": 1000,
+                  "tokens": 12,
+                  "calls": 1,
+                  "wasted": 0,
+                  "attempts": [
+                    {
+                      "jobId": "6ff658c7d4bddf73960248bcd463a3165bf43858bd9121ae8eb6b995c3861cbf",
+                      "revision": 2,
+                      "stage": "route",
+                      "section": null,
+                      "figure": null,
+                      "ms": 1000,
+                      "tokens": 12,
+                      "chars": null,
+                      "outcome": "accepted",
+                      "label": "회차 2 · 수정 위치 확인"
+                    }
+                  ]
+                },
+                {
+                  "stage": "draft",
+                  "name": "초고 작성",
+                  "ms": 7000,
+                  "tokens": 23,
+                  "calls": 2,
+                  "wasted": 1,
+                  "attempts": [
+                    {
+                      "jobId": "8429e6f1dc6f9e025fefbfd5b8c3aa0fad33ecd439ad72d2a86373495de98b90",
+                      "revision": 2,
+                      "stage": "draft",
+                      "section": {
+                        "index": 0,
+                        "total": 2
+                      },
+                      "figure": null,
+                      "ms": 3000,
+                      "tokens": 23,
+                      "chars": null,
+                      "outcome": "failed",
+                      "label": "회차 2 · 초고 작성 1/2"
+                    },
+                    {
+                      "jobId": "1cf625c427b4a030b8acc4f3a2492c3e9b3b64fce75da3e00a922941e339596d",
+                      "revision": 2,
+                      "stage": "draft",
+                      "section": null,
+                      "figure": null,
+                      "ms": 4000,
+                      "tokens": null,
+                      "chars": null,
+                      "outcome": "accepted",
+                      "label": "회차 2 · 초고 작성"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "hotspots": [
+            {
+              "label": "회차 2 · 초고 작성",
+              "ms": 4000,
+              "tokens": null,
+              "outcome": "accepted"
+            },
+            {
+              "label": "회차 2 · 초고 작성 1/2",
+              "ms": 3000,
+              "tokens": 23,
+              "outcome": "failed"
+            },
+            {
+              "label": "회차 1 · 주제 정리",
+              "ms": 2000,
+              "tokens": null,
+              "outcome": "accepted"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "figure choice",
+      "record": {
+        "updatedAt": 1779999999100,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "73782c4d-5d89-756c-ff70-7819dbc232d5",
+          "version": 15,
+          "revision": 2,
+          "status": "awaiting_figure_choice",
+          "stage": "review",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {
+            "diagnose": {
+              "revision": 2,
+              "output": {
+                "purpose": "経験と判断の共有",
+                "audience": "同じ課題の開発者",
+                "sectionModes": ["experience", "explanation"],
+                "preserveVoice": "一人称の迷いを保持",
+                "strategy": "経験→判断→結果; 分類表を強制しない"
+              },
+              "reusedFromRevision": 1
+            },
+            "topic": {
+              "revision": 2,
+              "output": {
+                "problem": "接続障害",
+                "scope": "原因の切り分け"
+              }
+            },
+            "audience": {
+              "revision": 2,
+              "output": {
+                "reader": "입문 독자",
+                "intent": "절차를 따라 하기"
+              }
+            },
+            "value": {
+              "revision": 2,
+              "output": {
+                "outcome": "判断を再現",
+                "preserve": ["失敗条件"]
+              }
+            },
+            "research": {
+              "revision": 2,
+              "output": {
+                "evidence": [],
+                "uncertainties": ["출처 다시 확인"]
+              }
+            },
+            "outline": {
+              "revision": 2,
+              "output": {
+                "sections": [
+                  {
+                    "title": "설정 확인",
+                    "mode": "procedure",
+                    "keyPoint": "기준을 찾는다"
+                  },
+                  {
+                    "title": "현상 분리",
+                    "mode": "procedure",
+                    "keyPoint": "조건을 하나씩 대조한다"
+                  }
+                ],
+                "rationale": "점검한 순서를 유지"
+              }
+            },
+            "draft": {
+              "revision": 2,
+              "output": {
+                "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+                "changeSummary": "순서를 짧게 정리",
+                "edits": [
+                  {
+                    "find": "이전 회차",
+                    "replace": "새 회차"
+                  }
+                ]
+              }
+            },
+            "review": {
+              "revision": 2,
+              "output": {
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
+                "preservationCheck": "条件・語り口を保持"
+              }
+            }
+          },
+          "history": [
+            {
+              "revision": 1,
+              "artifacts": {
+                "diagnose": {
+                  "revision": 1,
+                  "output": {
+                    "purpose": "経験と判断の共有",
+                    "audience": "同じ課題の開発者",
+                    "sectionModes": ["experience", "explanation"],
+                    "preserveVoice": "一人称の迷いを保持",
+                    "strategy": "経験→判断→結果; 分類表を強制しない"
+                  }
+                },
+                "topic": {
+                  "revision": 1,
+                  "output": {
+                    "problem": "接続障害",
+                    "scope": "原因の切り分け"
+                  }
+                },
+                "audience": {
+                  "revision": 1,
+                  "output": {
+                    "reader": "運用担当",
+                    "intent": "復旧したい"
+                  }
+                },
+                "value": {
+                  "revision": 1,
+                  "output": {
+                    "outcome": "判断を再現",
+                    "preserve": ["失敗条件"]
+                  }
+                },
+                "research": {
+                  "revision": 1,
+                  "output": {
+                    "evidence": [],
+                    "uncertainties": ["출처 다시 확인"]
+                  }
+                },
+                "outline": {
+                  "revision": 1,
+                  "output": {
+                    "sections": ["体験", "判断", "結果"],
+                    "rationale": "時間順で因果を説明"
+                  }
+                },
+                "draft": {
+                  "revision": 1,
+                  "output": {
+                    "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+                    "changeSummary": "첫 회차 요약"
+                  }
+                },
+                "review": {
+                  "revision": 1,
+                  "output": {
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
+                    "preservationCheck": "条件・語り口を保持"
+                  }
+                }
+              },
+              "stage": "review",
+              "status": "awaiting_user",
+              "feedback": "구성을 간결하게",
+              "reviewed": true
+            }
+          ],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}",
+            "result-1": "{\"id\":\"result-1\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":1,\"revision\":1,\"stage\":\"diagnose\",\"output\":{\"purpose\":\"経験と判断の共有\",\"audience\":\"同じ課題の開発者\",\"sectionModes\":[\"experience\",\"explanation\"],\"preserveVoice\":\"一人称の迷いを保持\",\"strategy\":\"経験→判断→結果; 分類表を強制しない\"}}",
+            "result-2": "{\"id\":\"result-2\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":2,\"revision\":1,\"stage\":\"topic\",\"output\":{\"problem\":\"接続障害\",\"scope\":\"原因の切り分け\"}}",
+            "result-3": "{\"id\":\"result-3\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":3,\"revision\":1,\"stage\":\"audience\",\"output\":{\"reader\":\"運用担当\",\"intent\":\"復旧したい\"}}",
+            "result-4": "{\"id\":\"result-4\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":4,\"revision\":1,\"stage\":\"value\",\"output\":{\"outcome\":\"判断を再現\",\"preserve\":[\"失敗条件\"]}}",
+            "result-5": "{\"id\":\"result-5\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":5,\"revision\":1,\"stage\":\"research\",\"output\":{\"evidence\":[],\"uncertainties\":[\"ログ未確認\"]}}",
+            "result-6": "{\"id\":\"result-6\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":6,\"revision\":1,\"stage\":\"outline\",\"output\":{\"sections\":[\"体験\",\"判断\",\"結果\"],\"rationale\":\"時間順で因果を説明\"}}",
+            "result-7": "{\"id\":\"result-7\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":7,\"revision\":1,\"stage\":\"draft\",\"output\":{\"text\":\"# 体験\\n\\n実体験の本文。\",\"changeSummary\":\"因果関係を補足\"}}",
+            "result-8": "{\"id\":\"result-8\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":8,\"revision\":1,\"stage\":\"review\",\"output\":{\"findings\":[\"出典未確認を表示\"],\"preservationCheck\":\"条件・語り口を保持\"}}",
+            "satisfied": "{\"id\":\"satisfied\",\"actor\":\"user\",\"type\":\"satisfy\",\"reviewedRevision\":2,\"expectedVersion\":12}",
+            "propose": "{\"id\":\"propose\",\"actor\":\"user\",\"type\":\"request_figures\",\"reviewedRevision\":2,\"expectedVersion\":13,\"note\":\"새 회차에 그림 하나\"}",
+            "pose": "{\"id\":\"pose\",\"actor\":\"adapter\",\"type\":\"figure_result\",\"revision\":2,\"stage\":\"figure_plan\",\"expectedVersion\":14,\"output\":{\"candidates\":[{\"anchor\":\"새 회차 본문입니다.\",\"claim\":\"새 회차 핵심\",\"reason\":\"첫 설명\"}]}}"
+          },
+          "approval": null,
+          "satisfiedRevision": 2,
+          "requirementLog": [
+            {
+              "revision": 2,
+              "source": "feedback",
+              "changes": [
+                {
+                  "kind": "mode",
+                  "op": "set",
+                  "value": "procedure",
+                  "quote": "따라 하게"
+                },
+                {
+                  "kind": "readerLevel",
+                  "op": "set",
+                  "value": "beginner",
+                  "quote": "처음 보는 독자"
+                },
+                {
+                  "kind": "tone",
+                  "op": "set",
+                  "value": "차분하게",
+                  "quote": "차분한 문장으로"
+                }
+              ]
+            }
+          ],
+          "lastTransition": {
+            "event": "figure_result",
+            "from": "waiting_figure",
+            "to": "awaiting_figure_choice"
+          },
+          "brief": {
+            "intent": "간결하게 정리",
+            "target": "draft",
+            "level": "line",
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
+            "requirementChanges": [
+              {
+                "kind": "length",
+                "op": "lift",
+                "quote": "분량 제한 없음"
+              }
+            ]
+          },
+          "figure": {
+            "phase": "choose",
+            "revision": 2,
+            "note": "새 회차에 그림 하나",
+            "candidates": [
+              {
+                "id": "f1",
+                "anchor": "새 회차 본문입니다.",
+                "claim": "새 회차 핵심",
+                "reason": "첫 설명"
+              }
+            ],
+            "skipped": [],
+            "coverage": {
+              "units": 1,
+              "withFigure": 1,
+              "skipped": 0,
+              "missing": [],
+              "candidates": 1
+            }
+          }
+        },
+        "id": "73782c4d-5d89-756c-ff70-7819dbc232d5",
+        "requestId": "req-figure-choice"
+      },
+      "detail": {
+        "id": "73782c4d-5d89-756c-ff70-7819dbc232d5",
+        "version": 15,
+        "revision": 2,
+        "idea": "접속 장애에서 배운 점",
+        "title": "수정한 실제 제목",
+        "source": "합성 원문",
+        "design": {
+          "mode": "procedure",
+          "modeBy": "user",
+          "readerLevel": "beginner",
+          "levelBy": "user",
+          "sections": [
+            {
+              "title": "설정 확인",
+              "mode": "procedure"
+            },
+            {
+              "title": "현상 분리",
+              "mode": "procedure"
+            }
+          ]
+        },
+        "status": "awaiting_figure_choice",
+        "busy": false,
+        "stage": "review",
+        "label": "시각자료 위치 선택 대기",
+        "monitor": {
+          "kind": "ready",
+          "label": "시각자료 위치 선택 대기",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": false,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "figure_plan",
+              "name": "시각자료 위치 제안",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "figure_compose",
+              "name": "시각자료 구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "figure",
+              "name": "시각자료 생성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+        "textRevision": 2,
+        "artifacts": [
+          {
+            "stage": "diagnose",
+            "name": "진단",
+            "revision": 2,
+            "output": {
+              "purpose": "経験と判断の共有",
+              "audience": "同じ課題の開発者",
+              "sectionModes": ["experience", "explanation"],
+              "preserveVoice": "一人称の迷いを保持",
+              "strategy": "経験→判断→結果; 分類表を強制しない"
+            },
+            "reusedFromRevision": 1
+          },
+          {
+            "stage": "topic",
+            "name": "주제 정리",
+            "revision": 2,
+            "output": {
+              "problem": "接続障害",
+              "scope": "原因の切り分け"
+            }
+          },
+          {
+            "stage": "audience",
+            "name": "독자 정리",
+            "revision": 2,
+            "output": {
+              "reader": "입문 독자",
+              "intent": "절차를 따라 하기"
+            }
+          },
+          {
+            "stage": "value",
+            "name": "핵심 정리",
+            "revision": 2,
+            "output": {
+              "outcome": "判断を再現",
+              "preserve": ["失敗条件"]
+            }
+          },
+          {
+            "stage": "research",
+            "name": "근거 정리",
+            "revision": 2,
+            "output": {
+              "evidence": [],
+              "uncertainties": ["출처 다시 확인"]
+            }
+          },
+          {
+            "stage": "outline",
+            "name": "구성",
+            "revision": 2,
+            "output": {
+              "sections": [
+                {
+                  "title": "설정 확인",
+                  "mode": "procedure",
+                  "keyPoint": "기준을 찾는다"
+                },
+                {
+                  "title": "현상 분리",
+                  "mode": "procedure",
+                  "keyPoint": "조건을 하나씩 대조한다"
+                }
+              ],
+              "rationale": "점검한 순서를 유지"
+            }
+          },
+          {
+            "stage": "draft",
+            "name": "초고 작성",
+            "revision": 2,
+            "output": {
+              "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+              "changeSummary": "순서를 짧게 정리",
+              "edits": [
+                {
+                  "find": "이전 회차",
+                  "replace": "새 회차"
+                }
+              ]
+            }
+          },
+          {
+            "stage": "review",
+            "name": "검토",
+            "revision": 2,
+            "output": {
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
+              "preservationCheck": "条件・語り口を保持"
+            }
+          }
+        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
+        "unmetRequirements": [],
+        "brief": {
+          "intent": "간결하게 정리",
+          "target": "draft",
+          "level": "line",
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
+        },
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
+        "changes": [
+          {
+            "find": "이전 회차",
+            "replace": "새 회차"
+          }
+        ],
+        "previous": [
+          {
+            "revision": 1,
+            "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+            "status": "awaiting_user",
+            "stage": "review",
+            "needsCompletion": false,
+            "reviewed": true
+          }
+        ],
+        "canDownload": true,
+        "canFeedback": true,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": {
+          "phase": "choose",
+          "note": "새 회차에 그림 하나",
+          "routesAvailable": ["svg"],
+          "candidates": [
+            {
+              "id": "f1",
+              "anchor": "새 회차 본문입니다.",
+              "claim": "새 회차 핵심",
+              "quote": "새 회차 본문입니다.",
+              "origin": "ai",
+              "reason": "첫 설명",
+              "analogy": null,
+              "scene": null,
+              "kind": null,
+              "motifs": [],
+              "without": null,
+              "mapping": [],
+              "route": "svg",
+              "routeBy": "default",
+              "direction": null,
+              "look": null,
+              "lookBy": "auto",
+              "section": null
+            }
+          ],
+          "world": null,
+          "feedback": null,
+          "recompose": [],
+          "style": null,
+          "motifs": [],
+          "selected": [],
+          "failed": {},
+          "coverage": {
+            "units": 1,
+            "withFigure": 1,
+            "skipped": 0,
+            "missing": [],
+            "candidates": 1,
+            "gap": null
+          },
+          "current": null,
+          "items": []
+        },
+        "canRequestFigures": false,
+        "canSelectFigures": true,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": true,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999999100,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "<p>새 회차 본문입니다.</p>\n<div class=\"figure-slot\" data-candidate=\"f1\" data-spot=\"candidate\"></div>",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [
+              {
+                "label": "독자",
+                "text": "運用担当",
+                "reason": "復旧したい"
+              },
+              {
+                "label": "핵심",
+                "text": "判断を再現",
+                "reason": "原因の切り分け"
+              },
+              {
+                "label": "구성",
+                "text": "体験 → 判断 → 結果",
+                "reason": "時間順で因果を説明"
+              }
+            ],
+            "summary": "첫 회차 요약",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          },
+          {
+            "revision": 2,
+            "request": "구성을 간결하게",
+            "direction": [
+              {
+                "label": "독자",
+                "text": "입문 독자",
+                "reason": "절차를 따라 하기"
+              },
+              {
+                "label": "구성",
+                "text": "설정 확인 → 현상 분리",
+                "reason": "점검한 순서를 유지"
+              }
+            ],
+            "summary": "순서를 짧게 정리",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          }
+        ],
+        "usage": {
+          "ms": 0,
+          "tokens": null,
+          "calls": 0,
+          "wasted": 0,
+          "revisions": [],
+          "hotspots": []
+        }
+      }
+    },
+    {
+      "name": "astral title",
+      "record": {
+        "updatedAt": 1779999998000,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "7c2a0d23-6708-ec0b-3f93-27069aba867e",
+          "version": 1,
+          "revision": 1,
+          "status": "waiting_ai",
+          "stage": "diagnose",
+          "source": "합성 원문",
+          "idea": "🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {},
+          "history": [],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": []
+        },
+        "id": "7c2a0d23-6708-ec0b-3f93-27069aba867e",
+        "requestId": "req-astral-title"
+      },
+      "detail": {
+        "id": "7c2a0d23-6708-ec0b-3f93-27069aba867e",
+        "version": 1,
+        "revision": 1,
+        "idea": "🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪",
+        "title": "🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪…",
+        "source": "합성 원문",
+        "design": {
+          "mode": null,
+          "modeBy": null,
+          "readerLevel": null,
+          "levelBy": null,
+          "sections": []
+        },
+        "status": "waiting_ai",
+        "busy": true,
+        "stage": "diagnose",
+        "label": "진단 대기",
+        "monitor": {
+          "kind": "queued",
+          "label": "진단 대기",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": true,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "active",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "",
+        "textRevision": null,
+        "artifacts": [],
+        "findings": [],
+        "unmetRequirements": [],
+        "brief": null,
+        "requirements": [],
+        "changes": [],
+        "previous": [],
+        "canDownload": false,
+        "canFeedback": false,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999998000,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [],
+            "summary": null,
+            "findings": [],
+            "hasDraft": false
+          }
+        ],
+        "usage": {
+          "ms": 0,
+          "tokens": null,
+          "calls": 0,
+          "wasted": 0,
+          "revisions": [],
+          "hotspots": []
+        }
+      }
+    },
+    {
+      "name": "archived satisfied",
+      "record": {
+        "updatedAt": 1779999999500,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "dd9e8812-30eb-f6e0-2363-abdbb3566ee5",
+          "version": 13,
+          "revision": 2,
+          "status": "satisfied",
+          "stage": "review",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {
+            "diagnose": {
+              "revision": 2,
+              "output": {
+                "purpose": "経験と判断の共有",
+                "audience": "同じ課題の開発者",
+                "sectionModes": ["experience", "explanation"],
+                "preserveVoice": "一人称の迷いを保持",
+                "strategy": "経験→判断→結果; 分類表を強制しない"
+              },
+              "reusedFromRevision": 1
+            },
+            "topic": {
+              "revision": 2,
+              "output": {
+                "problem": "接続障害",
+                "scope": "原因の切り分け"
+              }
+            },
+            "audience": {
+              "revision": 2,
+              "output": {
+                "reader": "입문 독자",
+                "intent": "절차를 따라 하기"
+              }
+            },
+            "value": {
+              "revision": 2,
+              "output": {
+                "outcome": "判断を再現",
+                "preserve": ["失敗条件"]
+              }
+            },
+            "research": {
+              "revision": 2,
+              "output": {
+                "evidence": [],
+                "uncertainties": ["출처 다시 확인"]
+              }
+            },
+            "outline": {
+              "revision": 2,
+              "output": {
+                "sections": [
+                  {
+                    "title": "설정 확인",
+                    "mode": "procedure",
+                    "keyPoint": "기준을 찾는다"
+                  },
+                  {
+                    "title": "현상 분리",
+                    "mode": "procedure",
+                    "keyPoint": "조건을 하나씩 대조한다"
+                  }
+                ],
+                "rationale": "점검한 순서를 유지"
+              }
+            },
+            "draft": {
+              "revision": 2,
+              "output": {
+                "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+                "changeSummary": "순서를 짧게 정리",
+                "edits": [
+                  {
+                    "find": "이전 회차",
+                    "replace": "새 회차"
+                  }
+                ]
+              }
+            },
+            "review": {
+              "revision": 2,
+              "output": {
+                "findings": ["출처 다시 확인", "검토에서만 확인"],
+                "preservationCheck": "条件・語り口を保持"
+              }
+            }
+          },
+          "history": [
+            {
+              "revision": 1,
+              "artifacts": {
+                "diagnose": {
+                  "revision": 1,
+                  "output": {
+                    "purpose": "経験と判断の共有",
+                    "audience": "同じ課題の開発者",
+                    "sectionModes": ["experience", "explanation"],
+                    "preserveVoice": "一人称の迷いを保持",
+                    "strategy": "経験→判断→結果; 分類表を強制しない"
+                  }
+                },
+                "topic": {
+                  "revision": 1,
+                  "output": {
+                    "problem": "接続障害",
+                    "scope": "原因の切り分け"
+                  }
+                },
+                "audience": {
+                  "revision": 1,
+                  "output": {
+                    "reader": "運用担当",
+                    "intent": "復旧したい"
+                  }
+                },
+                "value": {
+                  "revision": 1,
+                  "output": {
+                    "outcome": "判断を再現",
+                    "preserve": ["失敗条件"]
+                  }
+                },
+                "research": {
+                  "revision": 1,
+                  "output": {
+                    "evidence": [],
+                    "uncertainties": ["출처 다시 확인"]
+                  }
+                },
+                "outline": {
+                  "revision": 1,
+                  "output": {
+                    "sections": ["体験", "判断", "結果"],
+                    "rationale": "時間順で因果を説明"
+                  }
+                },
+                "draft": {
+                  "revision": 1,
+                  "output": {
+                    "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+                    "changeSummary": "첫 회차 요약"
+                  }
+                },
+                "review": {
+                  "revision": 1,
+                  "output": {
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
+                    "preservationCheck": "条件・語り口を保持"
+                  }
+                }
+              },
+              "stage": "review",
+              "status": "awaiting_user",
+              "feedback": "구성을 간결하게",
+              "reviewed": true
+            }
+          ],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}",
+            "result-1": "{\"id\":\"result-1\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":1,\"revision\":1,\"stage\":\"diagnose\",\"output\":{\"purpose\":\"経験と判断の共有\",\"audience\":\"同じ課題の開発者\",\"sectionModes\":[\"experience\",\"explanation\"],\"preserveVoice\":\"一人称の迷いを保持\",\"strategy\":\"経験→判断→結果; 分類表を強制しない\"}}",
+            "result-2": "{\"id\":\"result-2\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":2,\"revision\":1,\"stage\":\"topic\",\"output\":{\"problem\":\"接続障害\",\"scope\":\"原因の切り分け\"}}",
+            "result-3": "{\"id\":\"result-3\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":3,\"revision\":1,\"stage\":\"audience\",\"output\":{\"reader\":\"運用担当\",\"intent\":\"復旧したい\"}}",
+            "result-4": "{\"id\":\"result-4\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":4,\"revision\":1,\"stage\":\"value\",\"output\":{\"outcome\":\"判断を再現\",\"preserve\":[\"失敗条件\"]}}",
+            "result-5": "{\"id\":\"result-5\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":5,\"revision\":1,\"stage\":\"research\",\"output\":{\"evidence\":[],\"uncertainties\":[\"ログ未確認\"]}}",
+            "result-6": "{\"id\":\"result-6\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":6,\"revision\":1,\"stage\":\"outline\",\"output\":{\"sections\":[\"体験\",\"判断\",\"結果\"],\"rationale\":\"時間順で因果を説明\"}}",
+            "result-7": "{\"id\":\"result-7\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":7,\"revision\":1,\"stage\":\"draft\",\"output\":{\"text\":\"# 体験\\n\\n実体験の本文。\",\"changeSummary\":\"因果関係を補足\"}}",
+            "result-8": "{\"id\":\"result-8\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":8,\"revision\":1,\"stage\":\"review\",\"output\":{\"findings\":[\"出典未確認を表示\"],\"preservationCheck\":\"条件・語り口を保持\"}}",
+            "satisfied": "{\"id\":\"satisfied\",\"actor\":\"user\",\"type\":\"satisfy\",\"reviewedRevision\":2,\"expectedVersion\":12}"
+          },
+          "approval": null,
+          "satisfiedRevision": 2,
+          "requirementLog": [
+            {
+              "revision": 2,
+              "source": "feedback",
+              "changes": [
+                {
+                  "kind": "mode",
+                  "op": "set",
+                  "value": "procedure",
+                  "quote": "따라 하게"
+                },
+                {
+                  "kind": "readerLevel",
+                  "op": "set",
+                  "value": "beginner",
+                  "quote": "처음 보는 독자"
+                },
+                {
+                  "kind": "tone",
+                  "op": "set",
+                  "value": "차분하게",
+                  "quote": "차분한 문장으로"
+                }
+              ]
+            }
+          ],
+          "lastTransition": {
+            "event": "satisfy",
+            "from": "awaiting_user",
+            "to": "satisfied"
+          },
+          "brief": {
+            "intent": "간결하게 정리",
+            "target": "draft",
+            "level": "line",
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
+            "requirementChanges": [
+              {
+                "kind": "length",
+                "op": "lift",
+                "quote": "분량 제한 없음"
+              }
+            ]
+          }
+        },
+        "archivedAt": 1779999999500,
+        "id": "dd9e8812-30eb-f6e0-2363-abdbb3566ee5",
+        "requestId": "req-archived"
+      },
+      "detail": {
+        "id": "dd9e8812-30eb-f6e0-2363-abdbb3566ee5",
+        "version": 13,
+        "revision": 2,
+        "idea": "접속 장애에서 배운 점",
+        "title": "수정한 실제 제목",
+        "source": "합성 원문",
+        "design": {
+          "mode": "procedure",
+          "modeBy": "user",
+          "readerLevel": "beginner",
+          "levelBy": "user",
+          "sections": [
+            {
+              "title": "설정 확인",
+              "mode": "procedure"
+            },
+            {
+              "title": "현상 분리",
+              "mode": "procedure"
+            }
+          ]
+        },
+        "status": "satisfied",
+        "busy": false,
+        "stage": "review",
+        "label": "초안 확정",
+        "monitor": {
+          "kind": "ready",
+          "label": "초안 확정",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": false,
+          "canResume": false,
+          "resumeLabel": "이어가기",
+          "events": [],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "done",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": null,
+        "needsCompletion": false,
+        "completionReason": null,
+        "canCompleteRequirements": false,
+        "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+        "textRevision": 2,
+        "artifacts": [
+          {
+            "stage": "diagnose",
+            "name": "진단",
+            "revision": 2,
+            "output": {
+              "purpose": "経験と判断の共有",
+              "audience": "同じ課題の開発者",
+              "sectionModes": ["experience", "explanation"],
+              "preserveVoice": "一人称の迷いを保持",
+              "strategy": "経験→判断→結果; 分類表を強制しない"
+            },
+            "reusedFromRevision": 1
+          },
+          {
+            "stage": "topic",
+            "name": "주제 정리",
+            "revision": 2,
+            "output": {
+              "problem": "接続障害",
+              "scope": "原因の切り分け"
+            }
+          },
+          {
+            "stage": "audience",
+            "name": "독자 정리",
+            "revision": 2,
+            "output": {
+              "reader": "입문 독자",
+              "intent": "절차를 따라 하기"
+            }
+          },
+          {
+            "stage": "value",
+            "name": "핵심 정리",
+            "revision": 2,
+            "output": {
+              "outcome": "判断を再現",
+              "preserve": ["失敗条件"]
+            }
+          },
+          {
+            "stage": "research",
+            "name": "근거 정리",
+            "revision": 2,
+            "output": {
+              "evidence": [],
+              "uncertainties": ["출처 다시 확인"]
+            }
+          },
+          {
+            "stage": "outline",
+            "name": "구성",
+            "revision": 2,
+            "output": {
+              "sections": [
+                {
+                  "title": "설정 확인",
+                  "mode": "procedure",
+                  "keyPoint": "기준을 찾는다"
+                },
+                {
+                  "title": "현상 분리",
+                  "mode": "procedure",
+                  "keyPoint": "조건을 하나씩 대조한다"
+                }
+              ],
+              "rationale": "점검한 순서를 유지"
+            }
+          },
+          {
+            "stage": "draft",
+            "name": "초고 작성",
+            "revision": 2,
+            "output": {
+              "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+              "changeSummary": "순서를 짧게 정리",
+              "edits": [
+                {
+                  "find": "이전 회차",
+                  "replace": "새 회차"
+                }
+              ]
+            }
+          },
+          {
+            "stage": "review",
+            "name": "검토",
+            "revision": 2,
+            "output": {
+              "findings": ["출처 다시 확인", "검토에서만 확인"],
+              "preservationCheck": "条件・語り口を保持"
+            }
+          }
+        ],
+        "findings": ["출처 다시 확인", "검토에서만 확인"],
+        "unmetRequirements": [],
+        "brief": {
+          "intent": "간결하게 정리",
+          "target": "draft",
+          "level": "line",
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
+        },
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
+        "changes": [
+          {
+            "find": "이전 회차",
+            "replace": "새 회차"
+          }
+        ],
+        "previous": [
+          {
+            "revision": 1,
+            "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+            "status": "awaiting_user",
+            "stage": "review",
+            "needsCompletion": false,
+            "reviewed": true
+          }
+        ],
+        "canDownload": true,
+        "canFeedback": true,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": true,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": true,
+        "updatedAt": 1779999999500,
+        "archived": true,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "<p>새 회차 본문입니다.</p>\n",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [
+              {
+                "label": "독자",
+                "text": "運用担当",
+                "reason": "復旧したい"
+              },
+              {
+                "label": "핵심",
+                "text": "判断を再現",
+                "reason": "原因の切り分け"
+              },
+              {
+                "label": "구성",
+                "text": "体験 → 判断 → 結果",
+                "reason": "時間順で因果を説明"
+              }
+            ],
+            "summary": "첫 회차 요약",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          },
+          {
+            "revision": 2,
+            "request": "구성을 간결하게",
+            "direction": [
+              {
+                "label": "독자",
+                "text": "입문 독자",
+                "reason": "절차를 따라 하기"
+              },
+              {
+                "label": "구성",
+                "text": "설정 확인 → 현상 분리",
+                "reason": "점검한 순서를 유지"
+              }
+            ],
+            "summary": "순서를 짧게 정리",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          }
+        ],
+        "usage": {
+          "ms": 0,
+          "tokens": null,
+          "calls": 0,
+          "wasted": 0,
+          "revisions": [],
+          "hotspots": []
+        }
+      }
+    },
+    {
+      "name": "incomplete with retained draft",
+      "record": {
+        "updatedAt": 1779999999400,
+        "startedAt": 1779999993000,
+        "queuedAt": 1779999990000,
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "ai": {
+          "provider": "antigravity",
+          "model": "gemini-4-hydrogen",
+          "thinking": "medium"
+        },
+        "state": {
+          "plan": [
+            "diagnose",
+            "topic",
+            "audience",
+            "value",
+            "research",
+            "outline",
+            "draft",
+            "review"
+          ],
+          "schemaVersion": 1,
+          "articleId": "85554bb9-dd4b-57d6-e5c8-50e0840dbac6",
+          "version": 13,
+          "revision": 3,
+          "status": "waiting_ai",
+          "stage": "draft",
+          "source": "합성 원문",
+          "idea": "접속 장애에서 배운 점",
+          "direction": {
+            "mode": "auto",
+            "readerLevel": "auto"
+          },
+          "artifacts": {},
+          "history": [
+            {
+              "revision": 1,
+              "artifacts": {
+                "diagnose": {
+                  "revision": 1,
+                  "output": {
+                    "purpose": "経験と判断の共有",
+                    "audience": "同じ課題の開発者",
+                    "sectionModes": ["experience", "explanation"],
+                    "preserveVoice": "一人称の迷いを保持",
+                    "strategy": "経験→判断→結果; 分類表を強制しない"
+                  }
+                },
+                "topic": {
+                  "revision": 1,
+                  "output": {
+                    "problem": "接続障害",
+                    "scope": "原因の切り分け"
+                  }
+                },
+                "audience": {
+                  "revision": 1,
+                  "output": {
+                    "reader": "運用担当",
+                    "intent": "復旧したい"
+                  }
+                },
+                "value": {
+                  "revision": 1,
+                  "output": {
+                    "outcome": "判断を再現",
+                    "preserve": ["失敗条件"]
+                  }
+                },
+                "research": {
+                  "revision": 1,
+                  "output": {
+                    "evidence": [],
+                    "uncertainties": ["출처 다시 확인"]
+                  }
+                },
+                "outline": {
+                  "revision": 1,
+                  "output": {
+                    "sections": ["体験", "判断", "結果"],
+                    "rationale": "時間順で因果を説明"
+                  }
+                },
+                "draft": {
+                  "revision": 1,
+                  "output": {
+                    "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+                    "changeSummary": "첫 회차 요약"
+                  }
+                },
+                "review": {
+                  "revision": 1,
+                  "output": {
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
+                    "preservationCheck": "条件・語り口を保持"
+                  }
+                }
+              },
+              "stage": "review",
+              "status": "awaiting_user",
+              "feedback": "구성을 간결하게",
+              "reviewed": true
+            },
+            {
+              "revision": 2,
+              "artifacts": {
+                "diagnose": {
+                  "revision": 2,
+                  "output": {
+                    "purpose": "経験と判断の共有",
+                    "audience": "同じ課題の開発者",
+                    "sectionModes": ["experience", "explanation"],
+                    "preserveVoice": "一人称の迷いを保持",
+                    "strategy": "経験→判断→結果; 分類表を強制しない"
+                  },
+                  "reusedFromRevision": 1
+                },
+                "topic": {
+                  "revision": 2,
+                  "output": {
+                    "problem": "接続障害",
+                    "scope": "原因の切り分け"
+                  }
+                },
+                "audience": {
+                  "revision": 2,
+                  "output": {
+                    "reader": "입문 독자",
+                    "intent": "절차를 따라 하기"
+                  }
+                },
+                "value": {
+                  "revision": 2,
+                  "output": {
+                    "outcome": "判断を再現",
+                    "preserve": ["失敗条件"]
+                  }
+                },
+                "research": {
+                  "revision": 2,
+                  "output": {
+                    "evidence": [],
+                    "uncertainties": ["출처 다시 확인"]
+                  }
+                },
+                "outline": {
+                  "revision": 2,
+                  "output": {
+                    "sections": [
+                      {
+                        "title": "설정 확인",
+                        "mode": "procedure",
+                        "keyPoint": "기준을 찾는다"
+                      },
+                      {
+                        "title": "현상 분리",
+                        "mode": "procedure",
+                        "keyPoint": "조건을 하나씩 대조한다"
+                      }
+                    ],
+                    "rationale": "점검한 순서를 유지"
+                  }
+                },
+                "draft": {
+                  "revision": 2,
+                  "output": {
+                    "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+                    "changeSummary": "순서를 짧게 정리",
+                    "edits": [
+                      {
+                        "find": "이전 회차",
+                        "replace": "새 회차"
+                      }
+                    ]
+                  }
+                },
+                "review": {
+                  "revision": 2,
+                  "output": {
+                    "findings": ["출처 다시 확인", "검토에서만 확인"],
+                    "preservationCheck": "条件・語り口を保持"
+                  }
+                }
+              }
+            }
+          ],
+          "seen": {
+            "request-1": "{\"id\":\"request-1\",\"actor\":\"user\",\"type\":\"start\",\"articleId\":\"migration-example\",\"idea\":\"접속 장애에서 배운 점\",\"source\":\"합성 원문\"}",
+            "result-1": "{\"id\":\"result-1\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":1,\"revision\":1,\"stage\":\"diagnose\",\"output\":{\"purpose\":\"経験と判断の共有\",\"audience\":\"同じ課題の開発者\",\"sectionModes\":[\"experience\",\"explanation\"],\"preserveVoice\":\"一人称の迷いを保持\",\"strategy\":\"経験→判断→結果; 分類表を強制しない\"}}",
+            "result-2": "{\"id\":\"result-2\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":2,\"revision\":1,\"stage\":\"topic\",\"output\":{\"problem\":\"接続障害\",\"scope\":\"原因の切り分け\"}}",
+            "result-3": "{\"id\":\"result-3\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":3,\"revision\":1,\"stage\":\"audience\",\"output\":{\"reader\":\"運用担当\",\"intent\":\"復旧したい\"}}",
+            "result-4": "{\"id\":\"result-4\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":4,\"revision\":1,\"stage\":\"value\",\"output\":{\"outcome\":\"判断を再現\",\"preserve\":[\"失敗条件\"]}}",
+            "result-5": "{\"id\":\"result-5\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":5,\"revision\":1,\"stage\":\"research\",\"output\":{\"evidence\":[],\"uncertainties\":[\"ログ未確認\"]}}",
+            "result-6": "{\"id\":\"result-6\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":6,\"revision\":1,\"stage\":\"outline\",\"output\":{\"sections\":[\"体験\",\"判断\",\"結果\"],\"rationale\":\"時間順で因果を説明\"}}",
+            "result-7": "{\"id\":\"result-7\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":7,\"revision\":1,\"stage\":\"draft\",\"output\":{\"text\":\"# 体験\\n\\n実体験の本文。\",\"changeSummary\":\"因果関係を補足\"}}",
+            "result-8": "{\"id\":\"result-8\",\"actor\":\"adapter\",\"type\":\"complete\",\"expectedVersion\":8,\"revision\":1,\"stage\":\"review\",\"output\":{\"findings\":[\"出典未確認を表示\"],\"preservationCheck\":\"条件・語り口を保持\"}}"
+          },
+          "approval": null,
+          "satisfiedRevision": null,
+          "requirementLog": [
+            {
+              "revision": 2,
+              "source": "feedback",
+              "changes": [
+                {
+                  "kind": "mode",
+                  "op": "set",
+                  "value": "procedure",
+                  "quote": "따라 하게"
+                },
+                {
+                  "kind": "readerLevel",
+                  "op": "set",
+                  "value": "beginner",
+                  "quote": "처음 보는 독자"
+                },
+                {
+                  "kind": "tone",
+                  "op": "set",
+                  "value": "차분하게",
+                  "quote": "차분한 문장으로"
+                }
+              ]
+            }
+          ],
+          "lastTransition": {
+            "event": "complete",
+            "from": "waiting_ai",
+            "to": "awaiting_user"
+          },
+          "brief": {
+            "intent": "간결하게 정리",
+            "target": "draft",
+            "level": "line",
+            "priorities": ["첫 문단 정리"],
+            "preserve": ["원문"],
+            "requirementChanges": [
+              {
+                "kind": "length",
+                "op": "lift",
+                "quote": "분량 제한 없음"
+              }
+            ]
+          }
+        },
+        "id": "85554bb9-dd4b-57d6-e5c8-50e0840dbac6",
+        "requestId": "req-incomplete"
+      },
+      "detail": {
+        "id": "85554bb9-dd4b-57d6-e5c8-50e0840dbac6",
+        "version": 13,
+        "revision": 3,
+        "idea": "접속 장애에서 배운 점",
+        "title": "수정한 실제 제목",
+        "source": "합성 원문",
+        "design": {
+          "mode": "procedure",
+          "modeBy": "user",
+          "readerLevel": "beginner",
+          "levelBy": "user",
+          "sections": []
+        },
+        "status": "waiting_ai",
+        "busy": false,
+        "stage": "draft",
+        "label": "요구사항 보완 필요",
+        "monitor": {
+          "kind": "blocked",
+          "label": "요구사항 보완 필요",
+          "lastConfirmedAt": null,
+          "needsAiAttention": false,
+          "canPause": true,
+          "canResume": false,
+          "resumeLabel": "상태 다시 확인",
+          "events": [],
+          "pipeline": [
+            {
+              "stage": "diagnose",
+              "name": "진단",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "topic",
+              "name": "주제 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "audience",
+              "name": "독자 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "value",
+              "name": "핵심 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "research",
+              "name": "근거 정리",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "outline",
+              "name": "구성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "draft",
+              "name": "초고 작성",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            },
+            {
+              "stage": "review",
+              "name": "검토",
+              "status": "pending",
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
+          "now": 1780000000000,
+          "executionId": null
+        },
+        "issue": "전체 글쓰기 단계와 결과를 보완해야 합니다. 요구사항 보완을 눌러 주세요.",
+        "needsCompletion": true,
+        "completionReason": "전체 글쓰기 단계와 결과를 보완해야 합니다. 요구사항 보완을 눌러 주세요.",
+        "canCompleteRequirements": true,
+        "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+        "textRevision": 2,
+        "artifacts": [],
+        "findings": [],
+        "unmetRequirements": [],
+        "brief": {
+          "intent": "간결하게 정리",
+          "target": "draft",
+          "level": "line",
+          "priorities": ["첫 문단 정리"],
+          "preserve": ["원문"],
+          "requirementChanges": ["분량: 제한 해제"]
+        },
+        "requirements": ["서술 방식: procedure", "독자 수준: beginner", "tone: 차분하게"],
+        "changes": [],
+        "previous": [
+          {
+            "revision": 1,
+            "text": "# 실제 초안 제목\n\n이전 회차 본문입니다.",
+            "status": "awaiting_user",
+            "stage": "review",
+            "needsCompletion": false,
+            "reviewed": true
+          },
+          {
+            "revision": 2,
+            "text": "# 수정한 실제 제목\n\n새 회차 본문입니다.",
+            "status": null,
+            "stage": null,
+            "needsCompletion": false,
+            "reviewed": null
+          }
+        ],
+        "canDownload": true,
+        "canFeedback": false,
+        "canSatisfy": false,
+        "canApproveBrief": false,
+        "figure": null,
+        "canRequestFigures": false,
+        "canSelectFigures": false,
+        "canConfirmFigures": false,
+        "canApproveDesign": false,
+        "canReviseFigures": false,
+        "canDiscardFigures": false,
+        "canAuthorizePublication": false,
+        "updatedAt": 1779999999400,
+        "archived": false,
+        "model": "Hydrogen 4 Medium",
+        "callsUsed": 0,
+        "maxCalls": 8,
+        "appliedOperations": [],
+        "html": "<p>새 회차 본문입니다.</p>\n",
+        "executionLinks": []
+      },
+      "history": {
+        "records": [],
+        "journey": [
+          {
+            "revision": 1,
+            "request": null,
+            "direction": [
+              {
+                "label": "독자",
+                "text": "運用担当",
+                "reason": "復旧したい"
+              },
+              {
+                "label": "핵심",
+                "text": "判断を再現",
+                "reason": "原因の切り分け"
+              },
+              {
+                "label": "구성",
+                "text": "体験 → 判断 → 結果",
+                "reason": "時間順で因果を説明"
+              }
+            ],
+            "summary": "첫 회차 요약",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          },
+          {
+            "revision": 2,
+            "request": "구성을 간결하게",
+            "direction": [
+              {
+                "label": "독자",
+                "text": "입문 독자",
+                "reason": "절차를 따라 하기"
+              },
+              {
+                "label": "구성",
+                "text": "설정 확인 → 현상 분리",
+                "reason": "점검한 순서를 유지"
+              }
+            ],
+            "summary": "순서를 짧게 정리",
+            "findings": ["출처 다시 확인", "검토에서만 확인"],
+            "hasDraft": true
+          },
+          {
+            "revision": 3,
+            "request": null,
+            "direction": [],
+            "summary": null,
+            "findings": [],
+            "hasDraft": false
+          }
+        ],
+        "usage": {
+          "ms": 0,
+          "tokens": null,
+          "calls": 0,
+          "wasted": 0,
+          "revisions": [],
+          "hotspots": []
+        }
+      }
+    }
+  ],
+  "list": {
+    "runs": [
+      {
+        "id": "85554bb9-dd4b-57d6-e5c8-50e0840dbac6",
+        "title": "수정한 실제 제목",
+        "revision": 3,
+        "status": "waiting_ai",
+        "label": "요구사항 보완 필요",
+        "needsCompletion": true,
+        "completionReason": "전체 글쓰기 단계와 결과를 보완해야 합니다. 요구사항 보완을 눌러 주세요.",
+        "updatedAt": 1779999999400
+      },
+      {
+        "id": "73782c4d-5d89-756c-ff70-7819dbc232d5",
+        "title": "수정한 실제 제목",
+        "revision": 2,
+        "status": "awaiting_figure_choice",
+        "label": "시각자료 위치 선택 대기",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999999100
+      },
+      {
+        "id": "d36be649-4248-ee06-ac18-f38ea1119dfe",
+        "title": "접속 장애에서 배운 점",
+        "revision": 1,
+        "status": "waiting_ai",
+        "label": "진단 대기",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999998000
+      },
+      {
+        "id": "dd5ace9e-018d-bd62-336c-be039916ad7c",
+        "title": "접속 장애에서 배운 점",
+        "revision": 1,
+        "status": "waiting_ai",
+        "label": "진단 중",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999998000
+      },
+      {
+        "id": "a03f2386-ae06-b211-0957-7020844df367",
+        "title": "접속 장애에서 배운 점",
+        "revision": 1,
+        "status": "waiting_ai",
+        "label": "진행 확인 지연",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999998000
+      },
+      {
+        "id": "cab80b30-7989-8c66-79be-9a923ffb4edf",
+        "title": "수정한 실제 제목",
+        "revision": 2,
+        "status": "awaiting_user",
+        "label": "초안 준비됨",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999998000
+      },
+      {
+        "id": "7c2a0d23-6708-ec0b-3f93-27069aba867e",
+        "title": "🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪…",
+        "revision": 1,
+        "status": "waiting_ai",
+        "label": "진단 대기",
+        "needsCompletion": false,
+        "completionReason": null,
+        "updatedAt": 1779999998000
+      }
+    ]
+  }
+}

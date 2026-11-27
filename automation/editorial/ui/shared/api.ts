@@ -173,7 +173,7 @@ const runSchema = z.object({
     label: z.string(),
     now: timestamp,
     lastConfirmedAt: timestamp.nullable(),
-    executionId: z.string().nullable(),
+    executionId: z.string().nullable().default(null),
     canPause: z.boolean(),
     canResume: z.boolean(),
     resumeLabel: z.string(),
@@ -182,9 +182,24 @@ const runSchema = z.object({
     pipeline: z.array(pipelineSchema),
   }),
 });
+const paseoUrlSchema = z.string().refine((value) => {
+  try {
+    const url = new URL(value);
+    return (
+      ["http:", "https:"].includes(url.protocol) &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash
+    );
+  } catch {
+    return false;
+  }
+});
 const viewSchema = runSchema.extend({
   html: z.string(),
-  executionLinks: z.array(z.object({ id: z.string(), url: z.string() })),
+  paseoUrl: paseoUrlSchema.optional().catch(undefined),
 });
 const recentSchema = z.object({
   runs: z.array(

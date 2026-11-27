@@ -8,7 +8,7 @@ module.exports = {
       severity: "error",
       from: { path: "^automation/" },
       // 공용 Paseo는 연결(sdk)과 데몬 주소(endpoint)만 쓴다
-      to: { path: "^[.][.]/", pathNot: "^[.][.]/paseo/(sdk|endpoint)[.]mjs$" },
+      to: { path: "^[.][.]/", pathNot: "^(?:[.][.]/){1,2}paseo/(sdk|endpoint)[.]mjs$" },
     },
     {
       name: "browser-no-runtime",
@@ -95,7 +95,7 @@ module.exports = {
   options: {
     parser: "swc",
     tsConfig: { fileName: "tsconfig.json" },
-    doNotFollow: { path: "node_modules|^[.][.]/paseo/" },
+    doNotFollow: { path: "node_modules|^(?:[.][.]/){1,2}paseo/" },
     exclude: { path: "^[.]local/" },
     enhancedResolveOptions: {
       exportsFields: ["exports"],

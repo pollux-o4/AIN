@@ -87,7 +87,6 @@ export function makeRun(
     maxCalls: 30,
     appliedOperations: [],
     html: done ? html : "",
-    executionLinks: [],
     monitor: {
       kind: done ? "ready" : "working",
       label: done ? "초안 준비됨" : "AI 작업 중",

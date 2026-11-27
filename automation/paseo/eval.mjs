@@ -9,10 +9,6 @@ import { LIVE_CASES, liveCase } from "./live/cases.mjs";
 import { requireLiveConsent } from "./live/consent.mjs";
 import { GRADERS, summarize } from "./live/grade.mjs";
 
-// 격리 n8n은 실행마다 포트 둘(본체·작업 실행기 = 포트+1)을 쓴다 · 나란히 도는 실행은 PORT_STEP씩 띄운다
-const BASE_PORT = 5740; // 계약 검증(5738)과 겹치지 않는 구간
-const PORT_STEP = 10;
-
 const { values } = parseArgs({
   options: {
     cases: { type: "string", default: LIVE_CASES.map((c) => c.id).join(",") },
@@ -27,9 +23,9 @@ const parallel = Number(values.parallel);
 if (!(Number.isInteger(trials) && trials > 0 && Number.isInteger(parallel) && parallel > 0))
   throw new Error("--trials, --parallel은 양의 정수");
 
-async function trial(live, port) {
+async function trial(live) {
   try {
-    const report = await runLiveVerification({ pilot: false, live, port, quiet: true });
+    const report = await runLiveVerification({ pilot: false, live, quiet: true });
     return {
       case: live.id,
       quality: report.quality,
@@ -48,7 +44,9 @@ async function trial(live, port) {
   }
 }
 
-requireLiveConsent(`글 ${cases.length * trials}편 · 편당 호출 10회 안팎`);
+requireLiveConsent(
+  `연결 확인 최대 1회, 글 ${cases.length * trials}편 · 편당 최대 ${process.env.CONTRACT_FEEDBACK ? 60 : 30}회`,
+);
 
 // 연결 확인 1회가 통과해야 글 실행을 시작한다(실패한 연결에 글 호출을 쓰지 않음)
 await runLiveVerification({ article: false, quiet: true });
@@ -56,9 +54,9 @@ await runLiveVerification({ article: false, quiet: true });
 const queue = cases.flatMap((live) => Array.from({ length: trials }, () => live));
 const done = [];
 await Promise.all(
-  Array.from({ length: Math.min(parallel, queue.length) }, async (_unused, slot) => {
+  Array.from({ length: Math.min(parallel, queue.length) }, async () => {
     for (let live = queue.shift(); live; live = queue.shift()) {
-      const result = await trial(live, BASE_PORT + slot * PORT_STEP);
+      const result = await trial(live);
       done.push(result);
       console.error(
         `[${done.length}/${cases.length * trials}] ${live.id} ${result.failure ? `실패: ${result.failure}` : `${result.calls}회 · ${Math.round(result.durationMs / 1000)}초`}`,

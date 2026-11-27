@@ -1,0 +1,1422 @@
+{
+  "states": [
+    {
+      "articleId": "article",
+      "source": "합성 원문 </자료>",
+      "idea": "비교 🧪",
+      "version": 7,
+      "revision": 2,
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "primaryMode": "explain",
+            "readerLevel": "beginner",
+            "preserveVoice": "합니다체"
+          }
+        },
+        "topic": {
+          "revision": 1,
+          "output": {
+            "problem": "문제",
+            "titleCandidates": ["제목"]
+          }
+        },
+        "audience": {
+          "revision": 1,
+          "output": {
+            "reader": "독자",
+            "intent": "하기"
+          }
+        },
+        "value": {
+          "revision": 1,
+          "output": {
+            "preserve": ["조건"],
+            "promise": "약속"
+          }
+        },
+        "research": {
+          "revision": 1,
+          "output": {
+            "evidence": [
+              {
+                "claim": "사실",
+                "url": "사용자 제공 자료"
+              }
+            ]
+          }
+        },
+        "outline": {
+          "revision": 1,
+          "output": {
+            "title": "제목",
+            "sections": [
+              {
+                "mode": "explain",
+                "title": "첫 구간",
+                "hook": "질문",
+                "subsections": [
+                  {
+                    "title": "작은 구간"
+                  },
+                  {
+                    "title": "빠진 구간"
+                  }
+                ]
+              },
+              {
+                "mode": "procedure",
+                "title": "둘째 구간"
+              }
+            ]
+          }
+        },
+        "draft": {
+          "revision": 1,
+          "output": {
+            "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+          }
+        },
+        "review": {
+          "revision": 1,
+          "output": {
+            "findings": []
+          }
+        }
+      },
+      "history": [
+        {
+          "artifacts": {
+            "diagnose": {
+              "revision": 1,
+              "output": {
+                "primaryMode": "explain",
+                "readerLevel": "beginner",
+                "preserveVoice": "합니다체"
+              }
+            },
+            "topic": {
+              "revision": 1,
+              "output": {
+                "problem": "문제",
+                "titleCandidates": ["제목"]
+              }
+            },
+            "audience": {
+              "revision": 1,
+              "output": {
+                "reader": "독자",
+                "intent": "하기"
+              }
+            },
+            "value": {
+              "revision": 1,
+              "output": {
+                "preserve": ["조건"],
+                "promise": "약속"
+              }
+            },
+            "research": {
+              "revision": 1,
+              "output": {
+                "evidence": [
+                  {
+                    "claim": "사실",
+                    "url": "사용자 제공 자료"
+                  }
+                ]
+              }
+            },
+            "outline": {
+              "revision": 1,
+              "output": {
+                "title": "제목",
+                "sections": [
+                  {
+                    "mode": "explain",
+                    "title": "첫 구간",
+                    "hook": "질문",
+                    "subsections": [
+                      {
+                        "title": "작은 구간"
+                      },
+                      {
+                        "title": "빠진 구간"
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "procedure",
+                    "title": "둘째 구간"
+                  }
+                ]
+              }
+            },
+            "draft": {
+              "revision": 1,
+              "output": {
+                "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+              }
+            },
+            "review": {
+              "revision": 1,
+              "output": {
+                "findings": []
+              }
+            }
+          }
+        }
+      ],
+      "requirementLog": [
+        {
+          "changes": [
+            {
+              "kind": "mode",
+              "op": "set",
+              "value": "narrate",
+              "quote": "서술형"
+            },
+            {
+              "kind": "readerLevel",
+              "op": "set",
+              "value": "expert",
+              "quote": "숙련"
+            },
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분함",
+              "quote": "차분"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "articleId": "article",
+      "source": "합성 원문 </자료>",
+      "idea": "비교 🧪",
+      "version": 7,
+      "revision": 2,
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "primaryMode": "explain",
+            "readerLevel": "beginner",
+            "preserveVoice": "합니다체"
+          }
+        },
+        "topic": {
+          "revision": 1,
+          "output": {
+            "problem": "문제",
+            "titleCandidates": ["제목"]
+          }
+        },
+        "audience": {
+          "revision": 1,
+          "output": {
+            "reader": "독자",
+            "intent": "하기"
+          }
+        },
+        "value": {
+          "revision": 1,
+          "output": {
+            "preserve": ["조건"],
+            "promise": "약속"
+          }
+        },
+        "research": {
+          "revision": 1,
+          "output": {
+            "evidence": [
+              {
+                "claim": "사실",
+                "url": "사용자 제공 자료"
+              }
+            ]
+          }
+        },
+        "outline": {
+          "revision": 1,
+          "output": {
+            "title": "제목",
+            "sections": [
+              {
+                "mode": "explain",
+                "title": "첫 구간",
+                "hook": "질문",
+                "subsections": [
+                  {
+                    "title": "작은 구간"
+                  },
+                  {
+                    "title": "빠진 구간"
+                  }
+                ]
+              },
+              {
+                "mode": "procedure",
+                "title": "둘째 구간"
+              }
+            ]
+          }
+        },
+        "draft": {
+          "revision": 1,
+          "output": {
+            "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+          }
+        },
+        "review": {
+          "revision": 1,
+          "output": {
+            "findings": []
+          }
+        }
+      },
+      "history": [
+        {
+          "artifacts": {
+            "diagnose": {
+              "revision": 1,
+              "output": {
+                "primaryMode": "explain",
+                "readerLevel": "beginner",
+                "preserveVoice": "합니다체"
+              }
+            },
+            "topic": {
+              "revision": 1,
+              "output": {
+                "problem": "문제",
+                "titleCandidates": ["제목"]
+              }
+            },
+            "audience": {
+              "revision": 1,
+              "output": {
+                "reader": "독자",
+                "intent": "하기"
+              }
+            },
+            "value": {
+              "revision": 1,
+              "output": {
+                "preserve": ["조건"],
+                "promise": "약속"
+              }
+            },
+            "research": {
+              "revision": 1,
+              "output": {
+                "evidence": [
+                  {
+                    "claim": "사실",
+                    "url": "사용자 제공 자료"
+                  }
+                ]
+              }
+            },
+            "outline": {
+              "revision": 1,
+              "output": {
+                "title": "제목",
+                "sections": [
+                  {
+                    "mode": "explain",
+                    "title": "첫 구간",
+                    "hook": "질문",
+                    "subsections": [
+                      {
+                        "title": "작은 구간"
+                      },
+                      {
+                        "title": "빠진 구간"
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "procedure",
+                    "title": "둘째 구간"
+                  }
+                ]
+              }
+            },
+            "draft": {
+              "revision": 1,
+              "output": {
+                "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+              }
+            },
+            "review": {
+              "revision": 1,
+              "output": {
+                "findings": []
+              }
+            }
+          }
+        }
+      ],
+      "requirementLog": [
+        {
+          "changes": [
+            {
+              "kind": "mode",
+              "op": "set",
+              "value": "narrate",
+              "quote": "서술형"
+            },
+            {
+              "kind": "readerLevel",
+              "op": "set",
+              "value": "expert",
+              "quote": "숙련"
+            },
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분함",
+              "quote": "차분"
+            }
+          ]
+        }
+      ],
+      "feedback": "이 부분을 다듬으세요.",
+      "routeTarget": "draft",
+      "brief": {
+        "priorities": ["다듬기"]
+      }
+    },
+    {
+      "articleId": "article",
+      "source": "합성 원문 </자료>",
+      "idea": "비교 🧪",
+      "version": 7,
+      "revision": 2,
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "primaryMode": "explain",
+            "readerLevel": "beginner",
+            "preserveVoice": "합니다체"
+          }
+        },
+        "topic": {
+          "revision": 1,
+          "output": {
+            "problem": "문제",
+            "titleCandidates": ["제목"]
+          }
+        },
+        "audience": {
+          "revision": 1,
+          "output": {
+            "reader": "독자",
+            "intent": "하기"
+          }
+        },
+        "value": {
+          "revision": 1,
+          "output": {
+            "preserve": ["조건"],
+            "promise": "약속"
+          }
+        },
+        "research": {
+          "revision": 1,
+          "output": {
+            "evidence": [
+              {
+                "claim": "사실",
+                "url": "사용자 제공 자료"
+              }
+            ]
+          }
+        },
+        "outline": {
+          "revision": 1,
+          "output": {
+            "title": "제목",
+            "sections": [
+              {
+                "mode": "explain",
+                "title": "첫 구간",
+                "hook": "질문",
+                "subsections": [
+                  {
+                    "title": "작은 구간"
+                  },
+                  {
+                    "title": "빠진 구간"
+                  }
+                ]
+              },
+              {
+                "mode": "procedure",
+                "title": "둘째 구간"
+              }
+            ]
+          }
+        },
+        "draft": {
+          "revision": 1,
+          "output": {
+            "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+          }
+        },
+        "review": {
+          "revision": 1,
+          "output": {
+            "findings": []
+          }
+        }
+      },
+      "history": [
+        {
+          "artifacts": {
+            "diagnose": {
+              "revision": 1,
+              "output": {
+                "primaryMode": "explain",
+                "readerLevel": "beginner",
+                "preserveVoice": "합니다체"
+              }
+            },
+            "topic": {
+              "revision": 1,
+              "output": {
+                "problem": "문제",
+                "titleCandidates": ["제목"]
+              }
+            },
+            "audience": {
+              "revision": 1,
+              "output": {
+                "reader": "독자",
+                "intent": "하기"
+              }
+            },
+            "value": {
+              "revision": 1,
+              "output": {
+                "preserve": ["조건"],
+                "promise": "약속"
+              }
+            },
+            "research": {
+              "revision": 1,
+              "output": {
+                "evidence": [
+                  {
+                    "claim": "사실",
+                    "url": "사용자 제공 자료"
+                  }
+                ]
+              }
+            },
+            "outline": {
+              "revision": 1,
+              "output": {
+                "title": "제목",
+                "sections": [
+                  {
+                    "mode": "explain",
+                    "title": "첫 구간",
+                    "hook": "질문",
+                    "subsections": [
+                      {
+                        "title": "작은 구간"
+                      },
+                      {
+                        "title": "빠진 구간"
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "procedure",
+                    "title": "둘째 구간"
+                  }
+                ]
+              }
+            },
+            "draft": {
+              "revision": 1,
+              "output": {
+                "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+              }
+            },
+            "review": {
+              "revision": 1,
+              "output": {
+                "findings": []
+              }
+            }
+          }
+        }
+      ],
+      "requirementLog": [
+        {
+          "changes": [
+            {
+              "kind": "mode",
+              "op": "set",
+              "value": "narrate",
+              "quote": "서술형"
+            },
+            {
+              "kind": "readerLevel",
+              "op": "set",
+              "value": "expert",
+              "quote": "숙련"
+            },
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분함",
+              "quote": "차분"
+            }
+          ]
+        }
+      ],
+      "retry": {
+        "stage": "outline",
+        "note": "고정 기준"
+      }
+    },
+    {
+      "articleId": "article",
+      "source": "합성 원문 </자료>",
+      "idea": "비교 🧪",
+      "version": 7,
+      "revision": 2,
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "primaryMode": "explain",
+            "readerLevel": "beginner",
+            "preserveVoice": "합니다체"
+          }
+        },
+        "topic": {
+          "revision": 1,
+          "output": {
+            "problem": "문제",
+            "titleCandidates": ["제목"]
+          }
+        },
+        "audience": {
+          "revision": 1,
+          "output": {
+            "reader": "독자",
+            "intent": "하기"
+          }
+        },
+        "value": {
+          "revision": 1,
+          "output": {
+            "preserve": ["조건"],
+            "promise": "약속"
+          }
+        },
+        "research": {
+          "revision": 1,
+          "output": {
+            "evidence": [
+              {
+                "claim": "사실",
+                "url": "사용자 제공 자료"
+              }
+            ]
+          }
+        },
+        "outline": {
+          "revision": 1,
+          "output": {
+            "title": "제목",
+            "sections": [
+              {
+                "mode": "explain",
+                "title": "첫 구간",
+                "hook": "질문",
+                "subsections": [
+                  {
+                    "title": "작은 구간"
+                  },
+                  {
+                    "title": "빠진 구간"
+                  }
+                ]
+              },
+              {
+                "mode": "procedure",
+                "title": "둘째 구간"
+              }
+            ]
+          }
+        },
+        "draft": {
+          "revision": 1,
+          "output": {
+            "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+          }
+        },
+        "review": {
+          "revision": 1,
+          "output": {
+            "findings": []
+          }
+        }
+      },
+      "history": [
+        {
+          "artifacts": {
+            "diagnose": {
+              "revision": 1,
+              "output": {
+                "primaryMode": "explain",
+                "readerLevel": "beginner",
+                "preserveVoice": "합니다체"
+              }
+            },
+            "topic": {
+              "revision": 1,
+              "output": {
+                "problem": "문제",
+                "titleCandidates": ["제목"]
+              }
+            },
+            "audience": {
+              "revision": 1,
+              "output": {
+                "reader": "독자",
+                "intent": "하기"
+              }
+            },
+            "value": {
+              "revision": 1,
+              "output": {
+                "preserve": ["조건"],
+                "promise": "약속"
+              }
+            },
+            "research": {
+              "revision": 1,
+              "output": {
+                "evidence": [
+                  {
+                    "claim": "사실",
+                    "url": "사용자 제공 자료"
+                  }
+                ]
+              }
+            },
+            "outline": {
+              "revision": 1,
+              "output": {
+                "title": "제목",
+                "sections": [
+                  {
+                    "mode": "explain",
+                    "title": "첫 구간",
+                    "hook": "질문",
+                    "subsections": [
+                      {
+                        "title": "작은 구간"
+                      },
+                      {
+                        "title": "빠진 구간"
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "procedure",
+                    "title": "둘째 구간"
+                  }
+                ]
+              }
+            },
+            "draft": {
+              "revision": 1,
+              "output": {
+                "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+              }
+            },
+            "review": {
+              "revision": 1,
+              "output": {
+                "findings": []
+              }
+            }
+          }
+        }
+      ],
+      "requirementLog": [
+        {
+          "changes": [
+            {
+              "kind": "mode",
+              "op": "set",
+              "value": "narrate",
+              "quote": "서술형"
+            },
+            {
+              "kind": "readerLevel",
+              "op": "set",
+              "value": "expert",
+              "quote": "숙련"
+            },
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분함",
+              "quote": "차분"
+            }
+          ]
+        }
+      ],
+      "feedback": "이 부분을 다듬으세요.",
+      "routeTarget": "draft",
+      "brief": {
+        "priorities": ["다듬기"]
+      },
+      "draftParts": [
+        {
+          "text": "# 제목\n\n## 첫 구간\n\n이전 마무리."
+        }
+      ]
+    },
+    {
+      "articleId": "article",
+      "source": "합성 원문 </자료>",
+      "idea": "다른 입력",
+      "version": 7,
+      "revision": 2,
+      "artifacts": {
+        "diagnose": {
+          "revision": 1,
+          "output": {
+            "primaryMode": "explain",
+            "readerLevel": "beginner",
+            "preserveVoice": "합니다체"
+          }
+        },
+        "topic": {
+          "revision": 1,
+          "output": {
+            "problem": "문제",
+            "titleCandidates": ["제목"]
+          }
+        },
+        "audience": {
+          "revision": 1,
+          "output": {
+            "reader": "독자",
+            "intent": "하기"
+          }
+        },
+        "value": {
+          "revision": 1,
+          "output": {
+            "preserve": ["조건"],
+            "promise": "약속"
+          }
+        },
+        "research": {
+          "revision": 1,
+          "output": {
+            "evidence": [
+              {
+                "claim": "사실",
+                "url": "사용자 제공 자료"
+              }
+            ]
+          }
+        },
+        "outline": {
+          "revision": 1,
+          "output": {
+            "title": "제목",
+            "sections": [
+              {
+                "mode": "explain",
+                "title": "첫 구간",
+                "hook": "질문",
+                "subsections": [
+                  {
+                    "title": "작은 구간"
+                  },
+                  {
+                    "title": "빠진 구간"
+                  }
+                ]
+              },
+              {
+                "mode": "procedure",
+                "title": "둘째 구간"
+              }
+            ]
+          }
+        },
+        "draft": {
+          "revision": 1,
+          "output": {
+            "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+          }
+        },
+        "review": {
+          "revision": 1,
+          "output": {
+            "findings": []
+          }
+        }
+      },
+      "history": [
+        {
+          "artifacts": {
+            "diagnose": {
+              "revision": 1,
+              "output": {
+                "primaryMode": "explain",
+                "readerLevel": "beginner",
+                "preserveVoice": "합니다체"
+              }
+            },
+            "topic": {
+              "revision": 1,
+              "output": {
+                "problem": "문제",
+                "titleCandidates": ["제목"]
+              }
+            },
+            "audience": {
+              "revision": 1,
+              "output": {
+                "reader": "독자",
+                "intent": "하기"
+              }
+            },
+            "value": {
+              "revision": 1,
+              "output": {
+                "preserve": ["조건"],
+                "promise": "약속"
+              }
+            },
+            "research": {
+              "revision": 1,
+              "output": {
+                "evidence": [
+                  {
+                    "claim": "사실",
+                    "url": "사용자 제공 자료"
+                  }
+                ]
+              }
+            },
+            "outline": {
+              "revision": 1,
+              "output": {
+                "title": "제목",
+                "sections": [
+                  {
+                    "mode": "explain",
+                    "title": "첫 구간",
+                    "hook": "질문",
+                    "subsections": [
+                      {
+                        "title": "작은 구간"
+                      },
+                      {
+                        "title": "빠진 구간"
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "procedure",
+                    "title": "둘째 구간"
+                  }
+                ]
+              }
+            },
+            "draft": {
+              "revision": 1,
+              "output": {
+                "text": "# 제목\n\n도입입니다. 다음입니다.\n\n## 첫 구간\n\n👀 **사례**인가? [해설](https://example.org)입니다.이어집니다.\n\n### 작은 구간\n\n두번째 문장입니다.\n\n## 둘째 구간\n\n끝입니다.\n\n## 한눈에 정리\n- 두번째 문장입니다.\n- 끝입니다."
+              }
+            },
+            "review": {
+              "revision": 1,
+              "output": {
+                "findings": []
+              }
+            }
+          }
+        }
+      ],
+      "requirementLog": [
+        {
+          "changes": [
+            {
+              "kind": "mode",
+              "op": "set",
+              "value": "narrate",
+              "quote": "서술형"
+            },
+            {
+              "kind": "readerLevel",
+              "op": "set",
+              "value": "expert",
+              "quote": "숙련"
+            },
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분함",
+              "quote": "차분"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "name": "diagnose",
+      "action": {
+        "type": "request_ai",
+        "stage": "diagnose",
+        "revision": 2
+      },
+      "digest": "a9ce98eb4f00b873f184dd824a4a8c73ab1eb2c2ce2907412f58f9a3525758d8",
+      "stateIndex": 0
+    },
+    {
+      "name": "topic",
+      "action": {
+        "type": "request_ai",
+        "stage": "topic",
+        "revision": 2
+      },
+      "digest": "1843a850b781790675c29f70bcd14a9a0d5be3e13c878dac5b638d3d2a2bacb1",
+      "stateIndex": 0
+    },
+    {
+      "name": "audience",
+      "action": {
+        "type": "request_ai",
+        "stage": "audience",
+        "revision": 2
+      },
+      "digest": "72e2eb4186e7aaa8021174688fb7e5a54ebdb5ca4e6ff3dd0a4fd1608dc4a999",
+      "stateIndex": 0
+    },
+    {
+      "name": "value",
+      "action": {
+        "type": "request_ai",
+        "stage": "value",
+        "revision": 2
+      },
+      "digest": "5cf03f65490624e0c458185f7221f4edc853e91f545260538547bedcc821cc65",
+      "stateIndex": 0
+    },
+    {
+      "name": "research",
+      "action": {
+        "type": "request_ai",
+        "stage": "research",
+        "revision": 2
+      },
+      "digest": "25b5655573bbd6a3624e5dec24ed7040613461a1a41ba829cecded61f479d533",
+      "stateIndex": 0
+    },
+    {
+      "name": "outline",
+      "action": {
+        "type": "request_ai",
+        "stage": "outline",
+        "revision": 2
+      },
+      "digest": "bee1797d6e178bb948a34d79a86c9045efe63aec744ad0c6c25ae4a686310d46",
+      "stateIndex": 0
+    },
+    {
+      "name": "draft",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2
+      },
+      "digest": "cdf14bac274f1480fc03f0efe17244039f947b5c88a22b2842e4dea7b24cbaea",
+      "stateIndex": 0
+    },
+    {
+      "name": "review",
+      "action": {
+        "type": "request_ai",
+        "stage": "review",
+        "revision": 2
+      },
+      "digest": "93bbd86c7882d851ffebc6a266a3a9764b8ef880170d3425884aa2c1bb2e67b6",
+      "stateIndex": 0
+    },
+    {
+      "name": "route",
+      "action": {
+        "type": "request_route",
+        "revision": 2
+      },
+      "digest": "2ba575faae7fbffd851ab43897afa11d48a1dd196396e4a19d4ff0d4782b3b33",
+      "stateIndex": 1
+    },
+    {
+      "name": "outline retry",
+      "action": {
+        "type": "request_ai",
+        "stage": "outline",
+        "revision": 2
+      },
+      "digest": "3b0d063acb7f43bd0d3b2780e7340079fdac355c735bde380da1f38fe7dea6d2",
+      "stateIndex": 2
+    },
+    {
+      "name": "draft edit",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2,
+        "mode": "edit",
+        "retryNote": "한번만"
+      },
+      "digest": "49398c2d6e805b9d4e1468ed1bc084f52efb42be80141a90e853f689b92729c3",
+      "stateIndex": 1
+    },
+    {
+      "name": "draft first",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2,
+        "section": {
+          "index": 0,
+          "total": 2,
+          "title": "첫 구간",
+          "budget": 450,
+          "limit": 620
+        }
+      },
+      "digest": "89fc45daab9688096fadd75c519f3d4b0bd6e1537634e4e34fef4e35fc1c66aa",
+      "stateIndex": 1
+    },
+    {
+      "name": "draft last",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2,
+        "section": {
+          "index": 1,
+          "total": 2,
+          "title": "둘째 구간",
+          "rejected": "반려 원고",
+          "retryNote": "분량",
+          "budget": 450,
+          "limit": 620,
+          "floor": 320
+        }
+      },
+      "digest": "831e2de4e8ce138f58566645bd2792fd983282b6d1db16ccc2bbd33576582519",
+      "stateIndex": 3
+    },
+    {
+      "name": "reused planner",
+      "action": {
+        "type": "request_ai",
+        "stage": "audience",
+        "revision": 2
+      },
+      "delivered": {
+        "source": "c5ff852d13e5e776",
+        "idea": "3ca20b201e312c3a",
+        "requirements": "42aa0e6dba96519b",
+        "artifacts.diagnose": "717c1deaf4a237f5"
+      },
+      "next": {
+        "source": "c5ff852d13e5e776",
+        "idea": "ea542f12d5281201",
+        "requirements": "42aa0e6dba96519b",
+        "artifacts.diagnose": "717c1deaf4a237f5",
+        "artifacts.topic": "8ab2914a9c75d1a6"
+      },
+      "digest": "be2c7567efc352b5782ed826a43bea4b879153e036f0e9a8a32d4a9cc48955fe",
+      "stateIndex": 4
+    }
+  ],
+  "results": [
+    {
+      "name": "diagnose",
+      "action": {
+        "type": "request_ai",
+        "stage": "diagnose",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"purpose\":\"돕는다\",\"audience\":\"독자\",\"sectionModes\":[\"explain\"],\"preserveVoice\":\"합니다체\",\"strategy\":\"정리\",\"requirementChanges\":[{\"kind\":\" tone \",\"op\":\"set\",\"value\":\"차분\",\"quote\":\" 근거 \"}]}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "diagnose",
+        "output": {
+          "purpose": "돕는다",
+          "audience": "독자",
+          "sectionModes": ["explain"],
+          "preserveVoice": "합니다체",
+          "strategy": "정리",
+          "requirementChanges": [
+            {
+              "kind": "tone",
+              "op": "set",
+              "value": "차분",
+              "quote": "근거"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "topic",
+      "action": {
+        "type": "request_ai",
+        "stage": "topic",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"problem\":\"문제 {괄호}\",\"scope\":\"범위\",\"extra\":\"보존\"}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "topic",
+        "output": {
+          "problem": "문제 {괄호}",
+          "scope": "범위",
+          "extra": "보존"
+        }
+      }
+    },
+    {
+      "name": "audience",
+      "action": {
+        "type": "request_ai",
+        "stage": "audience",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"reader\":\"독자\",\"intent\":\"해보기\",\"scene\":null,\"readerTask\":\"  \"}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "audience",
+        "output": {
+          "reader": "독자",
+          "intent": "해보기"
+        }
+      }
+    },
+    {
+      "name": "value",
+      "action": {
+        "type": "request_ai",
+        "stage": "value",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"outcome\":\"결과\",\"preserve\":[],\"promise\":\"\"}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "value",
+        "output": {
+          "outcome": "결과",
+          "preserve": []
+        }
+      }
+    },
+    {
+      "name": "research",
+      "action": {
+        "type": "request_ai",
+        "stage": "research",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"evidence\":[{\"claim\":\"사실\",\"url\":\"사용자 제공 자료\",\"ref\":\"보존\"}],\"uncertainties\":[],\"cases\":[{\"text\":\"사례\",\"origin\":\"mismatch\"}]}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "research",
+        "output": {
+          "evidence": [
+            {
+              "claim": "사실",
+              "url": "사용자 제공 자료",
+              "ref": "보존"
+            }
+          ],
+          "uncertainties": []
+        }
+      }
+    },
+    {
+      "name": "outline",
+      "action": {
+        "type": "request_ai",
+        "stage": "outline",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"rationale\":\"순서\",\"title\":null,\"sections\":[{\"title\":\"구간\",\"mode\":\"explain\",\"keyPoint\":\"원칙\",\"budget\":\"320\",\"subsections\":[{\"title\":\"하위\",\"keyPoint\":\"\",\"subsections\":[\"오류\"]}]}]}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "outline",
+        "output": {
+          "sections": [
+            {
+              "title": "구간",
+              "mode": "explain",
+              "keyPoint": "원칙",
+              "subsections": [
+                {
+                  "title": "하위"
+                }
+              ],
+              "budget": 320
+            }
+          ],
+          "rationale": "순서"
+        }
+      }
+    },
+    {
+      "name": "draft",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2,
+        "section": {
+          "index": 0,
+          "total": 2,
+          "title": "구간"
+        }
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"text\":\"본문 🧪\",\"changeSummary\":\"요약\"}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "draft",
+        "output": {
+          "text": "본문 🧪",
+          "changeSummary": "요약"
+        },
+        "section": 0
+      }
+    },
+    {
+      "name": "draft",
+      "action": {
+        "type": "request_ai",
+        "stage": "draft",
+        "revision": 2,
+        "mode": "edit"
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"edits\":[{\"find\":\"글자\",\"replace\":\"\"}],\"changeSummary\":\"삭제\"}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "draft",
+        "output": {
+          "edits": [
+            {
+              "find": "글자",
+              "replace": ""
+            }
+          ],
+          "changeSummary": "삭제"
+        },
+        "mode": "edit"
+      }
+    },
+    {
+      "name": "review",
+      "action": {
+        "type": "request_ai",
+        "stage": "review",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"findings\":[],\"preservationCheck\":\"보존\",\"checks\":[{\"id\":\"R\",\"pass\":false,\"note\":null}],\"verdict\":\"revise\",\"unmetCriteria\":[\"요구 미충족\"]}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "complete",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "stage": "review",
+        "output": {
+          "findings": [],
+          "preservationCheck": "보존",
+          "checks": [
+            {
+              "id": "R",
+              "pass": false
+            }
+          ],
+          "verdict": "revise",
+          "unmetCriteria": ["요구 미충족"]
+        }
+      }
+    },
+    {
+      "name": "route",
+      "action": {
+        "type": "request_route",
+        "revision": 2
+      },
+      "text": "앞 문장\n{\"incompatible\":true}\n```json\n{\"target\":\"draft\",\"reason\":\"정리\",\"level\":\"copy\",\"priorities\":[\"문장\"],\"acceptance\":{\"criteria\":false},\"requirementChanges\":[{\"kind\":\"length\",\"op\":\"lift\",\"quote\":\"분량 제한 없음\"}]}\n```\n{\"invalid\":true}",
+      "actor": "adapter",
+      "type": "route",
+      "body": {
+        "expectedVersion": 7,
+        "revision": 2,
+        "target": "draft",
+        "reason": "정리",
+        "brief": {
+          "level": "copy",
+          "priorities": ["문장"],
+          "acceptance": {},
+          "requirementChanges": [
+            {
+              "kind": "length",
+              "op": "lift",
+              "quote": "분량 제한 없음"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

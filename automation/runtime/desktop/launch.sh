@@ -2,20 +2,16 @@
 # GNOME 실행기: `mise run editorial:start`로 서비스를 준비(이전 코드면 재시작)하고 글쓰기 화면을 연다.
 set -euo pipefail
 root="$(cd -- "$(dirname -- "$(readlink -f -- "$0")")/../../.." && pwd)"
-url="http://localhost:3230/write/"
-health="http://127.0.0.1:3230/healthz"
-log_dir="$root/.local/ai-runtime"
+listen="${AIN_LISTEN:-127.0.0.1:3230}"
+url="http://$listen/write/"
+log_dir="${AIN_GO_CONTROL_DIR:-$root/.local/editorial-go}"
 mise="$(command -v mise || echo "$HOME/.local/bin/mise")"
-up() { curl -fsS -m 1 "$health" >/dev/null 2>&1; }
 
 cd "$root"
+umask 077
 mkdir -p "$log_dir"
-paseo_url="http://$(node -e 'import("../paseo/endpoint.mjs").then((m) => console.log(m.launcherListen()))')/"
-if ! curl -fsS -m 1 "$paseo_url" >/dev/null 2>&1; then
-  "$mise" exec -- paseo daemon start >>"$log_dir/desktop.log" 2>&1 || true
-fi
 notify-send -i "$root/automation/runtime/desktop/ain.svg" "AIN" "글쓰기 서비스를 준비합니다" 2>/dev/null || true
-if "$mise" run editorial:start >>"$log_dir/desktop.log" 2>&1 < /dev/null && up; then
+if "$mise" run editorial:start >>"$log_dir/desktop.log" 2>&1 < /dev/null; then
   exec xdg-open "$url"
 fi
 notify-send -u critical "AIN" "시작 실패: $log_dir/desktop.log 확인" 2>/dev/null || true

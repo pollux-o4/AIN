@@ -1,5 +1,5 @@
-import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { currentModel } from "../contracts/ai-models.mjs";
 import { FIGURE_LIMITS, FIGURE_STAGES } from "../contracts/figure.mjs";
@@ -20,6 +20,7 @@ import {
   withoutFigureBodies,
   writeFigureInputs,
 } from "./figure-files.mjs";
+import { isFinishedJob, JobStore, jobIdFor } from "./job-store.mjs";
 import { SessionReaper, sessionLabels } from "./lifecycle.mjs";
 import { buildPrompt, formatRetryPrompt } from "./prompts/index.mjs";
 import { resultEvent } from "./results.mjs";
@@ -34,25 +35,16 @@ const MAX_JOB_MS = FIGURE_LIMITS.generateMs;
 const CONTRACT_ERROR = "AI output did not satisfy the editorial contract; inspect Paseo session";
 const PROVIDER_CACHE_MS = 60000;
 
-const TERMINAL = ["completed", "failed"];
-const summary = ({ id, agentId, status, deadline, deadlineStopAttempted }) => ({
-  id,
-  agentId,
-  status,
-  deadline,
-  deadlineStopAttempted,
-});
-
 export class Jobs {
   #sessions;
   #reaper;
-  // 끝나지 않은 작업 요약 색인 · 처음 한 번만 디스크를 훑고 이후 save가 갱신(감시 주기마다 전체 기록 재읽기 금지)
-  #active = null;
+  #store;
   #expiring = false;
   // shortcut: 단일 브리지 프로세스의 작업 잠금 사용, 다중 인스턴스 운영 전 공유 저장소·원자적 잠금 전환
   constructor({ client, root, workRoot, allowedProviders = null, reuseProviders }) {
     Object.assign(this, { client, root, workRoot, allowedProviders });
     this.locks = new Map();
+    this.#store = new JobStore(root);
     const workers = new Workers(root);
     this.#sessions = new RoleSessions({
       client,
@@ -70,31 +62,7 @@ export class Jobs {
   }
   // 진행 중 작업의 세션은 정리 대상에서 뺀다
   async #activeAgentIds() {
-    return [...(await this.#activeIndex()).values()].flatMap((job) =>
-      job.agentId ? [job.agentId] : [],
-    );
-  }
-  async #activeIndex() {
-    if (!this.#active) {
-      const found = new Map();
-      for await (const job of this.#jobs())
-        if (!TERMINAL.includes(job.status)) found.set(job.id, job);
-      this.#active ??= found;
-    }
-    return this.#active;
-  }
-  // 기록마다 글 상태·SVG 전체를 담아 크므로 한 장씩 읽고 훑기에 필요한 칸만 남긴다(전체 동시 읽기는 메모리 고갈)
-  async *#jobs() {
-    let files;
-    try {
-      files = await readdir(this.root);
-    } catch (e) {
-      if (e.code === "ENOENT") return;
-      throw e;
-    }
-    for (const file of files.filter((x) => /^[a-f0-9]{64}\.json$/.test(x))) {
-      yield summary(await this.read(file.slice(0, -5)));
-    }
+    return (await this.#store.activeJobs()).flatMap((job) => (job.agentId ? [job.agentId] : []));
   }
   /** 쓰지 않는 세션 정리 · all: 대기 담당까지 모두 내려놓음(런타임 종료 시) · ADR-0015 */
   sweepSessions(options) {
@@ -110,21 +78,14 @@ export class Jobs {
       if (this.locks.get(id) === task) this.locks.delete(id);
     }
   }
-  async save(job) {
-    const temp = join(this.root, `${job.id}.tmp`);
-    await writeFile(temp, JSON.stringify(job), { mode: 0o600 });
-    await rename(temp, join(this.root, `${job.id}.json`));
-    if (this.#active)
-      if (TERMINAL.includes(job.status)) this.#active.delete(job.id);
-      else this.#active.set(job.id, summary(job));
-    return job;
+  save(job) {
+    return this.#store.save(job);
   }
-  async read(id) {
-    if (!/^[a-f0-9]{64}$/.test(id)) throw new Error("Invalid job id");
-    return JSON.parse(await readFile(join(this.root, `${id}.json`), "utf8"));
+  read(id) {
+    return this.#store.read(id);
   }
   async find(body) {
-    const id = createHash("sha256").update(JSON.stringify(body)).digest("hex");
+    const id = jobIdFor(body);
     try {
       return await this.read(id);
     } catch (error) {
@@ -140,7 +101,7 @@ export class Jobs {
     }
     return this.locked(id, async () => {
       const job = await this.read(id);
-      if (["completed", "failed"].includes(job.status)) return job;
+      if (isFinishedJob(job.status)) return job;
       await this.cancelAndConfirm(job);
       job.status = "failed";
       job.failureKind = "cancelled";
@@ -278,7 +239,7 @@ export class Jobs {
     if (typeof ai.model !== "string" || !ai.model.trim())
       throw new Error("Explicit model selection required");
     // 상태·AI 선택이 같으면 같은 작업 회수; HTTP 재전송으로 새 에이전트 생성 방지.
-    const id = createHash("sha256").update(JSON.stringify({ state, ai })).digest("hex");
+    const id = jobIdFor({ state, ai });
     if (action.parts) return this.#createBatch(id, state, ai, action);
     return this.#createOne(id, state, ai, action);
   }
@@ -288,9 +249,7 @@ export class Jobs {
     // 자식은 그림별 잠금이므로 동시에 띄운다 · 에이전트 기동(수십 초)을 그림 수만큼 기다리지 않음
     const children = await Promise.all(
       partActions(action).map((part) => {
-        const childId = createHash("sha256")
-          .update(JSON.stringify({ state, ai, figureId: part.figureId }))
-          .digest("hex");
+        const childId = jobIdFor({ state, ai, figureId: part.figureId });
         return this.#createOne(childId, state, ai, part, id);
       }),
     );
@@ -438,7 +397,7 @@ export class Jobs {
     const children = await Promise.all(head.parts.map((child) => this.poll(child)));
     return this.locked(head.id, async () => {
       const job = await this.read(head.id);
-      if (["completed", "failed"].includes(job.status)) return job;
+      if (isFinishedJob(job.status)) return job;
       const verdict = judgeBatch(children);
       if (verdict.kind === "wait") return job;
       if (verdict.kind === "settle") {
@@ -490,7 +449,7 @@ export class Jobs {
     }
   }
   async #expireActive() {
-    for (const job of [...(await this.#activeIndex()).values()]) {
+    for (const job of await this.#store.activeJobs()) {
       if (
         job.deadline &&
         Date.now() > job.deadline &&
@@ -505,7 +464,7 @@ export class Jobs {
     if (head.kind === "batch") return this.#pollBatch(head);
     return this.locked(id, async () => {
       const job = await this.read(id);
-      if (["completed", "failed"].includes(job.status)) return job;
+      if (isFinishedJob(job.status)) return job;
       if (!job.agentId) {
         job.status = "needs_attention";
         job.error = "Creation interrupted; verify existing Paseo session before retrying";
@@ -632,7 +591,7 @@ export class Jobs {
         job.status = "needs_attention";
         job.error = "Unknown provider status";
       }
-      if (["completed", "failed"].includes(job.status) && agent.timeline) {
+      if (isFinishedJob(job.status) && agent.timeline) {
         try {
           job.steps = await finalSteps(agent, job.stepsAfter ?? job.workerBoundary?.seq);
         } catch {
@@ -640,7 +599,7 @@ export class Jobs {
         }
       }
       if (["failed", "needs_attention"].includes(job.status)) await this.#sessions.drop(job);
-      if (["completed", "failed"].includes(job.status)) await this.#sessions.release(job, agent);
+      if (isFinishedJob(job.status)) await this.#sessions.release(job, agent);
       return this.save(job);
     });
   }
