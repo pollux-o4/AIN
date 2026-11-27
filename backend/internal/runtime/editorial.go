@@ -49,6 +49,7 @@ func Editorial(store contract.Store, paseo contract.Paseo, turns contract.TurnBu
 	views := editorial.Queries{Store: store, Rules: rules}
 	httpapi.ReadRoutes(routes, views)
 	httpapi.HistoryRoute(routes, views)
+	ActivityRoutes(routes, store, paseo, rules)
 	httpapi.CreateRoute(routes, editorial.Creator{Store: store, Rules: rules, Scheduler: scheduler}, views)
 	commands := editorial.Commands{Store: store, Rules: rules, Scheduler: scheduler}
 	httpapi.ActionRoute(routes, commands, views)
