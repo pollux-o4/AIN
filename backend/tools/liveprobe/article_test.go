@@ -16,6 +16,7 @@ import (
 type articleFixture struct {
 	wire
 	mu       sync.Mutex
+	drafts   int
 	byStage  map[string]string
 	agents   map[string]articleFixtureAgent
 	archives int
@@ -32,6 +33,12 @@ func (f *articleFixture) Create(_ context.Context, id string, spec contract.Sess
 	header, _, _ := strings.Cut(spec.Prompt, "\n")
 	stage := strings.TrimSuffix(strings.TrimPrefix(header, "[과업 ID: "), "]")
 	result := f.byStage[stage]
+	if stage == "draft" {
+		f.drafts++
+		if f.drafts > 1 {
+			result = `{"edits":[{"find":"実体験の本文。","replace":"実体験の本文を読みやすくしました。"}],"changeSummary":"문장 표현을 다듬음"}`
+		}
+	}
 	if result == "" {
 		return contract.RemoteRef{}, errors.New("unsupported fixture stage " + stage)
 	}
@@ -70,6 +77,15 @@ func (f *articleFixture) Archive(_ context.Context, ref contract.RemoteRef) erro
 }
 
 func TestArticleUsesGoAPIWithEightStageFixture(t *testing.T) {
+	testArticle(t, "", 0, 8)
+}
+
+func TestArticleUsesGoAPIForAgentFeedback(t *testing.T) {
+	testArticle(t, "문장의 표현을 다듬어 주세요.", 2, 11)
+}
+
+func testArticle(t *testing.T, feedback string, revision int64, calls int) {
+	t.Helper()
 	data, err := os.ReadFile("../../../tests/migration/reference/flow-001.json")
 	if err != nil {
 		t.Fatal(err)
@@ -91,12 +107,13 @@ func TestArticleUsesGoAPIWithEightStageFixture(t *testing.T) {
 			fixture.byStage[e.Stage] = string(e.Output)
 		}
 	}
+	fixture.byStage["route"] = `{"target":"draft","reason":"문장 표현 수정","level":"line"}`
 	root := t.TempDir()
 	if err := os.Chmod(root, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	request := model{Provider: "fixture", Model: "synthetic"}
-	cfg := config{Root: root, Standard: request, High: request,
+	cfg := config{Root: root, Standard: request, High: request, Feedback: feedback,
 		Input: json.RawMessage(`{"requestId":"fixture-request","idea":"접속 장애에서 배운 점","source":"합성 원문"}`)}
 	report := &probeReport{}
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
@@ -104,7 +121,7 @@ func TestArticleUsesGoAPIWithEightStageFixture(t *testing.T) {
 	if err := article(ctx, fixture, cfg, "", report); err != nil {
 		t.Fatalf("%v, report: %+v", err, report)
 	}
-	if report.ArticleCalls != 8 || report.Created != 8 || report.Reused != 0 || len(report.CleanupIssues) != 0 || fixture.archives != 8 {
-		t.Fatalf("eight-stage article or cleanup did not complete: report=%+v archived=%d", report, fixture.archives)
+	if report.FeedbackRevision != revision || report.ArticleCalls != calls || len(report.CleanupIssues) != 0 || fixture.archives != report.Created {
+		t.Fatalf("article, revision or cleanup did not complete: report=%+v archived=%d", report, fixture.archives)
 	}
 }
