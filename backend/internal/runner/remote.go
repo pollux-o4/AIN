@@ -8,14 +8,14 @@ import (
 	"github.com/pollux-o4/AIN/backend/internal/contract"
 )
 
-func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent) (contract.Snapshot, error) {
-	current, err := r.confirm(ctx, intent)
+func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent, messageID string) (contract.Snapshot, error) {
+	current, err := r.confirm(ctx, intent, messageID)
 	if err != nil || terminal(current.Status) {
 		return current, err
 	}
 	cancelled := false
 	if expired(r.cfg.Now(), intent.Deadline) {
-		current, err = r.cancelRemote(ctx, intent)
+		current, err = r.cancelRemote(ctx, intent, messageID)
 		if err != nil || terminal(current.Status) {
 			return current, err
 		}
@@ -25,7 +25,7 @@ func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent) (co
 	watchCtx, stop := context.WithCancel(ctx)
 	finished := make(chan struct{})
 	pulse := make(chan struct{}, 1)
-	ref := current.Ref
+	ref := queryRef(intent, messageID)
 	go func() {
 		defer close(finished)
 		r.paseo.Watch(watchCtx, ref, func(contract.Snapshot) error {
@@ -53,11 +53,11 @@ func (r *Runner) awaitTerminal(ctx context.Context, intent *contract.Intent) (co
 		case <-pulse:
 		}
 		if !cancelled && expired(r.cfg.Now(), intent.Deadline) {
-			current, err = r.cancelRemote(ctx, intent)
+			current, err = r.cancelRemote(ctx, intent, messageID)
 			cancelled = true
 			polls = 0
 		} else {
-			current, err = r.confirm(ctx, intent)
+			current, err = r.confirm(ctx, intent, messageID)
 		}
 		if err != nil || terminal(current.Status) {
 			return current, err
@@ -87,12 +87,9 @@ func (r *Runner) recheckTimer(deadline time.Time, cancelled bool) <-chan time.Ti
 	return r.cfg.After(delay)
 }
 
-func (r *Runner) confirm(ctx context.Context, intent *contract.Intent) (contract.Snapshot, error) {
-	ref := intent.Remote
-	if ref.AgentID == "" {
-		ref.AgentID = intent.AgentID
-	}
-	if ref.AgentID == "" {
+func (r *Runner) confirm(ctx context.Context, intent *contract.Intent, messageID string) (contract.Snapshot, error) {
+	ref := queryRef(intent, messageID)
+	if ref.AgentID == "" || messageID == "" {
 		return contract.Snapshot{}, contract.ErrDeliveryUncertain
 	}
 	snapshot, err := r.paseo.Snapshot(ctx, ref)
@@ -105,12 +102,12 @@ func (r *Runner) confirm(ctx context.Context, intent *contract.Intent) (contract
 	observed := snapshot.Ref
 	if observed.AgentID != ref.AgentID ||
 		(ref.Epoch != "" && observed.Epoch != ref.Epoch) ||
-		(ref.TurnID != "" && observed.TurnID != ref.TurnID) ||
+		(observed.TurnID != "" && observed.TurnID != ref.TurnID) ||
 		(ref.After > 0 && observed.After < ref.After) ||
-		(terminal(snapshot.Status) && observed.TurnID == "") {
+		(observed.TurnID == "" && (intent.Remote.TurnID != "" || terminal(snapshot.Status))) {
 		return contract.Snapshot{}, contract.ErrDeliveryUncertain
 	}
-	if observed != intent.Remote {
+	if observed.TurnID != "" && observed != intent.Remote {
 		if err := r.store.Bind(ctx, intent.ID, observed); err != nil {
 			return contract.Snapshot{}, err
 		}
@@ -119,19 +116,28 @@ func (r *Runner) confirm(ctx context.Context, intent *contract.Intent) (contract
 	return snapshot, nil
 }
 
-func (r *Runner) cancelRemote(ctx context.Context, intent *contract.Intent) (contract.Snapshot, error) {
-	if intent.Remote.AgentID == "" {
+func queryRef(intent *contract.Intent, messageID string) contract.RemoteRef {
+	ref := intent.Remote
+	if ref.AgentID == "" {
+		ref.AgentID = intent.AgentID
+	}
+	ref.TurnID = messageID
+	return ref
+}
+
+func (r *Runner) cancelRemote(ctx context.Context, intent *contract.Intent, messageID string) (contract.Snapshot, error) {
+	if intent.Remote.AgentID == "" || intent.Remote.TurnID != messageID {
 		return contract.Snapshot{}, contract.ErrDeliveryUncertain
 	}
 	if err := r.paseo.Cancel(ctx, intent.Remote); err != nil {
 		// Cancellation may have succeeded before the response was lost.
-		snapshot, queryErr := r.confirm(ctx, intent)
+		snapshot, queryErr := r.confirm(ctx, intent, messageID)
 		if queryErr == nil && terminal(snapshot.Status) {
 			return snapshot, nil
 		}
 		return contract.Snapshot{}, errors.Join(contract.ErrDeliveryUncertain, err, queryErr)
 	}
-	return r.confirm(ctx, intent)
+	return r.confirm(ctx, intent, messageID)
 }
 
 func terminal(status string) bool {

@@ -11,28 +11,6 @@ import (
 
 const snapshotPageSize = 100
 
-type timeline struct {
-	AgentID    string  `json:"agentId"`
-	Epoch      string  `json:"epoch"`
-	Projection string  `json:"projection"`
-	Error      *string `json:"error"`
-	Agent      *struct {
-		ID     string `json:"id"`
-		Status string `json:"status"`
-	} `json:"agent"`
-	Window *struct {
-		MaxSeq int64 `json:"maxSeq"`
-	} `json:"window"`
-	Entries []struct {
-		TurnID string `json:"turnId"`
-		Item   struct {
-			Type            string `json:"type"`
-			ClientMessageID string `json:"clientMessageId"`
-			MessageID       string `json:"messageId"`
-		} `json:"item"`
-	} `json:"entries"`
-}
-
 func (c *Client) Snapshot(ctx context.Context, ref contract.RemoteRef) (contract.Snapshot, error) {
 	s, err := c.open(ctx, readPermissions)
 	if err != nil {
@@ -65,15 +43,7 @@ func (s *socket) snapshot(ctx context.Context, ref contract.RemoteRef) (contract
 		page.Window == nil || page.Window.MaxSeq < 0 || page.Projection != "projected" {
 		return contract.Snapshot{}, errProtocol
 	}
-	current := contract.RemoteRef{AgentID: ref.AgentID, Epoch: page.Epoch, After: page.Window.MaxSeq}
-	for _, entry := range page.Entries {
-		if ref.TurnID != "" && entry.Item.Type == "user_message" && entry.TurnID != "" &&
-			(entry.Item.ClientMessageID == ref.TurnID || entry.Item.MessageID == ref.TurnID) {
-			current.TurnID = ref.TurnID
-			break
-		}
-	}
-	return contract.Snapshot{Ref: current, Status: page.Agent.Status, Body: payload}, nil
+	return page.project(ref, payload)
 }
 
 func (s *socket) checkAbsent(ctx context.Context, agentID string) error {

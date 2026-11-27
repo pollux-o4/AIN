@@ -11,8 +11,9 @@ import (
 )
 
 type reservedAction struct {
-	Action  contract.Action
-	Version int64
+	Action    contract.Action
+	Version   int64
+	MessageID string
 }
 
 func (r *Runner) process(ctx context.Context, id string, intent *contract.Intent, candidate bool) (bool, error) {
@@ -37,7 +38,7 @@ func (r *Runner) process(ctx context.Context, id string, intent *contract.Intent
 	if planned.Version != run.Version {
 		return false, contract.ErrConflict
 	}
-	return r.finish(ctx, run, *intent, planned.Action)
+	return r.finish(ctx, run, *intent, planned)
 }
 
 func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
@@ -49,17 +50,22 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if spec.Prompt == "" {
+		return false, errors.New("Paseo initial prompt is required for turn correlation")
+	}
 	reserved, err := r.cfg.Reserve(run, action)
 	if err != nil {
 		return false, err
 	}
-	value, err := json.Marshal(reservedAction{Action: action, Version: reserved.Version})
+	id := contract.IntentID(run, action)
+	agent := agentID(id)
+	planned := reservedAction{Action: action, Version: reserved.Version, MessageID: agent}
+	value, err := json.Marshal(planned)
 	if err != nil {
 		return false, err
 	}
-	id := contract.IntentID(run, action)
 	intent := contract.Intent{
-		ID: id, RunID: run.ID, AgentID: agentID(id), Action: value, Deadline: r.cfg.Now().Add(r.cfg.TurnLimit),
+		ID: id, RunID: run.ID, AgentID: agent, Action: value, Deadline: r.cfg.Now().Add(r.cfg.TurnLimit),
 	}
 	if err := r.reserveTurn(ctx, run.Version, reserved, intent); err != nil {
 		if errors.Is(err, errAtCapacity) {
@@ -73,24 +79,26 @@ func (r *Runner) start(ctx context.Context, run contract.Run) (bool, error) {
 	ref, err := r.paseo.Create(ctx, intent.AgentID, spec)
 	if err != nil {
 		// A transport error after persistence can be a lost response.
-		return r.finish(ctx, reserved, intent, action)
+		return r.finish(ctx, reserved, intent, planned)
 	}
-	if ref.AgentID != intent.AgentID {
+	if ref.AgentID != intent.AgentID || ref.TurnID != planned.MessageID {
 		return false, contract.ErrDeliveryUncertain
 	}
-	if err := r.store.Bind(ctx, intent.ID, ref); err != nil {
+	// Creation acknowledges the agent, while a timeline snapshot proves
+	// that this exact submitted prompt owns the observed turn.
+	if err := r.store.Bind(ctx, intent.ID, contract.RemoteRef{AgentID: ref.AgentID}); err != nil {
 		return false, err
 	}
-	intent.Remote = ref
-	return r.finish(ctx, reserved, intent, action)
+	intent.Remote.AgentID = ref.AgentID
+	return r.finish(ctx, reserved, intent, planned)
 }
 
-func (r *Runner) finish(ctx context.Context, run contract.Run, intent contract.Intent, action contract.Action) (bool, error) {
-	snapshot, err := r.awaitTerminal(ctx, &intent)
+func (r *Runner) finish(ctx context.Context, run contract.Run, intent contract.Intent, planned reservedAction) (bool, error) {
+	snapshot, err := r.awaitTerminal(ctx, &intent, planned.MessageID)
 	if err != nil {
 		return false, err
 	}
-	event, err := r.terminalEvent(intent.ID, action, snapshot)
+	event, err := r.terminalEvent(intent.ID, planned.Action, snapshot)
 	if err != nil {
 		return false, err
 	}
@@ -118,6 +126,12 @@ func decodeAction(intent contract.Intent) (reservedAction, error) {
 	var reserved reservedAction
 	if err := json.Unmarshal(intent.Action, &reserved); err != nil || reserved.Action.Kind == "" {
 		return reservedAction{}, errors.New("invalid reserved editorial action")
+	}
+	if reserved.MessageID == "" {
+		reserved.MessageID = intent.Remote.TurnID
+		if reserved.MessageID == "" {
+			reserved.MessageID = intent.AgentID
+		}
 	}
 	return reserved, nil
 }

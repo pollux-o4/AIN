@@ -59,7 +59,7 @@ func TestFlow001RecoveryDoesNotReplayUncertainDelivery(t *testing.T) {
 			transport := newTestPaseo()
 			if mismatched {
 				transport.set(contract.Snapshot{
-					Status: "completed", Ref: contract.RemoteRef{AgentID: intent.AgentID, TurnID: "turn", Epoch: "changed", After: 18},
+					Status: "completed", Ref: contract.RemoteRef{AgentID: intent.AgentID, TurnID: intent.AgentID, Epoch: "changed", After: 18},
 				})
 			}
 			issues := make(chan error, 4)
@@ -76,7 +76,7 @@ func TestFlow001RecoveryDoesNotReplayUncertainDelivery(t *testing.T) {
 			}
 
 			transport.set(contract.Snapshot{
-				Status: "completed", Ref: contract.RemoteRef{AgentID: intent.AgentID, TurnID: "turn", Epoch: "epoch", After: 18},
+				Status: "completed", Ref: contract.RemoteRef{AgentID: intent.AgentID, TurnID: intent.AgentID, Epoch: "epoch", After: 18},
 				Body: json.RawMessage(`"recovered"`),
 			})
 			if err := r.Recover(t.Context()); err != nil {
@@ -199,7 +199,7 @@ func TestFlow001UncertainIntentRetainsDurableCapacity(t *testing.T) {
 	}
 }
 
-func newTestRunner(t *testing.T, store *testStore, transport *testPaseo, tune func(*Config)) *Runner {
+func newTestRunner(t *testing.T, store *testStore, transport contract.Paseo, tune func(*Config)) *Runner {
 	t.Helper()
 	clock := time.Date(2026, 11, 27, 0, 0, 0, 0, time.UTC)
 	cfg := Config{
@@ -267,13 +267,13 @@ func reserveFixture(t *testing.T, store *testStore, bound bool) contract.Intent 
 	id := contract.IntentID(initial, action)
 	updated := initial
 	updated.Version++
-	encoded, err := json.Marshal(reservedAction{Action: action, Version: updated.Version})
+	encoded, err := json.Marshal(reservedAction{Action: action, Version: updated.Version, MessageID: agentID(id)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	intent := contract.Intent{ID: id, RunID: initial.ID, AgentID: agentID(id), Action: encoded}
 	if bound {
-		intent.Remote = contract.RemoteRef{AgentID: intent.AgentID, TurnID: "turn", Epoch: "epoch", After: 10}
+		intent.Remote = contract.RemoteRef{AgentID: intent.AgentID, TurnID: intent.AgentID, Epoch: "epoch", After: 10}
 	}
 	if err := store.Reserve(t.Context(), initial.Version, updated, intent); err != nil {
 		t.Fatal(err)
@@ -299,7 +299,7 @@ func (testRules) Reduce(run contract.Run, event contract.Event) (contract.Run, e
 type testTurns struct{}
 
 func (testTurns) BuildTurn(contract.Run, contract.Action) (contract.SessionSpec, error) {
-	return contract.SessionSpec{Prompt: "synthetic"}, nil
+	return contract.SessionSpec{Provider: "codex", WorkDir: "/synthetic", Prompt: "synthetic"}, nil
 }
 
 func (testTurns) ValidateResult(_ contract.Action, snapshot contract.Snapshot) (contract.Event, error) {
@@ -338,7 +338,7 @@ func (p *testPaseo) finish(status string) {
 
 func (p *testPaseo) Create(_ context.Context, id string, _ contract.SessionSpec) (contract.RemoteRef, error) {
 	p.creates.Add(1)
-	ref := contract.RemoteRef{AgentID: id, TurnID: "turn", Epoch: "epoch", After: 10}
+	ref := contract.RemoteRef{AgentID: id, TurnID: id, Epoch: "epoch", After: 10}
 	p.set(contract.Snapshot{Ref: ref, Status: "running"})
 	if p.createHook != nil {
 		return contract.RemoteRef{}, p.createHook(id)

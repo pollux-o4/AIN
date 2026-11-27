@@ -57,12 +57,12 @@ func (r *Runner) Pause(ctx context.Context, id string) error {
 	if planned.Version != run.Version {
 		return contract.ErrConflict
 	}
-	snapshot, err := r.confirm(ctx, intent)
+	snapshot, err := r.confirm(ctx, intent, planned.MessageID)
 	if err != nil {
 		return err
 	}
 	if !terminal(snapshot.Status) {
-		snapshot, err = r.cancelRemote(ctx, intent)
+		snapshot, err = r.cancelRemote(ctx, intent, planned.MessageID)
 		if err != nil {
 			return err
 		}

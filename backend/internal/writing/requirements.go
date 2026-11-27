@@ -25,7 +25,11 @@ func formChanges(direction object) []any {
 
 func coerceInt(value any) int64 {
 	if text, ok := value.(string); ok {
-		value, _ = strconv.ParseFloat(strings.TrimSpace(text), 64)
+		parsed, err := strconv.ParseFloat(strings.TrimSpace(text), 64)
+		if err != nil {
+			return -1
+		}
+		value = parsed
 	}
 	return intValue(value)
 }
@@ -190,7 +194,7 @@ func requiredLength(state object) object {
 }
 
 var markdownLink = regexp.MustCompile(`\]\([^)]*\)`)
-var headings = regexp.MustCompile(`(?m)^##[ \t]+\S`)
+var headings = regexp.MustCompile(`(?m)^##\s`)
 
 func readerLength(value string) int64 {
 	return int64(utf8.RuneCountInString(markdownLink.ReplaceAllString(value, "]")))
@@ -228,7 +232,6 @@ func unmetRequirements(state object) []any {
 }
 
 func sectionCounts(draft string) []string {
-	var counts []string
 	starts := []int{0}
 	for _, match := range headings.FindAllStringIndex(draft, -1) {
 		if match[0] != 0 {
@@ -236,8 +239,24 @@ func sectionCounts(draft string) []string {
 		}
 	}
 	ends := append(append([]int{}, starts[1:]...), len(draft))
-	for index, start := range starts {
-		part := draft[start:ends[index]]
+	parts := make([]string, len(starts))
+	for i := range starts {
+		parts[i] = draft[starts[i]:ends[i]]
+	}
+	firstSection := 1
+	if strings.HasPrefix(draft, "## ") {
+		firstSection = 0
+	}
+	for i := firstSection + 1; i < len(parts); i++ {
+		first, _, _ := strings.Cut(parts[i], "\n")
+		if strings.TrimSpace(first) == "## 한눈에 정리" {
+			parts[i-1] = strings.Join(parts[i-1:], "")
+			parts = parts[:i]
+			break
+		}
+	}
+	counts := make([]string, 0, len(parts))
+	for _, part := range parts {
 		if part == "" {
 			continue
 		}
