@@ -816,6 +816,17 @@ test("ADR-0006 agent edits within delegated rounds; final sign-off is human only
       ["agent", "편집장 수정 요청"],
     ],
   );
+  // 사용자가 맡긴 요청은 한도에 세지 않고 위임으로 기록 · 사람만 하는 동작은 위임해도 거부
+  await act("d-fb", "feedback", "agent", { feedback: "사용자 의뢰", delegated: true });
+  const delegated = s.store.get(id).events.findLast((e) => e.kind === "feedback");
+  assert.deepEqual([delegated.by, delegated.delegated], ["agent", true]);
+  await finish(s, id);
+  await assert.rejects(() => act("d-sat", "satisfy", "agent", { delegated: true }), {
+    status: 403,
+  });
+  await assert.rejects(() => act("a-fb-5", "feedback", "agent", { feedback: "더" }), {
+    status: 409,
+  });
   await act("u-fb", "feedback", "user", { feedback: "사람 의견" });
   await s.advance(id);
   assert.equal(s.get(id).status, "awaiting_brief");

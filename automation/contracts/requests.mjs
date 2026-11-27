@@ -46,6 +46,8 @@ const actionFieldsSchema = z.looseObject({
   directions: z.unknown().optional(),
   look: z.unknown().optional(),
   target: z.unknown().optional(),
+  // 사용자가 에이전트에게 맡긴 요청 표시 · 에이전트 수정 지시 한도에 세지 않는다 · ADR-0006
+  delegated: z.literal(true).optional(),
 });
 // These checks run separately to preserve duplicate-operation and error precedence.
 export const actionIdentitySchema = actionFieldsSchema.pick({ operationId: true, type: true });

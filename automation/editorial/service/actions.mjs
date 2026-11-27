@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { actionAllowed, actionSpec, countsAsRound } from "../../contracts/actions.mjs";
+import { actionAllowed, actionSpec, agentRound } from "../../contracts/actions.mjs";
 import {
   FIGURE_LIMITS,
   figureDirectionsSchema,
@@ -46,6 +46,7 @@ const FIGURE_ACTIONS = [
   "discard_figures",
 ];
 const FIGURE_REVISIONS = ["revise_design", "revise_figures"];
+// 사람 확인 뒤 에이전트가 스스로 보낸 지시 수 · 위임 요청은 세지도 초기화하지도 않는다
 function agentFeedbackRounds(events = []) {
   let rounds = 0;
   for (const event of events.toReversed()) {
@@ -63,7 +64,7 @@ function agentFeedbackRounds(events = []) {
         break;
       continue;
     }
-    if (countsAsRound(event.kind)) rounds++;
+    if (agentRound(event.kind, event)) rounds++;
   }
   return rounds;
 }
@@ -85,6 +86,7 @@ export async function runAction(service, id, input, actor = "user") {
     look,
     target,
     notes,
+    delegated: requested,
   } = input;
   if (!actionIdentitySchema.safeParse(input).success) fail("지원하지 않는 요청입니다.");
   const changed = await service.locked(id, async () => {
@@ -104,6 +106,7 @@ export async function runAction(service, id, input, actor = "user") {
       look,
       target,
       notes,
+      requested,
     });
     if (Object.hasOwn(run.operations ?? {}, operationId)) {
       if (run.operations[operationId] !== signature)
@@ -181,9 +184,10 @@ export async function runAction(service, id, input, actor = "user") {
       fail("시각자료 위치 지시를 확인해 주세요.");
     if (!actionAllowed(type, actor))
       fail(`${actionSpec(type)?.summary}은 사람만 할 수 있습니다. 화면에서 확인해 주세요.`, 403);
+    // 사용자가 맡긴 요청인지는 에이전트가 보낸 경우에만 의미가 있다
+    const delegated = actor === "agent" && requested === true;
     if (
-      actor === "agent" &&
-      countsAsRound(type) &&
+      agentRound(type, { by: actor, delegated }) &&
       agentFeedbackRounds(run.events) >= EDITORIAL_LIMITS.agentFeedbackRounds
     )
       fail(
@@ -333,6 +337,7 @@ export async function runAction(service, id, input, actor = "user") {
     };
     recordEvent(run, service.now(), type, labels[type], {
       by: actor,
+      ...(delegated ? { delegated: true } : {}),
       ...(actionSpec(type)?.text ? { reason: feedback.trim() } : {}),
       ...(figures === undefined ? {} : { figures }),
     });

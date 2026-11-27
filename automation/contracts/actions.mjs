@@ -49,4 +49,8 @@ export const ACTION_TYPES = /** @type {any} */ (Object.keys(ACTIONS));
 export const actionAllowed = (type, actor) =>
   actor !== "agent" || actionSpec(type)?.actor === "agent";
 /** @param {string} type */
-export const countsAsRound = (type) => Boolean(actionSpec(type)?.round);
+const countsAsRound = (type) => Boolean(actionSpec(type)?.round);
+// 에이전트 수정 지시 한도는 에이전트가 스스로 판단한 지시(편집장 자동 수정)에만 셈 · 사용자가 맡긴 요청(delegated)은 사용자 지시로 본다 · ADR-0006
+/** @param {string} type @param {{ by?: string, delegated?: boolean }} who */
+export const agentRound = (type, { by, delegated }) =>
+  by === "agent" && !delegated && countsAsRound(type);
