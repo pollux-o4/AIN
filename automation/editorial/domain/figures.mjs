@@ -8,6 +8,7 @@ import {
   FIGURE_PASSES,
   FIGURE_REVISE_TARGETS,
   figureOutputSchemas,
+  revisionNotes,
   revisionReady,
 } from "../../contracts/figure.mjs";
 import { bindConsistency, consistencyFor } from "./figure-consistency.mjs";
@@ -408,6 +409,25 @@ function recompose(figure, targets, { feedback, look } = {}) {
     ...(all ? {} : { recompose: targets }),
   };
 }
+// 국소 수정: 직전 그림을 출발점으로 그림마다 남긴 지적만 고친다 · 고칠 그림 전부를 한 층에서 동시에 그린다 · ADR-0026
+function fixFigures(figure, notes) {
+  const fixes = (c) => c.fixes ?? 0;
+  requireThat(
+    figure.candidates.every((c) => !notes.has(c.id) || fixes(c) < FIGURE_LIMITS.fixes),
+    "Figure fix exceeds the fix limit",
+  );
+  const ids = ordered([...notes.keys()], figure.selected);
+  const prepared = new Map(figure.items.map((item) => [item.id, item]));
+  return {
+    ...figure,
+    phase: "generate",
+    candidates: figure.candidates.map((c) =>
+      notes.has(c.id) ? { ...c, fix: notes.get(c.id), fixes: fixes(c) + 1 } : c,
+    ),
+    current: { ids, pass: FIGURE_FIX_PASS },
+    passDrafts: Object.fromEntries(ids.map((id) => [id, prepared.get(id)])),
+  };
+}
 // 사람이 후보마다 덧붙인 그림 방향 · 고른 후보에만 남기고 빈 값은 방향 없음 · ADR-0023
 function withDirections(candidates, selected, directions = {}) {
   return candidates.map(({ direction: _old, ...candidate }) => {
@@ -547,30 +567,13 @@ export function figureTransition(state, event) {
           subset(event.figures, made),
         "Figure revision requires feedback on prepared figures",
       );
-      const fixing = event.target === FIGURE_FIX_PASS;
-      const fixes = (id) => figure.candidates.find((c) => c.id === id)?.fixes ?? 0;
-      requireThat(
-        !fixing || (event.figures.length === 1 && fixes(event.figures[0]) < FIGURE_LIMITS.fixes),
-        "Figure fix takes one figure within the fix limit",
-      );
       const items = figure.items.filter((item) => !event.figures.includes(item.id));
-      if (event.target === "compose") {
+      if (event.target === FIGURE_FIX_PASS) {
+        state.figure = { ...fixFigures(figure, revisionNotes(event)), items };
+      } else {
         state.figure = {
           ...recompose(figure, ordered(event.figures, figure.selected), event),
           items,
-        };
-      } else {
-        // 국소 수정: 직전 그림을 출발점으로 지적만 고친다 · ADR-0026
-        const [id] = event.figures;
-        state.figure = {
-          ...figure,
-          items,
-          phase: "generate",
-          candidates: figure.candidates.map((c) =>
-            c.id === id ? { ...c, fix: event.feedback.trim(), fixes: fixes(id) + 1 } : c,
-          ),
-          current: { ids: [id], pass: FIGURE_FIX_PASS },
-          passDrafts: { [id]: figure.items.find((item) => item.id === id) },
         };
       }
       state.status = FIGURE_WAITING;

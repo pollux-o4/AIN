@@ -891,14 +891,32 @@ test("ADR-0026 확인 뒤 되돌림: 구성으로 보내면 그 자리만 다시
       feedback: "선이 어긋났다",
       target: "fix",
     });
-  assert.throws(() =>
-    send(state, "revise_figures", {
-      ...reviewed,
-      figures: ["f1", "f2"],
-      feedback: "x",
-      target: "fix",
-    }),
+  // 여러 장을 그림마다 다른 지적으로 한 층에서 동시에 고친다 · 그림 의견이 공통 의견보다 우선
+  const both = send(state, "revise_figures", {
+    ...reviewed,
+    figures: ["f1", "f2"],
+    feedback: "공통 지적",
+    notes: { f2: "라벨이 잘렸다" },
+    target: "fix",
+  });
+  assert.deepEqual(
+    [nextAction(both).figureIds, partActions(nextAction(both)).map((a) => a.candidates[0].fix)],
+    [
+      ["f1", "f2"],
+      ["공통 지적", "라벨이 잘렸다"],
+    ],
   );
+  assert.deepEqual(
+    result(both, "figure", made(["f1", "f2"]), "fix").figure.items.map((item) => item.id),
+    ["f1", "f2"],
+  );
+  // 의견이 빠진 그림·대상 밖 그림 의견·다시 구성의 그림별 의견은 거부한다
+  for (const bad of [
+    { figures: ["f1", "f2"], notes: { f1: "선" } },
+    { figures: ["f1"], notes: { f1: "선", f2: "라벨" } },
+    { figures: ["f1"], notes: { f1: "선" }, target: "compose" },
+  ])
+    assert.throws(() => send(state, "revise_figures", { ...reviewed, target: "fix", ...bad }));
   let done = state;
   for (let round = 1; round <= FIGURE_LIMITS.fixes; round += 1) {
     const fixing = fix(done);

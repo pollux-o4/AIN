@@ -305,18 +305,41 @@ export const figureRoutesSchema = z
 export const FIGURE_REVISE_TARGETS = /** @type {const} */ (["compose", "fix"]);
 // 사람이 구성·그림에 남기는 의견 · ADR-0026
 export const figureFeedbackSchema = text(FIGURE_LIMITS.feedback);
-// 되돌림 요청이 갖출 것 · 부분 고치기는 의견만(그림체 유지), 다시 구성은 의견이나 새 그림체 중 하나 · ADR-0026·0027
+// 그림마다 남긴 의견 · 의견은 그 그림에만 머문다 · ADR-0026
+export const figureNotesSchema = z
+  .record(z.string().regex(FIGURE_ID), z.string())
+  .refine((map) => Object.keys(map).length <= FIGURE_LIMITS.candidates, "Too many notes");
+const noteText = (/** @type {unknown} */ note) =>
+  typeof note === "string" && note.trim().length > 0 && note.length <= FIGURE_LIMITS.feedback
+    ? note.trim()
+    : null;
+// 대상 그림별 의견 · 그림 의견(notes)이 공통 의견(feedback)보다 우선한다 · 빠진 그림이 있으면 null
+// 요청 검사·상태 전이·화면이 같은 규칙을 쓴다(SSoT)
+export function revisionNotes(
+  /** @type {{figures?: unknown, feedback?: unknown, notes?: unknown}} */ value,
+) {
+  const figures = Array.isArray(value.figures) ? value.figures : [];
+  const notes = /** @type {Record<string, unknown>} */ (
+    value.notes && typeof value.notes === "object" ? value.notes : {}
+  );
+  if (!figures.length || !Object.keys(notes).every((id) => figures.includes(id))) return null;
+  const pairs = figures.map(
+    (id) =>
+      /** @type {[string, string | null]} */ ([
+        id,
+        noteText(notes[id]) ?? noteText(value.feedback),
+      ]),
+  );
+  return pairs.every(([, note]) => note) ? new Map(pairs) : null;
+}
+// 되돌림 요청이 갖출 것 · 부분 고치기는 그림마다 의견(그림체 유지), 다시 구성은 의견이나 새 그림체 중 하나 · ADR-0026·0027
 // 요청 검사와 상태 전이가 같은 규칙을 쓴다
 export function revisionReady(
-  /** @type {{target?: unknown, feedback?: unknown, look?: unknown}} */ value,
+  /** @type {{target?: unknown, figures?: unknown, feedback?: unknown, notes?: unknown, look?: unknown}} */ value,
 ) {
-  const feedback =
-    typeof value.feedback === "string" &&
-    value.feedback.trim().length > 0 &&
-    value.feedback.length <= FIGURE_LIMITS.feedback;
-  return value.target === FIGURE_FIX_PASS
-    ? feedback && !value.look
-    : feedback || Boolean(value.look);
+  if (value.target === FIGURE_FIX_PASS) return Boolean(revisionNotes(value)) && !value.look;
+  // 다시 구성은 묶음 한 번의 구성이라 공통 의견만 받는다
+  return !value.notes && (Boolean(noteText(value.feedback)) || Boolean(value.look));
 }
 
 // 사람이 본문 범위로 자리를 추가·조절 · 평문 범위(W3C TextQuoteSelector 모양) · ADR-0030

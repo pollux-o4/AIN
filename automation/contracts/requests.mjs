@@ -6,6 +6,7 @@ import {
   figureFeedbackSchema,
   figureIdsSchema,
   figureLookSchema,
+  figureNotesSchema,
   figureRoutesSchema,
   placeFigureFields,
   placeNeedsTarget,
@@ -100,11 +101,16 @@ export const actionRequestSchema = z.discriminatedUnion("type", [
     .extend({
       type: z.literal("revise_figures"),
       feedback: figureFeedbackSchema.optional(),
+      // 부분 고치기는 그림마다 다른 의견을 한 번에 보낼 수 있다 · ADR-0026
+      notes: figureNotesSchema.optional(),
       figures: figureIdsSchema,
       target: z.enum(FIGURE_REVISE_TARGETS),
       look: figureLookSchema.optional(),
     })
-    .refine(revisionReady, "부분 고치기는 의견이, 다시 구성은 의견이나 그림체가 필요합니다."),
+    .refine(
+      revisionReady,
+      "부분 고치기는 그림마다 의견이, 다시 구성은 의견이나 그림체가 필요합니다.",
+    ),
   // 실패한 그림만 다시 · 끝난 그림은 그대로 · ADR-0026
   actionFieldsSchema.extend({
     type: z.literal("retry_figures"),

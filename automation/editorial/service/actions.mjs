@@ -84,6 +84,7 @@ export async function runAction(service, id, input, actor = "user") {
     routes,
     look,
     target,
+    notes,
   } = input;
   if (!actionIdentitySchema.safeParse(input).success) fail("지원하지 않는 요청입니다.");
   const changed = await service.locked(id, async () => {
@@ -102,6 +103,7 @@ export async function runAction(service, id, input, actor = "user") {
       routes,
       look,
       target,
+      notes,
     });
     if (Object.hasOwn(run.operations ?? {}, operationId)) {
       if (run.operations[operationId] !== signature)
@@ -260,8 +262,10 @@ export async function runAction(service, id, input, actor = "user") {
           ...(["select_figures", "approve_design"].includes(type) && directions !== undefined
             ? { directions }
             : {}),
-          ...(FIGURE_REVISIONS.includes(type) ? { feedback: feedback.trim() } : {}),
-          ...(type === "revise_figures" ? { target } : {}),
+          ...(FIGURE_REVISIONS.includes(type) && feedback !== undefined
+            ? { feedback: feedback.trim() }
+            : {}),
+          ...(type === "revise_figures" ? { target, ...(notes ? { notes } : {}) } : {}),
           ...(type === "select_figures" && routes !== undefined ? { routes } : {}),
           ...(type === "select_figures" && look !== undefined ? { look } : {}),
           ...(type === "request_figures" && feedback !== undefined
