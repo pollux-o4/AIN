@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pollux-o4/AIN/backend/internal/contract"
+	"github.com/pollux-o4/AIN/backend/internal/figureai"
 	"github.com/pollux-o4/AIN/backend/internal/paseowire"
 	"github.com/pollux-o4/AIN/backend/internal/runner"
 	"github.com/pollux-o4/AIN/backend/internal/runtime"
@@ -58,7 +59,15 @@ func run(ctx context.Context) error {
 	builder := writingai.New(writingai.Config{Base: contract.SessionSpec{
 		Provider: *provider, Model: *model, WorkDir: root,
 	}})
-	return runtime.ServeEditorial(ctx, *address, db, paseowire.New(*home), builder, runtime.EditorialConfig{
+	draw, err := figureai.New(figureai.Config{
+		WorkRoot: filepath.Join(root, "workspaces"),
+		Default:  figureai.Model{Provider: *provider, Model: *model},
+	})
+	if err != nil {
+		return err
+	}
+	turns := runtime.Turns{Writing: builder, Figures: draw}
+	return runtime.ServeEditorial(ctx, *address, db, paseowire.New(*home), turns, runtime.EditorialConfig{
 		Assets: os.DirFS(*assets), SessionKey: sessionKey, AgentToken: agentToken, Outbox: *outbox,
 		Runner: runner.Config{Workers: 4, Queue: 64, TurnLimit: 5 * time.Minute, RecheckInterval: 2 * time.Second, MaxRechecks: 5},
 	})
